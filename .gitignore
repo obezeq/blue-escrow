@@ -56,6 +56,9 @@ packages/contract-abis/src/generated/*.ts
 # Logs
 *.log
 
+# Scratch (ephemeral plans, prompts, research notes)
+.scratch/
+
 # Misc
 *.tsbuildinfo
 *.tgz
