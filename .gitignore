@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+.next/
+out/
+build/
+
+# Turbo
+.turbo/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+
+# Foundry
+apps/contracts/out/
+apps/contracts/cache/
+apps/contracts/broadcast/
+
+# Prisma
+apps/api/src/prisma/migrations/
+
+# Generated
+packages/contract-abis/src/generated/*.json
+packages/contract-abis/src/generated/*.ts
+
+# Docker
+*.log
+
+# Misc
+*.tsbuildinfo

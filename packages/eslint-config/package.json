@@ -1,0 +1,8 @@
+{
+  "name": "@blue-escrow/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "license": "BUSL-1.1",
+  "main": "base.js",
+  "files": ["base.js"]
+}
