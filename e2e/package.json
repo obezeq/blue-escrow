@@ -1,0 +1,12 @@
+{
+  "name": "@blue-escrow/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "license": "BUSL-1.1",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.51.0"
+  }
+}

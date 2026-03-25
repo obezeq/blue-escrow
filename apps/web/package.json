@@ -1,0 +1,31 @@
+{
+  "name": "@blue-escrow/web",
+  "version": "0.0.0",
+  "private": true,
+  "license": "BUSL-1.1",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf .next .turbo node_modules"
+  },
+  "dependencies": {
+    "@blue-escrow/types": "workspace:*",
+    "@blue-escrow/config": "workspace:*",
+    "@blue-escrow/contract-abis": "workspace:*",
+    "next": "^16.2.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "sass": "^1.86.0"
+  },
+  "devDependencies": {
+    "@blue-escrow/tsconfig": "workspace:*",
+    "@blue-escrow/eslint-config": "workspace:*",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.8.0"
+  }
+}

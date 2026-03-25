@@ -70,7 +70,7 @@ The backend is never involved in any financial operation. All money movement hap
 | Blockchain | Arbitrum Sepolia (dev) / Arbitrum One (prod) |
 | Storage | IPFS / Pinata |
 | Auth | Wallet signature + JWT with roles |
-| DevOps | Docker Compose, Nginx, GitHub Actions, DigitalOcean VPS |
+| DevOps | Docker Compose, Caddy, GitHub Actions, DigitalOcean VPS |
 
 ## Getting Started
 
