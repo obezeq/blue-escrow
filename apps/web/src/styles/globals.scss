@@ -1,0 +1,19 @@
+// ITCSS — Import order matters (generic → specific)
+
+// Layer 1: Settings — Design tokens
+@import 'settings/variables';
+
+// Layer 2: Tools — Mixins and functions
+@import 'tools/mixins';
+
+// Layer 3: Generic — Resets and normalize
+@import 'generic/reset';
+
+// Layer 4: Elements — Bare HTML element styles
+@import 'elements/base';
+
+// Layer 5: Objects — Layout patterns
+@import 'objects/container';
+
+// Layer 7: Utilities — Helper classes
+@import 'utilities/helpers';

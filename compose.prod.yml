@@ -1,0 +1,28 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: runner
+    command: ""
+    ports:
+      - "3000:3000"
+    volumes: []
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: runner
+    command: ""
+    ports:
+      - "4000:4000"
+    volumes: []
+    restart: unless-stopped
+
+  db:
+    restart: unless-stopped
+
+  caddy:
+    restart: unless-stopped

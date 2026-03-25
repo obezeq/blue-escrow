@@ -15,7 +15,7 @@ This document is the canonical reference for the folder structure of the Blue Es
 | **Blockchain** | Arbitrum Sepolia (dev) / Arbitrum One (prod) |
 | **Storage** | IPFS / Pinata |
 | **Auth** | Wallet signature + JWT with roles |
-| **DevOps** | Docker Compose, Nginx, GitHub Actions, VPS DigitalOcean |
+| **DevOps** | Docker Compose, Caddy, GitHub Actions, VPS DigitalOcean |
 
 ---
 
@@ -37,7 +37,7 @@ blue-escrow/
     eslint-config/        -- Shared ESLint configurations
   e2e/                    -- End-to-end tests (Playwright + local Anvil for frontend-to-contract flows)
   docker/
-    nginx/                -- Nginx configuration (reverse proxy, SSL, caching)
+    caddy/                -- Caddy configuration (reverse proxy, SSL, caching)
   .github/
     workflows/            -- GitHub Actions CI/CD pipelines
     ISSUE_TEMPLATE/       -- Issue templates
@@ -49,7 +49,7 @@ blue-escrow/
 - **`apps/`** — Deployable applications. Each app is independently buildable and deployable. They consume from `packages/` via pnpm workspace protocol. Apps NEVER import directly from another app. Each app contains its own `Dockerfile` (co-located, following the Turborepo convention).
 - **`packages/`** — Shared internal libraries. Never deployed on their own. Consumed by apps. Each package has a single purpose and its own `package.json`.
 - **`e2e/`** — End-to-end tests using Playwright against a local Anvil node. Tests critical user flows across frontend and smart contracts (deal lifecycle: create -> fund -> resolve). Runs in CI with a local blockchain fork.
-- **`docker/`** — Nginx reverse proxy configuration. Dockerfiles live co-located inside each app (`apps/web/Dockerfile`, `apps/api/Dockerfile`) following the Turborepo pattern.
+- **`docker/`** — Caddy reverse proxy configuration. Dockerfiles live co-located inside each app (`apps/web/Dockerfile`, `apps/api/Dockerfile`) following the Turborepo pattern.
 - **`.github/`** — CI/CD workflows, issue templates, PR templates.
 
 ---
@@ -241,9 +241,9 @@ Packages NEVER import from apps. Apps NEVER import from other apps.
 
 ---
 
-## 6. DevOps — Docker, CI/CD, Nginx
+## 6. DevOps — Docker, CI/CD, Caddy
 
-Docker Compose V2 for local development and production deployment. GitHub Actions for CI/CD. Nginx as reverse proxy. DigitalOcean VPS as the deployment target.
+Docker Compose V2 for local development and production deployment. GitHub Actions for CI/CD. Caddy as reverse proxy. DigitalOcean VPS as the deployment target.
 
 ```
 apps/
@@ -253,7 +253,7 @@ apps/
     Dockerfile                  -- Multi-stage build for Express (deps, build, production)
 
 docker/
-  nginx/                        -- Nginx config (reverse proxy: /api/* -> api, /* -> web; SSL, gzip, caching)
+  caddy/                        -- Caddy config (reverse proxy: /api/* -> api, /* -> web; SSL, gzip, caching)
 
 .github/
   workflows/
@@ -272,7 +272,7 @@ Compose files live at the monorepo root following Docker Compose V2 naming conve
 
 **Dockerfiles co-located**: Each app contains its own `Dockerfile` (`apps/web/Dockerfile`, `apps/api/Dockerfile`) following the official Turborepo pattern. Build from root with `docker compose build` or `docker build -f apps/web/Dockerfile .`. Multi-stage builds for minimal production images (alpine). Development uses hot-reload volumes. PostgreSQL runs as a Compose service.
 
-**Nginx**: Routes `/api/*` to the Express backend and everything else to the Next.js frontend. Handles SSL termination, gzip compression, and static asset caching with appropriate headers. Config lives in `docker/nginx/` since Nginx is infrastructure, not an app.
+**Caddy**: Routes `/api/*` to the Express backend and everything else to the Next.js frontend. Handles SSL termination, gzip compression, and static asset caching with appropriate headers. Config lives in `docker/caddy/` since Caddy is infrastructure, not an app.
 
 **CI/CD separation**: Three separate workflow groups. `ci/` runs on every push and PR (lint, typecheck, test, build for all apps). `cd/` runs on merge to main (build Docker images, deploy to VPS). `contracts/` runs when Solidity files change (full Cyfrin-standard pipeline).
 
@@ -424,7 +424,7 @@ blue-escrow/
     eslint-config/                    -- Shared ESLint configs
   e2e/                                -- Playwright + Anvil end-to-end tests
   docker/
-    nginx/                            -- Nginx reverse proxy config
+    caddy/                            -- Caddy reverse proxy config
   .github/
     workflows/
       ci/                             -- Lint, test, build (all apps)
