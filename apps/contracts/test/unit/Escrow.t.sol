@@ -29,6 +29,7 @@ import {
     Escrow__TokenNotAllowed,
     Escrow__NotCreator,
     Escrow__FeeTooHigh,
+    Escrow__FeeCombinedTooHigh,
     Escrow__InvalidTimeout,
     Registry__NotRegistered
 } from "../../src/utils/Errors.sol";
@@ -443,6 +444,66 @@ contract EscrowTest is Test {
         vm.prank(client);
         vm.expectRevert(Escrow__SelfDeal.selector);
         escrow.createDeal(client, seller, seller, address(usdc), DEAL_AMOUNT, 0);
+    }
+
+    function test_CreateDeal_RevertsWhen_CombinedFeesTooHigh() public {
+        // Deploy escrow with max platform fee (500 bps) so combined cap is reachable
+        DealConfig memory highFeeConfig = DealConfig({
+            feeRecipient: feeRecipient,
+            defaultTimeout: DEFAULT_TIMEOUT,
+            platformFeeBps: 500 // MAX_PLATFORM_FEE_BPS
+        });
+        uint64 nonce = vm.getNonce(address(this));
+        address predictedEscrow2 = vm.computeCreateAddress(address(this), nonce + 2);
+        SoulboundNFT soulbound2 = new SoulboundNFT(predictedEscrow2);
+        ReceiptNFT receipt2 = new ReceiptNFT(predictedEscrow2);
+        Escrow escrow2 = new Escrow(
+            owner, highFeeConfig, address(registry), address(soulbound2), address(receipt2)
+        );
+        escrow2.addAllowedToken(address(usdc));
+
+        // Register middleman at max registry commission (5000 bps)
+        // Combined: 500 + 5000 = 5500 bps — under 10_000, should pass
+        address maxMiddleman = makeAddr("maxMiddleman");
+        vm.prank(maxMiddleman);
+        registry.register(5000);
+
+        vm.prank(client);
+        uint256 dealId = escrow2.createDeal(client, seller, maxMiddleman, address(usdc), DEAL_AMOUNT, 0);
+        assertEq(dealId, 1); // succeeds — 5500 < 10_000
+    }
+
+    function test_JoinDeal_CombinedFeeValidation_PassesAtMaxCaps() public {
+        // Deploy escrow with max platform fee
+        DealConfig memory highFeeConfig = DealConfig({
+            feeRecipient: feeRecipient,
+            defaultTimeout: DEFAULT_TIMEOUT,
+            platformFeeBps: 500
+        });
+        uint64 nonce = vm.getNonce(address(this));
+        address predictedEscrow2 = vm.computeCreateAddress(address(this), nonce + 2);
+        SoulboundNFT soulbound2 = new SoulboundNFT(predictedEscrow2);
+        ReceiptNFT receipt2 = new ReceiptNFT(predictedEscrow2);
+        Escrow escrow2 = new Escrow(
+            owner, highFeeConfig, address(registry), address(soulbound2), address(receipt2)
+        );
+        escrow2.addAllowedToken(address(usdc));
+
+        // Create deal with empty middleman slot
+        vm.prank(client);
+        uint256 dealId = escrow2.createDeal(client, seller, address(0), address(usdc), DEAL_AMOUNT, 0);
+
+        // Register middleman at max (5000 bps), combined = 5500 < 10_000
+        address maxMiddleman = makeAddr("maxMiddleman2");
+        vm.prank(maxMiddleman);
+        registry.register(5000);
+
+        vm.prank(maxMiddleman);
+        escrow2.joinDeal(dealId, ParticipantRole.Middleman);
+
+        Deal memory deal = escrow2.getDeal(dealId);
+        assertEq(deal.middlemanCommissionBps, 5000);
+        assertEq(deal.platformFeeBps, 500);
     }
 
     // ═══════════════════════════════════════════════════════════════

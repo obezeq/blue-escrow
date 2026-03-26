@@ -31,6 +31,7 @@ import {
     Escrow__NotCreator,
     Escrow__InvalidState,
     Escrow__InvalidTimeout,
+    Escrow__FeeCombinedTooHigh,
     Registry__NotRegistered
 } from "../utils/Errors.sol";
 import {
@@ -66,6 +67,13 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 ///      - Combined fee cap: platformFeeBps + middlemanCommissionBps < 10_000
 contract Escrow is EscrowBase, IEscrow {
     using SafeERC20 for IERC20;
+
+    // ──────────────────────────────────────────────────────────────
+    //  Constants
+    // ──────────────────────────────────────────────────────────────
+
+    /// @dev Combined platform fee + middleman commission must be strictly less than 100%.
+    uint16 internal constant MAX_COMBINED_FEE_BPS = 10_000;
 
     // ──────────────────────────────────────────────────────────────
     //  Immutable External Contracts
@@ -144,6 +152,10 @@ contract Escrow is EscrowBase, IEscrow {
                 revert Registry__NotRegistered(middleman_);
             }
             commissionBps = middlemanRegistry.getCommission(middleman_);
+            uint16 combined = _config.platformFeeBps + commissionBps;
+            if (combined >= MAX_COMBINED_FEE_BPS) {
+                revert Escrow__FeeCombinedTooHigh(combined, MAX_COMBINED_FEE_BPS);
+            }
         }
 
         // Timeout validation
@@ -205,6 +217,10 @@ contract Escrow is EscrowBase, IEscrow {
             }
             deal.middleman = msg.sender;
             deal.middlemanCommissionBps = middlemanRegistry.getCommission(msg.sender);
+            uint16 combined = deal.platformFeeBps + deal.middlemanCommissionBps;
+            if (combined >= MAX_COMBINED_FEE_BPS) {
+                revert Escrow__FeeCombinedTooHigh(combined, MAX_COMBINED_FEE_BPS);
+            }
         }
 
         emit DealJoined(dealId, msg.sender, role);

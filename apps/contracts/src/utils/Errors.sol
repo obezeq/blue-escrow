@@ -77,6 +77,9 @@ error Escrow__SequencerGracePeriod();
 /// @notice Platform fee exceeds the maximum allowed
 error Escrow__FeeTooHigh(uint16 fee, uint16 maxFee);
 
+/// @notice Combined platform fee + middleman commission exceeds 100%
+error Escrow__FeeCombinedTooHigh(uint16 combined, uint16 max);
+
 /// @notice Timeout duration is below the minimum allowed
 error Escrow__InvalidTimeout(uint48 timeout, uint48 minTimeout);
 
