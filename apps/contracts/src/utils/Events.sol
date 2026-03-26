@@ -89,6 +89,17 @@ event AmountIncreased(uint256 indexed dealId, uint96 oldAmount, uint96 newAmount
 /// @param executor Address that triggered the timeout execution
 event DealTimedOut(uint256 indexed dealId, address indexed executor);
 
+/// @notice Emitted when a deal is cancelled by its creator
+/// @param dealId Deal that was cancelled
+/// @param canceller Address that cancelled the deal
+event DealCancelled(uint256 indexed dealId, address indexed canceller);
+
+/// @notice Emitted when a user withdraws their pending balance
+/// @param user Address that withdrew
+/// @param token ERC-20 token withdrawn
+/// @param amount Amount withdrawn in token units
+event Withdrawal(address indexed user, address indexed token, uint96 amount);
+
 // ──────────────────────────────────────────────────────────────
 //  Registry Events
 // ──────────────────────────────────────────────────────────────
@@ -107,6 +118,33 @@ event MiddlemanUnregistered(address indexed middleman);
 /// @param oldCommission Previous commission in basis points
 /// @param newCommission New commission in basis points
 event CommissionUpdated(address indexed middleman, uint16 oldCommission, uint16 newCommission);
+
+// ──────────────────────────────────────────────────────────────
+//  Admin Events
+// ──────────────────────────────────────────────────────────────
+
+/// @notice Emitted when a token is added to the whitelist
+/// @param token Address of the allowed ERC-20 token
+event TokenAllowed(address indexed token);
+
+/// @notice Emitted when a token is removed from the whitelist
+/// @param token Address of the disallowed ERC-20 token
+event TokenDisallowed(address indexed token);
+
+/// @notice Emitted when the platform fee is updated
+/// @param oldFee Previous fee in basis points
+/// @param newFee New fee in basis points
+event PlatformFeeUpdated(uint16 oldFee, uint16 newFee);
+
+/// @notice Emitted when the default timeout duration is updated
+/// @param oldTimeout Previous timeout in seconds
+/// @param newTimeout New timeout in seconds
+event DefaultTimeoutUpdated(uint48 oldTimeout, uint48 newTimeout);
+
+/// @notice Emitted when the fee recipient address is updated
+/// @param oldRecipient Previous fee recipient
+/// @param newRecipient New fee recipient
+event FeeRecipientUpdated(address oldRecipient, address newRecipient);
 
 // ──────────────────────────────────────────────────────────────
 //  NFT Events
