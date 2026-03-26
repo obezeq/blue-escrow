@@ -74,6 +74,12 @@ error Escrow__NotCreator(address caller, uint256 dealId);
 /// @notice Action blocked during Arbitrum sequencer grace period after downtime
 error Escrow__SequencerGracePeriod();
 
+/// @notice Platform fee exceeds the maximum allowed
+error Escrow__FeeTooHigh(uint16 fee, uint16 maxFee);
+
+/// @notice Timeout duration is below the minimum allowed
+error Escrow__InvalidTimeout(uint48 timeout, uint48 minTimeout);
+
 // ──────────────────────────────────────────────────────────────
 //  Registry Errors
 // ──────────────────────────────────────────────────────────────
