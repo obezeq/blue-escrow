@@ -11,7 +11,8 @@ import {
     Escrow__DealNotFound,
     Escrow__ZeroAddress,
     Escrow__FeeTooHigh,
-    Escrow__InvalidTimeout
+    Escrow__InvalidTimeout,
+    Escrow__RenounceDisabled
 } from "../utils/Errors.sol";
 import { ReentrancyGuardTransient } from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
 import { Ownable2Step, Ownable } from "@openzeppelin/contracts/access/Ownable2Step.sol";
@@ -118,6 +119,15 @@ abstract contract EscrowBase is ReentrancyGuardTransient, Ownable2Step {
     modifier onlyMiddleman(uint256 dealId) {
         _checkMiddleman(dealId);
         _;
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  Ownership
+    // ──────────────────────────────────────────────────────────
+
+    /// @dev Disable renounceOwnership to prevent irrevocable loss of admin control.
+    function renounceOwnership() public pure override {
+        revert Escrow__RenounceDisabled();
     }
 
     // ──────────────────────────────────────────────────────────

@@ -5,7 +5,8 @@ import { IMiddlemanRegistry } from "../interfaces/IMiddlemanRegistry.sol";
 import {
     Registry__AlreadyRegistered,
     Registry__NotRegistered,
-    Registry__InvalidCommission
+    Registry__InvalidCommission,
+    Registry__RenounceDisabled
 } from "../utils/Errors.sol";
 import { MiddlemanRegistered, MiddlemanUnregistered, CommissionUpdated } from "../utils/Events.sol";
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -55,6 +56,15 @@ contract MiddlemanRegistry is IMiddlemanRegistry, ERC165, Ownable2Step {
 
     /// @param owner_ Initial contract owner (multisig on mainnet). Ownable reverts on address(0).
     constructor(address owner_) Ownable(owner_) { }
+
+    // ──────────────────────────────────────────────────────────────
+    //  Ownership
+    // ──────────────────────────────────────────────────────────────
+
+    /// @dev Disable renounceOwnership to prevent irrevocable loss of admin control.
+    function renounceOwnership() public pure override {
+        revert Registry__RenounceDisabled();
+    }
 
     // ──────────────────────────────────────────────────────────────
     //  External — Mutating

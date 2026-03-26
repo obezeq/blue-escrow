@@ -35,8 +35,8 @@ error Escrow__SlotAlreadyFilled(uint256 dealId, ParticipantRole role);
 /// @notice This participant has already signed the deal
 error Escrow__AlreadySigned(uint256 dealId, address signer);
 
-/// @notice Deposited amount does not meet the required amount
-error Escrow__InsufficientFunds(uint256 required, uint256 provided);
+/// @notice Ownership renunciation is permanently disabled
+error Escrow__RenounceDisabled();
 
 /// @notice The deal deadline has not been reached yet
 error Escrow__TimeoutNotReached(uint256 deadline, uint256 currentTimestamp);
@@ -49,9 +49,6 @@ error Escrow__ZeroAddress();
 
 /// @notice Amount must be greater than zero
 error Escrow__InvalidAmount();
-
-/// @notice Deal has already been resolved or timed out
-error Escrow__DealAlreadyResolved(uint256 dealId);
 
 /// @notice A participant cannot hold multiple roles in the same deal
 error Escrow__SelfDeal();
@@ -70,9 +67,6 @@ error Escrow__TokenNotAllowed(address token);
 
 /// @notice Caller is not the creator of this deal
 error Escrow__NotCreator(address caller, uint256 dealId);
-
-/// @notice Action blocked during Arbitrum sequencer grace period after downtime
-error Escrow__SequencerGracePeriod();
 
 /// @notice Platform fee exceeds the maximum allowed
 error Escrow__FeeTooHigh(uint16 fee, uint16 maxFee);
@@ -95,6 +89,9 @@ error Registry__NotRegistered(address middleman);
 
 /// @notice Commission exceeds the maximum allowed basis points
 error Registry__InvalidCommission(uint16 commission);
+
+/// @notice Ownership renunciation is permanently disabled
+error Registry__RenounceDisabled();
 
 // ──────────────────────────────────────────────────────────────
 //  NFT Errors
