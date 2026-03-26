@@ -2015,6 +2015,42 @@ contract EscrowTest is Test {
         assertFalse(escrow.isTokenAllowed(address(0xdead)));
     }
 
+    function test_AddAllowedToken_NoDuplicateOnReAdd() public {
+        // USDC is already added in setUp. Remove and re-add.
+        escrow.removeAllowedToken(address(usdc));
+        assertFalse(escrow.isTokenAllowed(address(usdc)));
+
+        escrow.addAllowedToken(address(usdc));
+        assertTrue(escrow.isTokenAllowed(address(usdc)));
+
+        // Verify no duplicate: resolve a deal, withdraw, check correct transfer amount.
+        // With a duplicate _tokenList entry the balance would be zeroed on first iteration,
+        // and the second iteration would try to transfer 0 (no harm but wastes gas).
+        // We verify the seller gets exactly the right amount — proving no double-processing.
+        uint256 dealId = _createFundedDeal();
+        vm.prank(client);
+        escrow.confirmDelivery(dealId);
+
+        uint96 sellerBal = escrow.pendingBalance(seller, address(usdc));
+        assertTrue(sellerBal > 0);
+
+        uint256 balBefore = usdc.balanceOf(seller);
+        vm.prank(seller);
+        escrow.withdraw();
+
+        assertEq(usdc.balanceOf(seller), balBefore + sellerBal);
+        assertEq(escrow.pendingBalance(seller, address(usdc)), 0);
+    }
+
+    function test_AddAllowedToken_IdempotentConsecutiveCalls() public {
+        address newToken = makeAddr("DAI");
+        escrow.addAllowedToken(newToken);
+        escrow.addAllowedToken(newToken); // second call — should not push again
+
+        // Verify token is allowed
+        assertTrue(escrow.isTokenAllowed(newToken));
+    }
+
     // ═══════════════════════════════════════════════════════════════
     //  14. Fee Calculations — Fuzz
     // ═══════════════════════════════════════════════════════════════

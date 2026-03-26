@@ -95,6 +95,10 @@ contract Escrow is EscrowBase, IEscrow {
     ///      Removed tokens remain in the list — users may still have pending balances.
     address[] private _tokenList;
 
+    /// @dev Tracks whether a token has ever been pushed to _tokenList (never cleared).
+    ///      Prevents duplicate entries after removeAllowedToken + re-add.
+    mapping(address token => bool) private _tokenInList;
+
     // ──────────────────────────────────────────────────────────────
     //  Constructor
     // ──────────────────────────────────────────────────────────────
@@ -493,8 +497,9 @@ contract Escrow is EscrowBase, IEscrow {
     /// @inheritdoc IEscrow
     function addAllowedToken(address token) external onlyOwner {
         if (token == address(0)) revert Escrow__ZeroAddress();
-        if (!_allowedTokens[token]) {
-            _allowedTokens[token] = true;
+        _allowedTokens[token] = true;
+        if (!_tokenInList[token]) {
+            _tokenInList[token] = true;
             _tokenList.push(token);
         }
         emit TokenAllowed(token);
