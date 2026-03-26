@@ -4,7 +4,7 @@ pragma solidity 0.8.34;
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { ISoulboundNFT } from "../interfaces/ISoulboundNFT.sol";
 import { IERC5192 } from "../interfaces/IERC5192.sol";
-import { NFT__TransferDisabled, NFT__NotAuthorized, NFT__AlreadyMinted } from "../utils/Errors.sol";
+import { NFT__TransferDisabled, NFT__NotAuthorized, NFT__AlreadyMinted, NFT__ZeroAddress } from "../utils/Errors.sol";
 import { SoulboundNFTMinted } from "../utils/Events.sol";
 
 /// @title SoulboundNFT
@@ -29,6 +29,7 @@ contract SoulboundNFT is ERC721, ISoulboundNFT, IERC5192 {
 
     /// @param escrow_ Address of the Escrow contract (immutable, only minter)
     constructor(address escrow_) ERC721("Blue Escrow Soulbound", "BESBT") {
+        if (escrow_ == address(0)) revert NFT__ZeroAddress();
         escrow = escrow_;
     }
 

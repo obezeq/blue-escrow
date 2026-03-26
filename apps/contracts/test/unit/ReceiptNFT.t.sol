@@ -4,7 +4,7 @@ pragma solidity ^0.8.34;
 import { Test } from "forge-std/Test.sol";
 import { ReceiptNFT } from "../../src/tokens/ReceiptNFT.sol";
 import { IReceiptNFT } from "../../src/interfaces/IReceiptNFT.sol";
-import { NFT__NotAuthorized, NFT__AlreadyMinted } from "../../src/utils/Errors.sol";
+import { NFT__NotAuthorized, NFT__AlreadyMinted, NFT__ZeroAddress } from "../../src/utils/Errors.sol";
 import { ReceiptNFTMinted } from "../../src/utils/Events.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
@@ -25,6 +25,15 @@ contract ReceiptNFTTest is Test {
 
     function setUp() public {
         receipt = new ReceiptNFT(escrow);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  Constructor
+    // ═══════════════════════════════════════════════════════════════
+
+    function test_Constructor_RevertsWhen_EscrowIsZeroAddress() public {
+        vm.expectRevert(NFT__ZeroAddress.selector);
+        new ReceiptNFT(address(0));
     }
 
     // ═══════════════════════════════════════════════════════════════

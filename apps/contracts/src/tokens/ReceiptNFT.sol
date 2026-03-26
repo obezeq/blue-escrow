@@ -3,7 +3,7 @@ pragma solidity 0.8.34;
 
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { IReceiptNFT } from "../interfaces/IReceiptNFT.sol";
-import { NFT__NotAuthorized, NFT__AlreadyMinted } from "../utils/Errors.sol";
+import { NFT__NotAuthorized, NFT__AlreadyMinted, NFT__ZeroAddress } from "../utils/Errors.sol";
 import { ReceiptNFTMinted } from "../utils/Events.sol";
 
 /// @title ReceiptNFT
@@ -26,6 +26,7 @@ contract ReceiptNFT is ERC721, IReceiptNFT {
 
     /// @param escrow_ Address of the Escrow contract (immutable, only minter)
     constructor(address escrow_) ERC721("Blue Escrow Receipt", "BERCT") {
+        if (escrow_ == address(0)) revert NFT__ZeroAddress();
         escrow = escrow_;
     }
 

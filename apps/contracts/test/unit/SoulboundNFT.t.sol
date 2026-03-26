@@ -5,7 +5,7 @@ import { Test } from "forge-std/Test.sol";
 import { SoulboundNFT } from "../../src/tokens/SoulboundNFT.sol";
 import { ISoulboundNFT } from "../../src/interfaces/ISoulboundNFT.sol";
 import { IERC5192 } from "../../src/interfaces/IERC5192.sol";
-import { NFT__TransferDisabled, NFT__NotAuthorized, NFT__AlreadyMinted } from "../../src/utils/Errors.sol";
+import { NFT__TransferDisabled, NFT__NotAuthorized, NFT__AlreadyMinted, NFT__ZeroAddress } from "../../src/utils/Errors.sol";
 import { SoulboundNFTMinted } from "../../src/utils/Events.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
@@ -28,6 +28,15 @@ contract SoulboundNFTTest is Test {
 
     function setUp() public {
         sbt = new SoulboundNFT(escrow);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  Constructor
+    // ═══════════════════════════════════════════════════════════════
+
+    function test_Constructor_RevertsWhen_EscrowIsZeroAddress() public {
+        vm.expectRevert(NFT__ZeroAddress.selector);
+        new SoulboundNFT(address(0));
     }
 
     // ═══════════════════════════════════════════════════════════════

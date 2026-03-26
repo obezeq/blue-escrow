@@ -105,3 +105,6 @@ error NFT__NotAuthorized(address caller);
 
 /// @notice An NFT has already been minted for this deal and recipient
 error NFT__AlreadyMinted(uint256 dealId, address to);
+
+/// @notice Zero address provided for escrow in NFT constructor
+error NFT__ZeroAddress();
