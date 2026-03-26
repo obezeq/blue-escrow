@@ -39,14 +39,20 @@ blob-report/
 playwright/.cache/
 playwright/.auth/
 
-# Foundry
+# Foundry — build outputs and caches
 apps/contracts/out/
 apps/contracts/cache/
 apps/contracts/cache_forge/
 apps/contracts/broadcast/
 apps/contracts/artifacts/
+
+# Foundry — installed dependencies (forge install, not submodules)
 apps/contracts/lib/openzeppelin-contracts/
+
+# Static analysis reports (aderyn, slither — regenerated on demand)
 apps/contracts/report.md
+apps/contracts/report.json
+apps/contracts/slither-report/
 
 # Generated ABIs
 packages/contract-abis/src/generated/*.json
@@ -62,6 +68,14 @@ packages/contract-abis/src/generated/*.ts
 # Scratch (ephemeral plans, prompts, research notes)
 .scratch/
 
+# Docker
+docker-compose.override.yml
+
+# Prisma
+apps/api/prisma/*.db
+apps/api/prisma/*.db-journal
+
 # Misc
 *.tsbuildinfo
 *.tgz
+*.pid
