@@ -142,6 +142,7 @@ contract Escrow is EscrowBase, IEscrow {
         // --- Checks ---
         if (paymentToken == address(0)) revert Escrow__ZeroAddress();
         if (!_allowedTokens[paymentToken]) revert Escrow__TokenNotAllowed(paymentToken);
+        if (amount == 0) revert Escrow__InvalidAmount();
 
         // msg.sender must be one of the non-zero addresses
         bool isParticipant = (client_ != address(0) && msg.sender == client_)

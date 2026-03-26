@@ -292,14 +292,6 @@ contract EscrowTest is Test {
         assertEq(deal.seller, address(0));
     }
 
-    function test_CreateDeal_AmountZero() public {
-        vm.prank(client);
-        uint256 dealId = escrow.createDeal(client, seller, middleman, address(usdc), 0, 0);
-
-        Deal memory deal = escrow.getDeal(dealId);
-        assertEq(deal.amount, 0);
-    }
-
     function test_CreateDeal_TimeoutZero_UsesDefault() public {
         vm.prank(client);
         uint256 dealId = escrow.createDeal(client, seller, middleman, address(usdc), DEAL_AMOUNT, 0);
@@ -416,6 +408,12 @@ contract EscrowTest is Test {
         escrow.createDeal(client, seller, middleman, address(0), DEAL_AMOUNT, 0);
     }
 
+    function test_CreateDeal_RevertsWhen_AmountIsZero() public {
+        vm.prank(client);
+        vm.expectRevert(Escrow__InvalidAmount.selector);
+        escrow.createDeal(client, seller, middleman, address(usdc), 0, 0);
+    }
+
     function test_CreateDeal_RevertsWhen_MiddlemanNotRegistered() public {
         address unregistered = makeAddr("unregistered");
         vm.prank(client);
@@ -513,6 +511,7 @@ contract EscrowTest is Test {
     // ═══════════════════════════════════════════════════════════════
 
     function testFuzz_CreateDeal_RandomAmounts(uint96 amount) public {
+        amount = uint96(bound(amount, 1, type(uint96).max));
         vm.prank(client);
         uint256 dealId = escrow.createDeal(client, seller, middleman, address(usdc), amount, 0);
 
@@ -844,15 +843,6 @@ contract EscrowTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(Escrow__InvalidState.selector, DealState.Created, DealState.Joined)
         );
-        escrow.signDeal(dealId);
-    }
-
-    function test_SignDeal_RevertsWhen_AmountIsZero() public {
-        vm.prank(client);
-        uint256 dealId = escrow.createDeal(client, seller, middleman, address(usdc), 0, 0);
-
-        vm.prank(client);
-        vm.expectRevert(Escrow__InvalidAmount.selector);
         escrow.signDeal(dealId);
     }
 
