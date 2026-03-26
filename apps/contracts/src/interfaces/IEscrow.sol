@@ -126,6 +126,12 @@ interface IEscrow {
     ///      address from blocking fund distribution for all parties.
     function withdraw() external;
 
+    /// @notice Withdraw pending balance for a specific token
+    /// @dev Backup for withdraw() when a token in _tokenList is paused or broken.
+    ///      Does not iterate the full token list.
+    /// @param token ERC-20 token address to withdraw
+    function withdrawToken(address token) external;
+
     // ──────────────────────────────────────────────────────────
     //  Token Whitelist (Admin)
     // ──────────────────────────────────────────────────────────

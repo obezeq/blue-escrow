@@ -1880,6 +1880,84 @@ contract EscrowTest is Test {
     }
 
     // ═══════════════════════════════════════════════════════════════
+    //  12c. Withdrawal — withdrawToken (targeted)
+    // ═══════════════════════════════════════════════════════════════
+
+    function test_WithdrawToken_TransfersCorrectAmount() public {
+        uint256 dealId = _createFundedDeal();
+        vm.prank(client);
+        escrow.confirmDelivery(dealId);
+
+        uint96 sellerBal = escrow.pendingBalance(seller, address(usdc));
+        uint256 balBefore = usdc.balanceOf(seller);
+
+        vm.prank(seller);
+        escrow.withdrawToken(address(usdc));
+
+        assertEq(usdc.balanceOf(seller), balBefore + sellerBal);
+        assertEq(escrow.pendingBalance(seller, address(usdc)), 0);
+    }
+
+    function test_WithdrawToken_EmitsWithdrawal() public {
+        uint256 dealId = _createFundedDeal();
+        vm.prank(client);
+        escrow.confirmDelivery(dealId);
+
+        uint96 sellerBal = escrow.pendingBalance(seller, address(usdc));
+
+        vm.expectEmit(true, true, false, true, address(escrow));
+        emit Withdrawal(seller, address(usdc), sellerBal);
+
+        vm.prank(seller);
+        escrow.withdrawToken(address(usdc));
+    }
+
+    function test_WithdrawToken_RevertsWhen_NothingToWithdraw() public {
+        vm.prank(outsider);
+        vm.expectRevert(Escrow__NothingToWithdraw.selector);
+        escrow.withdrawToken(address(usdc));
+    }
+
+    function test_WithdrawToken_DoesNotAffectOtherTokens() public {
+        // Setup a second token
+        MockUSDC dai = new MockUSDC();
+        escrow.addAllowedToken(address(dai));
+
+        // Create deal with USDC
+        uint256 dealId1 = _createFundedDeal();
+        vm.prank(client);
+        escrow.confirmDelivery(dealId1);
+
+        // Create deal with DAI
+        vm.prank(client);
+        uint256 dealId2 = escrow.createDeal(client, seller, middleman, address(dai), DEAL_AMOUNT, 0);
+        vm.prank(client);
+        escrow.signDeal(dealId2);
+        vm.prank(seller);
+        escrow.signDeal(dealId2);
+        vm.prank(middleman);
+        escrow.signDeal(dealId2);
+        vm.startPrank(client);
+        dai.mint(client, DEAL_AMOUNT);
+        dai.approve(address(escrow), DEAL_AMOUNT);
+        escrow.fundDeal(dealId2);
+        escrow.confirmDelivery(dealId2);
+        vm.stopPrank();
+
+        uint96 sellerUsdcBal = escrow.pendingBalance(seller, address(usdc));
+        uint96 sellerDaiBal = escrow.pendingBalance(seller, address(dai));
+        assertTrue(sellerUsdcBal > 0 && sellerDaiBal > 0);
+
+        // Withdraw only USDC
+        vm.prank(seller);
+        escrow.withdrawToken(address(usdc));
+
+        // USDC zeroed, DAI untouched
+        assertEq(escrow.pendingBalance(seller, address(usdc)), 0);
+        assertEq(escrow.pendingBalance(seller, address(dai)), sellerDaiBal);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     //  13. Admin Functions — Token Whitelist
     // ═══════════════════════════════════════════════════════════════
 

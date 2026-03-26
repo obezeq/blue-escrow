@@ -476,6 +476,16 @@ contract Escrow is EscrowBase, IEscrow {
         if (!transferred) revert Escrow__NothingToWithdraw();
     }
 
+    /// @inheritdoc IEscrow
+    function withdrawToken(address token) external nonReentrant {
+        uint96 balance = _pendingBalances[msg.sender][token];
+        if (balance == 0) revert Escrow__NothingToWithdraw();
+
+        _pendingBalances[msg.sender][token] = 0;
+        IERC20(token).safeTransfer(msg.sender, balance);
+        emit Withdrawal(msg.sender, token, balance);
+    }
+
     // ══════════════════════════════════════════════════════════════
     //  Token Whitelist (Admin)
     // ══════════════════════════════════════════════════════════════
