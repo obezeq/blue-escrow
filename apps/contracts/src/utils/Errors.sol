@@ -59,6 +59,21 @@ error Escrow__SelfDeal();
 /// @notice Middleman passed an invalid resolution type
 error Escrow__InvalidResolution();
 
+/// @notice Deal cannot be cancelled in its current state
+error Escrow__DealNotCancellable(uint256 dealId);
+
+/// @notice Caller has no pending balance to withdraw
+error Escrow__NothingToWithdraw();
+
+/// @notice ERC-20 token is not on the allowed list
+error Escrow__TokenNotAllowed(address token);
+
+/// @notice Caller is not the creator of this deal
+error Escrow__NotCreator(address caller, uint256 dealId);
+
+/// @notice Action blocked during Arbitrum sequencer grace period after downtime
+error Escrow__SequencerGracePeriod();
+
 // ──────────────────────────────────────────────────────────────
 //  Registry Errors
 // ──────────────────────────────────────────────────────────────
