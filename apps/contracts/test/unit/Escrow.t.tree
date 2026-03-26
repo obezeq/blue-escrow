@@ -1,0 +1,415 @@
+Escrow::constructor
+├── when config is valid and all addresses are non-zero
+│   ├── it sets the owner
+│   ├── it stores feeRecipient, defaultTimeout, platformFeeBps
+│   ├── it stores middlemanRegistry, soulboundNFT, receiptNFT as immutables
+│   └── it initializes dealCounter at 0
+├── when feeRecipient is address(0)
+│   └── it reverts with Escrow__ZeroAddress
+├── when platformFeeBps exceeds MAX_PLATFORM_FEE_BPS (500)
+│   └── it reverts with Escrow__FeeTooHigh
+├── when defaultTimeout is below MIN_TIMEOUT (1 day)
+│   └── it reverts with Escrow__InvalidTimeout
+├── when middlemanRegistry is address(0)
+│   └── it reverts with Escrow__ZeroAddress
+├── when soulboundNFT is address(0)
+│   └── it reverts with Escrow__ZeroAddress
+└── when receiptNFT is address(0)
+    └── it reverts with Escrow__ZeroAddress
+
+Escrow::createDeal
+├── when all 3 participants are provided (no address(0) slots)
+│   ├── given msg.sender is one of the provided addresses
+│   │   ├── given paymentToken is whitelisted
+│   │   │   ├── given middleman is registered in registry
+│   │   │   │   ├── given no two roles share the same address
+│   │   │   │   │   ├── it increments dealCounter and returns new dealId
+│   │   │   │   │   ├── it stores Deal struct with correct fields
+│   │   │   │   │   ├── it sets state to Joined (all slots filled)
+│   │   │   │   │   ├── it sets middlemanCommissionBps from registry
+│   │   │   │   │   ├── it sets platformFeeBps from config
+│   │   │   │   │   ├── it sets createdAt to block.timestamp
+│   │   │   │   │   ├── it stores timeoutDuration in deadline field (overloaded)
+│   │   │   │   │   ├── it records msg.sender as deal creator
+│   │   │   │   │   └── it emits DealCreated
+│   │   │   │   ├── given client == seller
+│   │   │   │   │   └── it reverts with Escrow__SelfDeal
+│   │   │   │   ├── given client == middleman
+│   │   │   │   │   └── it reverts with Escrow__SelfDeal
+│   │   │   │   └── given seller == middleman
+│   │   │   │       └── it reverts with Escrow__SelfDeal
+│   │   │   └── given middleman is NOT registered in registry
+│   │   │       └── it reverts with Registry__NotRegistered
+│   │   └── given paymentToken is NOT whitelisted
+│   │       └── it reverts with Escrow__TokenNotAllowed
+│   └── given msg.sender is NOT one of the provided addresses
+│       └── it reverts with Escrow__NotParticipant
+├── when some participant slots are address(0)
+│   ├── given msg.sender is one of the non-zero addresses
+│   │   ├── it creates deal in Created state (not all slots filled)
+│   │   ├── it stores address(0) for empty slots
+│   │   └── it emits DealCreated with address(0) for empty slots
+│   └── given all three addresses are address(0)
+│       └── it reverts with Escrow__NotParticipant
+├── when amount is 0 (price not yet agreed)
+│   └── it creates the deal with amount = 0
+├── when timeoutDuration is 0
+│   └── it uses config.defaultTimeout
+├── when timeoutDuration is nonzero and >= MIN_TIMEOUT
+│   └── it stores the custom timeout duration
+├── when middleman is address(0)
+│   └── it skips middleman registration check
+└── when paymentToken is address(0)
+    └── it reverts with Escrow__ZeroAddress
+
+Escrow::joinDeal
+├── when deal exists
+│   ├── when deal is in Created state
+│   │   ├── when requested role slot is empty (address(0))
+│   │   │   ├── given msg.sender does not already hold another role in the deal
+│   │   │   │   ├── when role is Client
+│   │   │   │   │   ├── it sets deal.client to msg.sender
+│   │   │   │   │   └── it emits DealJoined(dealId, msg.sender, Client)
+│   │   │   │   ├── when role is Seller
+│   │   │   │   │   ├── it sets deal.seller to msg.sender
+│   │   │   │   │   └── it emits DealJoined(dealId, msg.sender, Seller)
+│   │   │   │   ├── when role is Middleman
+│   │   │   │   │   ├── given msg.sender is registered in registry
+│   │   │   │   │   │   ├── it sets deal.middleman to msg.sender
+│   │   │   │   │   │   ├── it sets middlemanCommissionBps from registry
+│   │   │   │   │   │   └── it emits DealJoined(dealId, msg.sender, Middleman)
+│   │   │   │   │   └── given msg.sender is NOT registered
+│   │   │   │   │       └── it reverts with Registry__NotRegistered
+│   │   │   │   └── when all slots become filled after joining
+│   │   │   │       └── it transitions state from Created to Joined
+│   │   │   └── given msg.sender already holds another role
+│   │   │       └── it reverts with Escrow__SelfDeal
+│   │   └── when requested role slot is already filled
+│   │       └── it reverts with Escrow__SlotAlreadyFilled
+│   └── when deal is NOT in Created state
+│       └── it reverts with Escrow__InvalidState
+└── when deal does not exist
+    └── it reverts with Escrow__DealNotFound
+
+Escrow::cancelDeal
+├── when deal exists
+│   ├── when msg.sender is the deal creator
+│   │   ├── when deal is in Created state
+│   │   │   ├── it sets state to Resolved with resolution None
+│   │   │   └── it emits DealCancelled
+│   │   ├── when deal is in Joined state
+│   │   │   ├── it sets state to Resolved with resolution None
+│   │   │   └── it emits DealCancelled
+│   │   ├── when deal is in Signed state
+│   │   │   └── it reverts with Escrow__DealNotCancellable
+│   │   ├── when deal is in Funded state
+│   │   │   └── it reverts with Escrow__DealNotCancellable
+│   │   └── when deal is in Resolved state
+│   │       └── it reverts with Escrow__DealNotCancellable
+│   └── when msg.sender is NOT the deal creator
+│       └── it reverts with Escrow__NotCreator
+└── when deal does not exist
+    └── it reverts with Escrow__DealNotFound
+
+Escrow::signDeal
+├── when deal exists
+│   ├── when deal is in Joined state
+│   │   ├── when msg.sender is a participant
+│   │   │   ├── when deal.amount > 0
+│   │   │   │   ├── when msg.sender has NOT already signed
+│   │   │   │   │   ├── it records the signature
+│   │   │   │   │   ├── it emits DealSigned(dealId, msg.sender)
+│   │   │   │   │   ├── when this is the 1st or 2nd signature
+│   │   │   │   │   │   └── it does NOT change deal state
+│   │   │   │   │   └── when this is the 3rd signature (all signed)
+│   │   │   │   │       ├── it transitions state to Signed
+│   │   │   │   │       ├── it sets deadline = block.timestamp + stored duration
+│   │   │   │   │       └── it emits DealFullySigned(dealId, deadline)
+│   │   │   │   └── when msg.sender has already signed
+│   │   │   │       └── it reverts with Escrow__AlreadySigned
+│   │   │   └── when deal.amount == 0
+│   │   │       └── it reverts with Escrow__InvalidAmount
+│   │   └── when msg.sender is NOT a participant
+│   │       └── it reverts with Escrow__NotParticipant
+│   └── when deal is NOT in Joined state
+│       └── it reverts with Escrow__InvalidState
+└── when deal does not exist
+    └── it reverts with Escrow__DealNotFound
+
+Escrow::fundDeal
+├── when deal exists
+│   ├── when deal is in Signed state
+│   │   ├── when msg.sender is the client
+│   │   │   ├── when deadline has NOT passed
+│   │   │   │   ├── when client has sufficient token balance and approval
+│   │   │   │   │   ├── it transfers deal.amount from client to escrow via SafeERC20
+│   │   │   │   │   ├── it transitions state to Funded
+│   │   │   │   │   └── it emits DealFunded(dealId, client, amount)
+│   │   │   │   └── when client has insufficient balance or approval
+│   │   │   │       └── it reverts (SafeERC20 / ERC20 revert)
+│   │   │   └── when deadline HAS passed
+│   │   │       └── it reverts with Escrow__TimeoutReached
+│   │   └── when msg.sender is NOT the client
+│   │       └── it reverts with Escrow__NotClient
+│   └── when deal is NOT in Signed state
+│       └── it reverts with Escrow__InvalidState
+└── when deal does not exist
+    └── it reverts with Escrow__DealNotFound
+
+Escrow::confirmDelivery
+├── when deal exists
+│   ├── when deal is in Funded state
+│   │   ├── when msg.sender is the client
+│   │   │   ├── when deadline has NOT passed
+│   │   │   │   ├── it transitions to DeliveryConfirmed then Resolved
+│   │   │   │   ├── it sets resolution to Delivery
+│   │   │   │   ├── it calculates platformFee = floor(amount * platformFeeBps / 10000)
+│   │   │   │   ├── it calculates middlemanFee = floor(amount * commissionBps / 10000)
+│   │   │   │   ├── it credits seller: amount - platformFee - middlemanFee
+│   │   │   │   ├── it credits middleman: middlemanFee
+│   │   │   │   ├── it credits feeRecipient: platformFee
+│   │   │   │   ├── it emits DeliveryConfirmed(dealId, client)
+│   │   │   │   ├── it emits DealResolved(dealId, Delivery, 0, sellerPayout)
+│   │   │   │   ├── it mints SoulboundNFT to middleman
+│   │   │   │   ├── it mints ReceiptNFT to client
+│   │   │   │   └── it mints ReceiptNFT to seller
+│   │   │   └── when deadline HAS passed
+│   │   │       └── it reverts with Escrow__TimeoutReached
+│   │   └── when msg.sender is NOT the client
+│   │       └── it reverts with Escrow__NotClient
+│   └── when deal is NOT in Funded state
+│       └── it reverts with Escrow__InvalidState
+└── when deal does not exist
+    └── it reverts with Escrow__DealNotFound
+
+Escrow::requestRefund
+├── when deal exists
+│   ├── when deal is in Funded state
+│   │   ├── when msg.sender is the client
+│   │   │   ├── when deadline has NOT passed
+│   │   │   │   ├── it transitions state to RefundRequested
+│   │   │   │   └── it emits RefundRequested(dealId, client)
+│   │   │   └── when deadline HAS passed
+│   │   │       └── it reverts with Escrow__TimeoutReached
+│   │   └── when msg.sender is NOT the client
+│   │       └── it reverts with Escrow__NotClient
+│   └── when deal is NOT in Funded state
+│       └── it reverts with Escrow__InvalidState
+└── when deal does not exist
+    └── it reverts with Escrow__DealNotFound
+
+Escrow::acceptRefund
+├── when deal exists
+│   ├── when deal is in RefundRequested state
+│   │   ├── when msg.sender is the seller
+│   │   │   ├── it transitions state to Resolved
+│   │   │   ├── it sets resolution to Refund
+│   │   │   ├── it credits client pendingBalance with full amount
+│   │   │   ├── it emits RefundAccepted(dealId)
+│   │   │   ├── it emits DealResolved(dealId, Refund, amount, 0)
+│   │   │   ├── it mints SoulboundNFT to middleman
+│   │   │   ├── it mints ReceiptNFT to client
+│   │   │   └── it mints ReceiptNFT to seller
+│   │   └── when msg.sender is NOT the seller
+│   │       └── it reverts with Escrow__NotSeller
+│   └── when deal is NOT in RefundRequested state
+│       └── it reverts with Escrow__InvalidState
+└── when deal does not exist
+    └── it reverts with Escrow__DealNotFound
+
+Escrow::rejectRefund
+├── when deal exists
+│   ├── when deal is in RefundRequested state
+│   │   ├── when msg.sender is the seller
+│   │   │   ├── it transitions state to Disputed
+│   │   │   └── it emits DealDisputed(dealId)
+│   │   └── when msg.sender is NOT the seller
+│   │       └── it reverts with Escrow__NotSeller
+│   └── when deal is NOT in RefundRequested state
+│       └── it reverts with Escrow__InvalidState
+└── when deal does not exist
+    └── it reverts with Escrow__DealNotFound
+
+Escrow::resolveDispute
+├── when deal exists
+│   ├── when deal is in Disputed state
+│   │   ├── when msg.sender is the middleman
+│   │   │   ├── when resolution is MiddlemanBuyer
+│   │   │   │   ├── it transitions to Resolved
+│   │   │   │   ├── it sets resolution to MiddlemanBuyer
+│   │   │   │   ├── it credits client with full amount (no fees)
+│   │   │   │   ├── it emits DealResolved(dealId, MiddlemanBuyer, amount, 0)
+│   │   │   │   ├── it mints SoulboundNFT to middleman
+│   │   │   │   ├── it mints ReceiptNFT to client
+│   │   │   │   └── it mints ReceiptNFT to seller
+│   │   │   ├── when resolution is MiddlemanSeller
+│   │   │   │   ├── it transitions to Resolved
+│   │   │   │   ├── it sets resolution to MiddlemanSeller
+│   │   │   │   ├── it credits seller: amount - platformFee - middlemanFee
+│   │   │   │   ├── it credits middleman: middlemanFee
+│   │   │   │   ├── it credits feeRecipient: platformFee
+│   │   │   │   ├── it emits DealResolved(dealId, MiddlemanSeller, 0, sellerPayout)
+│   │   │   │   ├── it mints SoulboundNFT to middleman
+│   │   │   │   ├── it mints ReceiptNFT to client
+│   │   │   │   └── it mints ReceiptNFT to seller
+│   │   │   ├── when resolution is None
+│   │   │   │   └── it reverts with Escrow__InvalidResolution
+│   │   │   ├── when resolution is Delivery
+│   │   │   │   └── it reverts with Escrow__InvalidResolution
+│   │   │   ├── when resolution is Refund
+│   │   │   │   └── it reverts with Escrow__InvalidResolution
+│   │   │   └── when resolution is Timeout
+│   │   │       └── it reverts with Escrow__InvalidResolution
+│   │   └── when msg.sender is NOT the middleman
+│   │       └── it reverts with Escrow__NotMiddleman
+│   └── when deal is NOT in Disputed state
+│       └── it reverts with Escrow__InvalidState
+└── when deal does not exist
+    └── it reverts with Escrow__DealNotFound
+
+Escrow::executeTimeout
+├── when deal exists
+│   ├── when deal is in Funded state
+│   │   ├── when block.timestamp > deal.deadline
+│   │   │   ├── it transitions to TimedOut
+│   │   │   ├── it sets resolution to Timeout
+│   │   │   ├── it credits client with full amount (no fees)
+│   │   │   ├── it emits DealTimedOut(dealId, msg.sender)
+│   │   │   ├── it emits DealResolved(dealId, Timeout, amount, 0)
+│   │   │   ├── it mints SoulboundNFT to middleman
+│   │   │   ├── it mints ReceiptNFT to client
+│   │   │   └── it mints ReceiptNFT to seller
+│   │   └── when block.timestamp <= deal.deadline
+│   │       └── it reverts with Escrow__TimeoutNotReached
+│   ├── when deal is in RefundRequested state
+│   │   └── when block.timestamp > deal.deadline
+│   │       └── it transitions to TimedOut (same behavior)
+│   ├── when deal is in Disputed state
+│   │   └── when block.timestamp > deal.deadline
+│   │       └── it transitions to TimedOut (same behavior)
+│   ├── when deal is in Created state
+│   │   └── it reverts with Escrow__InvalidState
+│   ├── when deal is in Joined state
+│   │   └── it reverts with Escrow__InvalidState
+│   ├── when deal is in Signed state
+│   │   └── it reverts with Escrow__InvalidState
+│   ├── when deal is in Resolved state
+│   │   └── it reverts with Escrow__InvalidState
+│   └── it is callable by anyone (no role restriction)
+└── when deal does not exist
+    └── it reverts with Escrow__DealNotFound
+
+Escrow::increaseAmount
+├── when deal exists
+│   ├── when deal is in Funded state
+│   │   ├── when msg.sender is client or seller
+│   │   │   ├── when newAmount > deal.amount
+│   │   │   │   ├── when deadline has NOT passed
+│   │   │   │   │   ├── when no prior proposal exists
+│   │   │   │   │   │   └── it records IncreaseProposal(msg.sender, newAmount)
+│   │   │   │   │   ├── when prior proposal exists from the SAME party
+│   │   │   │   │   │   └── it overwrites with new IncreaseProposal(msg.sender, newAmount)
+│   │   │   │   │   ├── when prior proposal exists from OTHER party with SAME newAmount
+│   │   │   │   │   │   ├── it updates deal.amount to newAmount
+│   │   │   │   │   │   ├── it transfers (newAmount - oldAmount) from client to escrow
+│   │   │   │   │   │   ├── it deletes the IncreaseProposal
+│   │   │   │   │   │   └── it emits AmountIncreased(dealId, oldAmount, newAmount)
+│   │   │   │   │   └── when prior proposal exists from OTHER party with DIFFERENT newAmount
+│   │   │   │   │       └── it overwrites with new IncreaseProposal(msg.sender, newAmount)
+│   │   │   │   └── when deadline HAS passed
+│   │   │   │       └── it reverts with Escrow__TimeoutReached
+│   │   │   └── when newAmount <= deal.amount
+│   │   │       └── it reverts with Escrow__InvalidAmount
+│   │   └── when msg.sender is middleman or outsider
+│   │       └── it reverts with Escrow__NotParticipant
+│   └── when deal is NOT in Funded state
+│       └── it reverts with Escrow__InvalidState
+└── when deal does not exist
+    └── it reverts with Escrow__DealNotFound
+
+Escrow::withdraw
+├── when msg.sender has nonzero pendingBalance for at least one token
+│   ├── it transfers each nonzero pending amount to msg.sender via SafeERC20
+│   ├── it zeros each pendingBalance before transfer (CEI)
+│   └── it emits Withdrawal(user, token, amount) for each token
+├── when msg.sender has no pendingBalance for any token
+│   └── it reverts with Escrow__NothingToWithdraw
+└── when msg.sender has balances from multiple deals
+    └── it transfers the accumulated total
+
+Escrow::addAllowedToken
+├── when msg.sender is owner
+│   ├── when token is not address(0)
+│   │   ├── it adds token to whitelist
+│   │   └── it emits TokenAllowed(token)
+│   └── when token is address(0)
+│       └── it reverts with Escrow__ZeroAddress
+└── when msg.sender is NOT owner
+    └── it reverts with OwnableUnauthorizedAccount
+
+Escrow::removeAllowedToken
+├── when msg.sender is owner
+│   ├── it removes token from whitelist
+│   └── it emits TokenDisallowed(token)
+└── when msg.sender is NOT owner
+    └── it reverts with OwnableUnauthorizedAccount
+
+Escrow::isTokenAllowed
+├── when token is whitelisted
+│   └── it returns true
+└── when token is not whitelisted
+    └── it returns false
+
+Escrow::getDeal
+├── when dealId exists
+│   └── it returns the full Deal struct
+└── when dealId does not exist
+    └── it reverts with Escrow__DealNotFound
+
+Escrow::getDealCount
+└── it returns the current _dealCounter value
+
+Escrow::pendingBalance
+├── when user has a pending balance for the token
+│   └── it returns the correct amount
+└── when user has no pending balance
+    └── it returns 0
+
+Escrow::feeCalculations (fuzz)
+├── given any valid amount and feeBps
+│   ├── platformFee = floor(amount * platformFeeBps / 10000)
+│   ├── middlemanFee = floor(amount * commissionBps / 10000)
+│   ├── sellerPayout = amount - platformFee - middlemanFee
+│   └── sellerPayout + platformFee + middlemanFee == amount (invariant)
+├── given amount = 0
+│   └── all fees are 0
+├── given amount = 1
+│   └── all fees are 0 (floor rounding)
+└── given amount = type(uint96).max
+    └── no overflow occurs
+
+Escrow::stateMachineIntegrity
+├── valid transitions
+│   ├── Created → Joined (via joinDeal filling last slot)
+│   ├── Joined → Signed (via signDeal third signature)
+│   ├── Signed → Funded (via fundDeal)
+│   ├── Funded → DeliveryConfirmed (via confirmDelivery)
+│   ├── Funded → RefundRequested (via requestRefund)
+│   ├── Funded → TimedOut (via executeTimeout)
+│   ├── DeliveryConfirmed → Resolved (via _resolveDeal)
+│   ├── RefundRequested → Disputed (via rejectRefund)
+│   ├── RefundRequested → Resolved (via acceptRefund)
+│   ├── RefundRequested → TimedOut (via executeTimeout)
+│   ├── Disputed → Resolved (via resolveDispute)
+│   └── Disputed → TimedOut (via executeTimeout)
+└── invalid transitions
+    ├── no backward transitions (Joined → Created, Funded → Signed, etc.)
+    ├── no skip transitions (Created → Signed, Created → Funded, etc.)
+    ├── Resolved → any (terminal, no outgoing transitions)
+    └── TimedOut → any (terminal, no outgoing transitions)
+
+Escrow::reentrancy
+├── fundDeal with reentrant token callback
+│   └── it reverts due to ReentrancyGuardTransient
+└── withdraw with reentrant token callback
+    └── it reverts due to ReentrancyGuardTransient
