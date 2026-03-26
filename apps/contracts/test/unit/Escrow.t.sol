@@ -870,9 +870,6 @@ contract EscrowTest is Test {
     function test_FundDeal_RevertsWhen_InsufficientBalance() public {
         uint256 dealId = _createSignedDeal();
 
-        address poorClient = makeAddr("poorClient");
-        // Not possible to have poor client fund since they're not the deal's client
-        // Instead: drain client's balance
         vm.startPrank(client);
         usdc.transfer(outsider, usdc.balanceOf(client));
         usdc.approve(address(escrow), DEAL_AMOUNT);
@@ -1876,7 +1873,7 @@ contract EscrowTest is Test {
     }
 
     function test_IsTokenAllowed_ReturnsFalseForNonWhitelisted() public view {
-        assertFalse(escrow.isTokenAllowed(makeAddr("unknown")));
+        assertFalse(escrow.isTokenAllowed(address(0xdead)));
     }
 
     // ═══════════════════════════════════════════════════════════════
