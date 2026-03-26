@@ -18,21 +18,26 @@ import { DealConfig } from "../../src/types/DataTypes.sol";
 ///        FEE_RECIPIENT         — Platform fee recipient (defaults to deployer)
 ///        PLATFORM_FEE_BPS      — Platform fee in bps (defaults to 33 = 0.33%)
 ///        DEFAULT_TIMEOUT       — Deal timeout in seconds (defaults to 2851200 = 33 days)
-///        USDC_ADDRESS          — Real USDC address (required on non-local chains)
+///        USDC_ADDRESS          — USDC address (required on non-local chains)
 ///
 ///      Usage:
 ///        Local:   forge script script/deploy/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
-///        Testnet: forge script script/deploy/Deploy.s.sol --rpc-url arbitrum_sepolia --account deployer --sender $SENDER --broadcast --verify
+///        Testnet: forge script script/deploy/Deploy.s.sol --rpc-url arbitrum_sepolia --account blue-escrow-dev --sender $SENDER --broadcast --verify
 contract Deploy is Script {
     function run() external {
-        uint256 deployerKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
-        address deployer = vm.addr(deployerKey);
+        bool isLocal = block.chainid == 31337;
+
+        address deployer;
+        if (isLocal) {
+            uint256 deployerKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
+            deployer = vm.addr(deployerKey);
+        } else {
+            deployer = msg.sender;
+        }
 
         address feeRecipient = vm.envOr("FEE_RECIPIENT", deployer);
         uint16 platformFeeBps = uint16(vm.envOr("PLATFORM_FEE_BPS", uint256(33)));
         uint48 defaultTimeout = uint48(vm.envOr("DEFAULT_TIMEOUT", uint256(2_851_200)));
-
-        bool isLocal = block.chainid == 31337;
 
         // ── Nonce prediction (BEFORE broadcast) ─────────────────
         uint64 nonce = vm.getNonce(deployer);
@@ -43,7 +48,11 @@ contract Deploy is Script {
         address predictedEscrow = vm.computeCreateAddress(deployer, nonce + escrowOffset);
 
         // ── Deploy ──────────────────────────────────────────────
-        vm.startBroadcast(deployerKey);
+        if (isLocal) {
+            vm.startBroadcast(vm.envUint("DEPLOYER_PRIVATE_KEY"));
+        } else {
+            vm.startBroadcast();
+        }
 
         // 1. USDC
         address usdc;
