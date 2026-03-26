@@ -1,10 +1,10 @@
 export const addresses = {
   421614: {
-    escrow: '0x1E00E9a3163D406affFE93970851c18883f0a04a' as const,
-    middlemanRegistry: '0x14E2208039bF5F6bF6e455A3985e57B86B12AE26' as const,
-    soulboundNFT: '0x156d872a812118be39561551462D1433daB31930' as const,
-    receiptNFT: '0xcBAA856799De081cBf105F20453539F778de7FCF' as const,
-    usdc: '0x24F43943893815be52ad9189a470915c5C72b6D0' as const,
+    escrow: '0x31513B2ab788ba2528a1566Dd51B1d894D97c303' as const,
+    middlemanRegistry: '0x985568E5A5A7d1231B54d3BA429E6Fe5cCbC329F' as const,
+    soulboundNFT: '0x1e22966A56Cb55977F4657FF254e0658381CA0ce' as const,
+    receiptNFT: '0x184b76e9513be07022B88170aC71A8f0F32965b7' as const,
+    usdc: '0xA10930464a262ce1fCc84eEC601004d863784C36' as const,
   },
 } as const;
 
