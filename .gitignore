@@ -44,6 +44,9 @@ apps/contracts/out/
 apps/contracts/cache/
 apps/contracts/cache_forge/
 apps/contracts/broadcast/
+apps/contracts/artifacts/
+apps/contracts/lib/openzeppelin-contracts/
+apps/contracts/report.md
 
 # Generated ABIs
 packages/contract-abis/src/generated/*.json
