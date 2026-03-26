@@ -43,6 +43,16 @@ interface IEscrow {
     function joinDeal(uint256 dealId, ParticipantRole role) external;
 
     // ──────────────────────────────────────────────────────────
+    //  Cancellation
+    // ──────────────────────────────────────────────────────────
+
+    /// @notice Cancel a deal in Created or Joined state
+    /// @dev Only the deal creator can cancel. No funds are at risk in these states.
+    ///      Reverts with Escrow__DealNotCancellable if state is past Joined.
+    /// @param dealId The deal to cancel
+    function cancelDeal(uint256 dealId) external;
+
+    // ──────────────────────────────────────────────────────────
     //  Agreement Phase
     // ──────────────────────────────────────────────────────────
 
@@ -107,6 +117,36 @@ interface IEscrow {
     function executeTimeout(uint256 dealId) external;
 
     // ──────────────────────────────────────────────────────────
+    //  Withdrawal (Pull-over-Push)
+    // ──────────────────────────────────────────────────────────
+
+    /// @notice Withdraw all pending balances owed to msg.sender
+    /// @dev Pull-over-push pattern: resolution functions record amounts owed,
+    ///      recipients withdraw at their own pace. Prevents a single blacklisted
+    ///      address from blocking fund distribution for all parties.
+    function withdraw() external;
+
+    // ──────────────────────────────────────────────────────────
+    //  Token Whitelist (Admin)
+    // ──────────────────────────────────────────────────────────
+
+    /// @notice Add an ERC-20 token to the allowed list
+    /// @dev Admin-only. Prevents malicious/incompatible tokens (fee-on-transfer,
+    ///      rebasing, pausable) from breaking escrow logic.
+    /// @param token Address of the ERC-20 token to allow
+    function addAllowedToken(address token) external;
+
+    /// @notice Remove an ERC-20 token from the allowed list
+    /// @dev Admin-only. Existing deals with this token are not affected.
+    /// @param token Address of the ERC-20 token to disallow
+    function removeAllowedToken(address token) external;
+
+    /// @notice Check whether a token is on the allowed list
+    /// @param token Address to check
+    /// @return True if the token is allowed for new deals
+    function isTokenAllowed(address token) external view returns (bool);
+
+    // ──────────────────────────────────────────────────────────
     //  View Functions
     // ──────────────────────────────────────────────────────────
 
@@ -118,4 +158,10 @@ interface IEscrow {
     /// @notice Get the total number of deals created
     /// @return Total deal count
     function getDealCount() external view returns (uint256);
+
+    /// @notice Get the pending withdrawal balance for a user and token
+    /// @param user Address to query
+    /// @param token ERC-20 token address
+    /// @return amount Pending balance available for withdrawal
+    function pendingBalance(address user, address token) external view returns (uint96 amount);
 }
