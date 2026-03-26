@@ -66,6 +66,9 @@ abstract contract EscrowBase is ReentrancyGuardTransient, Ownable2Step {
     /// @dev Whitelist of ERC-20 tokens allowed for new deals.
     mapping(address token => bool) internal _allowedTokens;
 
+    /// @dev Tracks the original creator of each deal (for cancelDeal authorization).
+    mapping(uint256 dealId => address creator) internal _dealCreators;
+
     // ──────────────────────────────────────────────────────────
     //  Constructor
     // ──────────────────────────────────────────────────────────

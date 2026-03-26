@@ -69,6 +69,15 @@ struct Deal {
     address paymentToken;
 }
 
+/// @notice Pending amount increase proposal (dual-consent mechanism)
+/// @dev Packed into 1 EVM slot: address (20) + uint96 (12) = 32 bytes.
+///      Both client and seller must call increaseAmount with matching newAmount.
+///      The first call records the proposal; the second matching call executes the increase.
+struct IncreaseProposal {
+    address proposer;
+    uint96 newAmount;
+}
+
 /// @notice Protocol-level configuration
 /// @dev Packed into 1 EVM slot: address (20) + uint48 (6) + uint16 (2) = 28 bytes
 struct DealConfig {
