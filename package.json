@@ -13,5 +13,8 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "solhint": "6.1.0"
   }
 }
