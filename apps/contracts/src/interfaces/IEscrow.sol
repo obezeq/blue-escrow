@@ -78,6 +78,12 @@ interface IEscrow {
     /// @param newAmount The new total amount (must be greater than current)
     function increaseAmount(uint256 dealId, uint96 newAmount) external;
 
+    /// @notice Cancel a pending increase proposal before the other party confirms
+    /// @dev Only the original proposer can cancel. Prevents stale proposals from
+    ///      being confirmed later when the proposer no longer intends the increase.
+    /// @param dealId The deal whose increase proposal to cancel
+    function cancelIncreaseProposal(uint256 dealId) external;
+
     // ──────────────────────────────────────────────────────────
     //  Resolution
     // ──────────────────────────────────────────────────────────

@@ -77,6 +77,9 @@ error Escrow__FeeCombinedTooHigh(uint16 combined, uint16 max);
 /// @notice Timeout duration is below the minimum allowed
 error Escrow__InvalidTimeout(uint48 timeout, uint48 minTimeout);
 
+/// @notice No active increase proposal exists for this deal
+error Escrow__NoActiveProposal(uint256 dealId);
+
 // ──────────────────────────────────────────────────────────────
 //  Registry Errors
 // ──────────────────────────────────────────────────────────────

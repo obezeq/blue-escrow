@@ -31,6 +31,7 @@ import {
     Escrow__FeeTooHigh,
     Escrow__FeeCombinedTooHigh,
     Escrow__InvalidTimeout,
+    Escrow__NoActiveProposal,
     Registry__NotRegistered
 } from "../../src/utils/Errors.sol";
 import {
@@ -49,7 +50,8 @@ import {
     DealCancelled,
     Withdrawal,
     TokenAllowed,
-    TokenDisallowed
+    TokenDisallowed,
+    IncreaseProposalCancelled
 } from "../../src/utils/Events.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -1786,6 +1788,68 @@ contract EscrowTest is Test {
 
         Deal memory deal = escrow.getDeal(dealId);
         assertEq(deal.amount, newAmount);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  11d. Cancel Increase Proposal
+    // ═══════════════════════════════════════════════════════════════
+
+    function test_CancelIncreaseProposal_HappyPath() public {
+        uint256 dealId = _createFundedDeal();
+        uint96 newAmount = DEAL_AMOUNT + 500_000_000;
+
+        // Client proposes increase
+        vm.prank(client);
+        escrow.increaseAmount(dealId, newAmount);
+
+        // Client cancels proposal
+        vm.expectEmit(true, true, false, false, address(escrow));
+        emit IncreaseProposalCancelled(dealId, client);
+
+        vm.prank(client);
+        escrow.cancelIncreaseProposal(dealId);
+
+        // Seller confirming the same amount should now just create a new proposal
+        // (not execute the increase), because the original proposal was deleted
+        vm.prank(seller);
+        escrow.increaseAmount(dealId, newAmount);
+
+        // Amount should remain unchanged (no dual-consent reached)
+        Deal memory deal = escrow.getDeal(dealId);
+        assertEq(deal.amount, DEAL_AMOUNT);
+    }
+
+    function test_CancelIncreaseProposal_RevertsWhen_NoProposal() public {
+        uint256 dealId = _createFundedDeal();
+
+        vm.prank(client);
+        vm.expectRevert(abi.encodeWithSelector(Escrow__NoActiveProposal.selector, dealId));
+        escrow.cancelIncreaseProposal(dealId);
+    }
+
+    function test_CancelIncreaseProposal_RevertsWhen_NotProposer() public {
+        uint256 dealId = _createFundedDeal();
+        uint96 newAmount = DEAL_AMOUNT + 500_000_000;
+
+        // Client proposes increase
+        vm.prank(client);
+        escrow.increaseAmount(dealId, newAmount);
+
+        // Seller tries to cancel (not the proposer)
+        vm.prank(seller);
+        vm.expectRevert(abi.encodeWithSelector(Escrow__NotParticipant.selector, seller, dealId));
+        escrow.cancelIncreaseProposal(dealId);
+    }
+
+    function test_CancelIncreaseProposal_RevertsWhen_WrongState() public {
+        uint256 dealId = _createSignedDeal();
+
+        // Deal is in Signed state, not Funded
+        vm.prank(client);
+        vm.expectRevert(
+            abi.encodeWithSelector(Escrow__InvalidState.selector, DealState.Signed, DealState.Funded)
+        );
+        escrow.cancelIncreaseProposal(dealId);
     }
 
     // ═══════════════════════════════════════════════════════════════

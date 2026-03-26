@@ -32,6 +32,7 @@ import {
     Escrow__InvalidState,
     Escrow__InvalidTimeout,
     Escrow__FeeCombinedTooHigh,
+    Escrow__NoActiveProposal,
     Registry__NotRegistered
 } from "../utils/Errors.sol";
 import {
@@ -51,7 +52,8 @@ import {
     Withdrawal,
     TokenAllowed,
     TokenDisallowed,
-    MintFailed
+    MintFailed,
+    IncreaseProposalCancelled
 } from "../utils/Events.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -352,6 +354,22 @@ contract Escrow is EscrowBase, IEscrow {
             // Record or overwrite proposal
             _increaseProposals[dealId] = IncreaseProposal({ proposer: msg.sender, newAmount: newAmount });
         }
+    }
+
+    /// @inheritdoc IEscrow
+    function cancelIncreaseProposal(uint256 dealId)
+        external
+        nonReentrant
+        dealExists(dealId)
+        onlyInState(dealId, DealState.Funded)
+    {
+        IncreaseProposal storage proposal = _increaseProposals[dealId];
+        if (proposal.proposer == address(0)) revert Escrow__NoActiveProposal(dealId);
+        if (proposal.proposer != msg.sender) revert Escrow__NotParticipant(msg.sender, dealId);
+
+        delete _increaseProposals[dealId];
+
+        emit IncreaseProposalCancelled(dealId, msg.sender);
     }
 
     // ══════════════════════════════════════════════════════════════

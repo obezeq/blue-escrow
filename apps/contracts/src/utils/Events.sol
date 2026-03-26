@@ -84,6 +84,11 @@ event DealResolved(
 /// @param newAmount New total amount
 event AmountIncreased(uint256 indexed dealId, uint96 oldAmount, uint96 newAmount);
 
+/// @notice Emitted when an increase proposal is cancelled by the proposer
+/// @param dealId Deal whose increase proposal was cancelled
+/// @param canceller Address that cancelled the proposal
+event IncreaseProposalCancelled(uint256 indexed dealId, address indexed canceller);
+
 /// @notice Emitted when a deal is resolved via timeout
 /// @param dealId Deal that timed out
 /// @param executor Address that triggered the timeout execution
