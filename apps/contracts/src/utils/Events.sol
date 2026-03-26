@@ -161,3 +161,11 @@ event ReceiptNFTMinted(uint256 indexed tokenId, address indexed to, uint256 inde
 /// @param to Recipient address (middleman)
 /// @param dealId Associated deal
 event SoulboundNFTMinted(uint256 indexed tokenId, address indexed to, uint256 indexed dealId);
+
+/// @notice Emitted when an NFT mint fails during deal resolution
+/// @dev Deal resolution and fund distribution proceed regardless of mint failure.
+/// @param nftContract Address of the NFT contract that failed
+/// @param to Intended recipient
+/// @param dealId Associated deal
+/// @param reason ABI-encoded revert reason
+event MintFailed(address indexed nftContract, address indexed to, uint256 indexed dealId, bytes reason);

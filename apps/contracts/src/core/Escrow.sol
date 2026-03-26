@@ -50,7 +50,8 @@ import {
     DealCancelled,
     Withdrawal,
     TokenAllowed,
-    TokenDisallowed
+    TokenDisallowed,
+    MintFailed
 } from "../utils/Events.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -556,10 +557,16 @@ contract Escrow is EscrowBase, IEscrow {
             emit DealResolved(dealId, resolution, amount, 0);
         }
 
-        // Mint NFTs (trusted protocol contracts)
-        receiptNFT.mint(deal.client, dealId);
-        receiptNFT.mint(deal.seller, dealId);
-        soulboundNFT.mint(deal.middleman, dealId);
+        // Mint NFTs — try/catch ensures fund distribution is never blocked by mint failure
+        try receiptNFT.mint(deal.client, dealId) {} catch (bytes memory reason) {
+            emit MintFailed(address(receiptNFT), deal.client, dealId, reason);
+        }
+        try receiptNFT.mint(deal.seller, dealId) {} catch (bytes memory reason) {
+            emit MintFailed(address(receiptNFT), deal.seller, dealId, reason);
+        }
+        try soulboundNFT.mint(deal.middleman, dealId) {} catch (bytes memory reason) {
+            emit MintFailed(address(soulboundNFT), deal.middleman, dealId, reason);
+        }
     }
 
     // ══════════════════════════════════════════════════════════════
