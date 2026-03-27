@@ -8,7 +8,7 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { InstancedMesh, Color } from 'three';
+import { InstancedMesh, InstancedBufferAttribute } from 'three';
 import type { VaultState } from '@/providers/ThreeProvider';
 import { VAULT_GEOMETRY, PARTICLE, ANIMATION, COLORS } from '../config/vaultConfig';
 import { useVaultTimeline } from '../hooks/useVaultTimeline';
@@ -91,35 +91,34 @@ export function VaultParticles({ count, reducedMotion }: VaultParticlesProps) {
     [buffers, count, geoData],
   );
 
-  // Initialize particle positions
+  // Initialize particle positions and instanceColor attribute
   useEffect(() => {
     const mesh = meshRef.current;
     if (!mesh) return;
 
     if (reducedMotion) {
-      // Static: place on vault surface with correct color
       buffers.positions.set(geoData.vaultSurfacePositions);
       buffers.targetPositions.set(geoData.vaultSurfacePositions);
     } else {
-      // Start scattered for forming animation
       buffers.positions.set(geoData.randomPositions);
       buffers.targetPositions.set(geoData.vaultSurfacePositions);
     }
 
-    // Initialize instance color attribute
-    const colorArray = mesh.instanceColor?.array;
-    if (colorArray) {
+    // Create instanceColor if missing (R3F doesn't auto-create it)
+    if (!mesh.instanceColor) {
+      const colorArray = new Float32Array(count * 3);
       for (let i = 0; i < count; i++) {
         const i3 = i * 3;
         colorArray[i3] = COLORS.particleOnBlue.r;
         colorArray[i3 + 1] = COLORS.particleOnBlue.g;
         colorArray[i3 + 2] = COLORS.particleOnBlue.b;
       }
-      mesh.instanceColor!.needsUpdate = true;
+      mesh.instanceColor = new InstancedBufferAttribute(colorArray, 3);
     }
 
-    // Initial matrix write
     writeMatrices(mesh, buffers, count);
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.instanceColor.needsUpdate = true;
   }, [buffers, count, geoData, reducedMotion]);
 
   // Main animation loop
@@ -144,40 +143,45 @@ export function VaultParticles({ count, reducedMotion }: VaultParticlesProps) {
 
     // Shared lerp loop — positions
     const lerpFactor = 1 - Math.exp(-ANIMATION.lerpSpeed / delta);
-    const posLerp = Math.min(lerpFactor, 0.15); // clamp to avoid overshoot
-    for (let i = 0; i < count * 3; i++) {
-      buffers.positions[i] += (buffers.targetPositions[i] - buffers.positions[i]) * posLerp;
+    const posLerp = Math.min(lerpFactor, 0.15);
+    const pos = buffers.positions;
+    const tPos = buffers.targetPositions;
+    for (let i = 0, len = count * 3; i < len; i++) {
+      pos[i]! += (tPos[i]! - pos[i]!) * posLerp;
     }
 
     // Shared lerp loop — scales
+    const sc = buffers.scales;
+    const tSc = buffers.targetScales;
     for (let i = 0; i < count; i++) {
-      buffers.scales[i] += (buffers.targetScales[i] - buffers.scales[i]) * posLerp;
+      sc[i]! += (tSc[i]! - sc[i]!) * posLerp;
     }
 
     // Shared lerp loop — color factors (with per-particle variation)
     const baseColorSpeed = ANIMATION.colorLerpSpeed;
     const colorVariation = ANIMATION.colorLerpVariation;
+    const cf = buffers.colorFactors;
+    const tCf = buffers.targetColorFactors;
     for (let i = 0; i < count; i++) {
-      const speed = baseColorSpeed + buffers.seeds[i] * colorVariation;
-      buffers.colorFactors[i] += (buffers.targetColorFactors[i] - buffers.colorFactors[i]) * speed;
+      const speed = baseColorSpeed + buffers.seeds[i]! * colorVariation;
+      cf[i]! += (tCf[i]! - cf[i]!) * speed;
     }
 
-    // Compose instance matrices — write directly to typed array
+    // Compose instance matrices
     writeMatrices(mesh, buffers, count);
 
     // Write colors to instanceColor array
+    if (!mesh.instanceColor) return;
     const baseColor = colorTargetRef.current;
-    const colorArr = mesh.instanceColor?.array;
-    if (colorArr) {
-      for (let i = 0; i < count; i++) {
-        const i3 = i * 3;
-        const { r, g, b } = composeParticleColor(buffers.colorFactors[i], baseColor);
-        colorArr[i3] = r;
-        colorArr[i3 + 1] = g;
-        colorArr[i3 + 2] = b;
-      }
-      mesh.instanceColor!.needsUpdate = true;
+    const colorArr = mesh.instanceColor.array as Float32Array;
+    for (let i = 0; i < count; i++) {
+      const i3 = i * 3;
+      const { r, g, b } = composeParticleColor(cf[i]!, baseColor);
+      colorArr[i3] = r;
+      colorArr[i3 + 1] = g;
+      colorArr[i3 + 2] = b;
     }
+    mesh.instanceColor.needsUpdate = true;
   });
 
   return (
@@ -199,12 +203,14 @@ function writeMatrices(
 ): void {
   const matrixArray = mesh.instanceMatrix.array as Float32Array;
 
+  const pos = buffers.positions;
+  const sc = buffers.scales;
+
   for (let i = 0; i < count; i++) {
     const i3 = i * 3;
     const i16 = i * 16;
-    const s = buffers.scales[i];
+    const s = sc[i]!;
 
-    // Column-major 4x4: scale on diagonal, translation in last column
     matrixArray[i16] = s;
     matrixArray[i16 + 1] = 0;
     matrixArray[i16 + 2] = 0;
@@ -217,9 +223,9 @@ function writeMatrices(
     matrixArray[i16 + 9] = 0;
     matrixArray[i16 + 10] = s;
     matrixArray[i16 + 11] = 0;
-    matrixArray[i16 + 12] = buffers.positions[i3];
-    matrixArray[i16 + 13] = buffers.positions[i3 + 1];
-    matrixArray[i16 + 14] = buffers.positions[i3 + 2];
+    matrixArray[i16 + 12] = pos[i3]!;
+    matrixArray[i16 + 13] = pos[i3 + 1]!;
+    matrixArray[i16 + 14] = pos[i3 + 2]!;
     matrixArray[i16 + 15] = 1;
   }
 

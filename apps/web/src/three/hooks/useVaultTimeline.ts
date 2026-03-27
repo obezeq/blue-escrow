@@ -28,7 +28,7 @@ function resolveSection(
   for (const offset of [0, 1, -1]) {
     const idx = lastIndex + offset;
     if (idx >= 0 && idx < SCROLL_THRESHOLDS.length) {
-      const s = SCROLL_THRESHOLDS[idx];
+      const s = SCROLL_THRESHOLDS[idx]!;
       if (progress >= s.start && progress < s.end) {
         const sub = (progress - s.start) / (s.end - s.start);
         return { section: s, index: idx, subProgress: sub };
@@ -38,7 +38,7 @@ function resolveSection(
 
   // Fallback: linear scan
   for (let i = 0; i < SCROLL_THRESHOLDS.length; i++) {
-    const s = SCROLL_THRESHOLDS[i];
+    const s = SCROLL_THRESHOLDS[i]!;
     if (progress >= s.start && progress < s.end) {
       const sub = (progress - s.start) / (s.end - s.start);
       return { section: s, index: i, subProgress: sub };
@@ -46,7 +46,7 @@ function resolveSection(
   }
 
   // At 1.0 (end), use last section
-  const last = SCROLL_THRESHOLDS[SCROLL_THRESHOLDS.length - 1];
+  const last = SCROLL_THRESHOLDS[SCROLL_THRESHOLDS.length - 1]!;
   return {
     section: last,
     index: SCROLL_THRESHOLDS.length - 1,

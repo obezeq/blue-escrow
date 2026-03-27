@@ -2,16 +2,18 @@
 // Vault state machine handlers — Strategy Pattern
 // Each handler sets TARGET positions/colors. The shared lerp loop in
 // VaultParticles applies smooth interpolation every frame.
+//
+// NOTE: All typed array access in this file is within bounds-checked loops.
+// Non-null assertions (!) are safe because buffer sizes match particle count.
 // ---------------------------------------------------------------------------
 
 import type { IcosahedronGeometry } from 'three';
 import type { VaultState } from '@/providers/ThreeProvider';
-import { ANIMATION, COLORS, MIDDLEMAN_GAP_RATIO, VAULT_GEOMETRY } from '../config/vaultConfig';
+import { ANIMATION, VAULT_GEOMETRY } from '../config/vaultConfig';
 import type { FaceGroups } from './geometry';
 import {
   sampleIcosahedronSurface,
   sampleFaceGroup,
-  generateRandomPositions,
 } from './geometry';
 
 // ---------------------------------------------------------------------------
@@ -36,7 +38,6 @@ export interface StateHandlerContext {
   vaultSurfacePositions: Float32Array;
   faceGroups: FaceGroups;
   geometry: IcosahedronGeometry;
-  // Cached face-group target positions (computed on enter)
   buyerTargets: Float32Array;
   sellerTargets: Float32Array;
   middlemanTargets: Float32Array;
@@ -48,9 +49,7 @@ export interface StateHandlerContext {
 // ---------------------------------------------------------------------------
 
 export interface StateHandler {
-  /** Called once when transitioning INTO this state */
   enter(ctx: StateHandlerContext): void;
-  /** Called every frame while in this state */
   update(ctx: StateHandlerContext, subProgress: number, delta: number, elapsed: number): void;
 }
 
@@ -64,7 +63,7 @@ function getParticleRange(
 ): [number, number] {
   const buyerEnd = Math.floor(count * 0.33);
   const sellerEnd = Math.floor(count * 0.66);
-  const middlemanEnd = Math.floor(count * (1 - MIDDLEMAN_GAP_RATIO));
+  const middlemanEnd = Math.floor(count * 0.86);
 
   switch (group) {
     case 'buyer': return [0, buyerEnd];
@@ -81,16 +80,14 @@ function getParticleRange(
 const formingHandler: StateHandler = {
   enter(ctx) {
     const { buffers, count, vaultSurfacePositions } = ctx;
-    for (let i = 0; i < count * 3; i++) {
-      buffers.targetPositions[i] = vaultSurfacePositions[i];
-    }
+    buffers.targetPositions.set(vaultSurfacePositions.subarray(0, count * 3));
     for (let i = 0; i < count; i++) {
       buffers.targetScales[i] = 1;
-      buffers.targetColorFactors[i] = 0; // white (on blue bg)
+      buffers.targetColorFactors[i] = 0;
     }
   },
-  update(_ctx, _subProgress, _delta, _elapsed) {
-    // Lerp handled by shared loop — targets already set in enter
+  update() {
+    // Targets set in enter — lerp handled by shared loop
   },
 };
 
@@ -101,25 +98,25 @@ const formingHandler: StateHandler = {
 const completeHandler: StateHandler = {
   enter(ctx) {
     const { buffers, count, vaultSurfacePositions } = ctx;
-    for (let i = 0; i < count * 3; i++) {
-      buffers.targetPositions[i] = vaultSurfacePositions[i];
-    }
+    buffers.targetPositions.set(vaultSurfacePositions.subarray(0, count * 3));
     for (let i = 0; i < count; i++) {
       buffers.targetScales[i] = 1;
-      buffers.targetColorFactors[i] = 0; // white
+      buffers.targetColorFactors[i] = 0;
     }
   },
   update(ctx, _subProgress, _delta, elapsed) {
     const { buffers, count, vaultSurfacePositions } = ctx;
     const { driftAmplitude, driftFrequency } = ANIMATION;
+    const tp = buffers.targetPositions;
+    const ph = buffers.phases;
 
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
-      const phase = buffers.phases[i];
+      const phase = ph[i]!;
       const drift = Math.sin(elapsed * driftFrequency + phase) * driftAmplitude;
-      buffers.targetPositions[i3] = vaultSurfacePositions[i3] + drift;
-      buffers.targetPositions[i3 + 1] = vaultSurfacePositions[i3 + 1] + drift * 0.7;
-      buffers.targetPositions[i3 + 2] = vaultSurfacePositions[i3 + 2] + drift * 0.5;
+      tp[i3] = vaultSurfacePositions[i3]! + drift;
+      tp[i3 + 1] = vaultSurfacePositions[i3 + 1]! + drift * 0.7;
+      tp[i3 + 2] = vaultSurfacePositions[i3 + 2]! + drift * 0.5;
     }
   },
 };
@@ -131,80 +128,84 @@ const completeHandler: StateHandler = {
 const shatteringHandler: StateHandler = {
   enter(ctx) {
     const { buffers, count } = ctx;
+    const pos = buffers.positions;
+    const vel = buffers.velocities;
+    const sd = buffers.seeds;
+
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
-      // Velocity = outward from center
-      const px = buffers.positions[i3];
-      const py = buffers.positions[i3 + 1];
-      const pz = buffers.positions[i3 + 2];
+      const px = pos[i3]!;
+      const py = pos[i3 + 1]!;
+      const pz = pos[i3 + 2]!;
       const len = Math.sqrt(px * px + py * py + pz * pz) || 1;
-      const force = ANIMATION.shatterForce * (0.5 + buffers.seeds[i]);
-      buffers.velocities[i3] = (px / len) * force;
-      buffers.velocities[i3 + 1] = (py / len) * force;
-      buffers.velocities[i3 + 2] = (pz / len) * force;
+      const force = ANIMATION.shatterForce * (0.5 + sd[i]!);
+      vel[i3] = (px / len) * force;
+      vel[i3 + 1] = (py / len) * force;
+      vel[i3 + 2] = (pz / len) * force;
     }
   },
-  update(ctx, subProgress, delta, _elapsed) {
+  update(ctx, subProgress, delta) {
     const { buffers, count } = ctx;
     const damping = 0.96;
-
-    // Brief #FF4455 flash at start, then transition to blue
     const flashEnd = ANIMATION.shatterDangerFlashDuration;
+    const pos = buffers.positions;
+    const tp = buffers.targetPositions;
+    const vel = buffers.velocities;
+    const sd = buffers.seeds;
 
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
 
-      // Apply velocity with damping
-      buffers.velocities[i3] *= damping;
-      buffers.velocities[i3 + 1] *= damping;
-      buffers.velocities[i3 + 2] *= damping;
+      vel[i3] = vel[i3]! * damping;
+      vel[i3 + 1] = vel[i3 + 1]! * damping;
+      vel[i3 + 2] = vel[i3 + 2]! * damping;
 
-      buffers.targetPositions[i3] = buffers.positions[i3] + buffers.velocities[i3] * delta;
-      buffers.targetPositions[i3 + 1] = buffers.positions[i3 + 1] + buffers.velocities[i3 + 1] * delta;
-      buffers.targetPositions[i3 + 2] = buffers.positions[i3 + 2] + buffers.velocities[i3 + 2] * delta;
+      tp[i3] = pos[i3]! + vel[i3]! * delta;
+      tp[i3 + 1] = pos[i3 + 1]! + vel[i3 + 1]! * delta;
+      tp[i3 + 2] = pos[i3 + 2]! + vel[i3 + 2]! * delta;
 
-      // Color: flash red early, then transition white → blue
       if (subProgress < flashEnd) {
-        // -1 signals "danger" color to the color composer
         buffers.targetColorFactors[i] = -1;
       } else {
         buffers.targetColorFactors[i] = (subProgress - flashEnd) / (1 - flashEnd);
       }
 
-      buffers.targetScales[i] = 0.8 + buffers.seeds[i] * 0.4;
+      buffers.targetScales[i] = 0.8 + sd[i]! * 0.4;
     }
   },
 };
 
 // ---------------------------------------------------------------------------
-// SCATTERED: brownian chaos, particles on white bg (blue color)
+// SCATTERED: brownian chaos, blue particles on white bg
 // ---------------------------------------------------------------------------
 
 const scatteredHandler: StateHandler = {
   enter(ctx) {
     const { buffers, count } = ctx;
+    const sd = buffers.seeds;
     for (let i = 0; i < count; i++) {
-      buffers.targetColorFactors[i] = 1; // blue (on white bg)
-      buffers.targetScales[i] = 0.6 + buffers.seeds[i] * 0.4;
+      buffers.targetColorFactors[i] = 1;
+      buffers.targetScales[i] = 0.6 + sd[i]! * 0.4;
     }
   },
   update(ctx, _subProgress, delta, elapsed) {
     const { buffers, count } = ctx;
     const { brownianForce } = ANIMATION;
+    const tp = buffers.targetPositions;
+    const ph = buffers.phases;
 
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
-      const phase = buffers.phases[i];
-      buffers.targetPositions[i3] += Math.sin(elapsed * 1.3 + phase) * brownianForce * delta;
-      buffers.targetPositions[i3 + 1] += Math.cos(elapsed * 0.9 + phase * 2) * brownianForce * delta;
-      buffers.targetPositions[i3 + 2] += Math.sin(elapsed * 1.1 + phase * 3) * brownianForce * delta;
+      const phase = ph[i]!;
+      tp[i3] = tp[i3]! + Math.sin(elapsed * 1.3 + phase) * brownianForce * delta;
+      tp[i3 + 1] = tp[i3 + 1]! + Math.cos(elapsed * 0.9 + phase * 2) * brownianForce * delta;
+      tp[i3 + 2] = tp[i3 + 2]! + Math.sin(elapsed * 1.1 + phase * 3) * brownianForce * delta;
     }
   },
 };
 
 // ---------------------------------------------------------------------------
 // REBUILDING: particles converge to assigned face group positions
-// Three sub-phases: buyer, seller, middleman (with gap)
 // ---------------------------------------------------------------------------
 
 function createRebuildingHandler(
@@ -216,73 +217,64 @@ function createRebuildingHandler(
       const [start, end] = getParticleRange(group, count);
       const groupCount = end - start;
 
-      // Compute target positions for this group's particles
       const targets = sampleFaceGroup(faceGroups[group], geometry, groupCount);
+      if (group === 'buyer') ctx.buyerTargets = targets;
+      else if (group === 'seller') ctx.sellerTargets = targets;
+      else ctx.middlemanTargets = targets;
 
-      if (group === 'buyer') {
-        ctx.buyerTargets = targets;
-      } else if (group === 'seller') {
-        ctx.sellerTargets = targets;
-      } else {
-        ctx.middlemanTargets = targets;
-      }
-
-      // Set targets for this group's particles
+      const tp = buffers.targetPositions;
       for (let i = 0; i < groupCount; i++) {
         const pi = start + i;
         const i3 = pi * 3;
         const t3 = i * 3;
-        buffers.targetPositions[i3] = targets[t3];
-        buffers.targetPositions[i3 + 1] = targets[t3 + 1];
-        buffers.targetPositions[i3 + 2] = targets[t3 + 2];
+        tp[i3] = targets[t3]!;
+        tp[i3 + 1] = targets[t3 + 1]!;
+        tp[i3 + 2] = targets[t3 + 2]!;
         buffers.targetScales[pi] = 1;
       }
 
-      // Color factor by group
-      const colorMap = { buyer: 1, seller: 1, middleman: 1 };
       for (let i = start; i < end; i++) {
-        buffers.targetColorFactors[i] = colorMap[group];
+        buffers.targetColorFactors[i] = 1;
       }
 
-      // Handle middleman gap particles — hover near but can't join
+      // Middleman gap particles hover near but can't join
       if (group === 'middleman') {
         const [gapStart, gapEnd] = getParticleRange('gap', count);
         const gapCount = gapEnd - gapStart;
         const gapTargets = sampleFaceGroup(faceGroups.middleman, geometry, gapCount);
-
         ctx.gapHoverTargets = gapTargets;
 
         for (let i = 0; i < gapCount; i++) {
           const pi = gapStart + i;
           const i3 = pi * 3;
           const t3 = i * 3;
-          // Offset outward from the surface — they hover nearby but can't land
-          const ox = gapTargets[t3];
-          const oy = gapTargets[t3 + 1];
-          const oz = gapTargets[t3 + 2];
+          const ox = gapTargets[t3]!;
+          const oy = gapTargets[t3 + 1]!;
+          const oz = gapTargets[t3 + 2]!;
           const len = Math.sqrt(ox * ox + oy * oy + oz * oz) || 1;
           const hoverDist = 0.3 + Math.random() * 0.2;
-          buffers.targetPositions[i3] = ox + (ox / len) * hoverDist;
-          buffers.targetPositions[i3 + 1] = oy + (oy / len) * hoverDist;
-          buffers.targetPositions[i3 + 2] = oz + (oz / len) * hoverDist;
-          buffers.targetScales[pi] = 0.5 + buffers.seeds[pi] * 0.3;
-          buffers.targetColorFactors[pi] = 1; // blue (middleman color handled in color composer)
+          tp[i3] = ox + (ox / len) * hoverDist;
+          tp[i3 + 1] = oy + (oy / len) * hoverDist;
+          tp[i3 + 2] = oz + (oz / len) * hoverDist;
+          buffers.targetScales[pi] = 0.5 + buffers.seeds[pi]! * 0.3;
+          buffers.targetColorFactors[pi] = 1;
         }
       }
     },
     update(ctx, _subProgress, _delta, elapsed) {
-      // Gap particles drift slightly while hovering
       if (group === 'middleman') {
         const { buffers, count } = ctx;
         const [gapStart, gapEnd] = getParticleRange('gap', count);
         const { driftAmplitude } = ANIMATION;
+        const tp = buffers.targetPositions;
+        const ph = buffers.phases;
 
         for (let i = gapStart; i < gapEnd; i++) {
           const i3 = i * 3;
-          const phase = buffers.phases[i];
+          const phase = ph[i]!;
           const drift = Math.sin(elapsed * 0.8 + phase) * driftAmplitude * 2;
-          buffers.targetPositions[i3] += drift * 0.01;
-          buffers.targetPositions[i3 + 1] += drift * 0.01;
+          tp[i3] = tp[i3]! + drift * 0.01;
+          tp[i3 + 1] = tp[i3 + 1]! + drift * 0.01;
         }
       }
     },
@@ -302,19 +294,21 @@ const rebuiltHandler: StateHandler = {
     const { buffers, count } = ctx;
     for (let i = 0; i < count; i++) {
       buffers.targetScales[i] = 1;
-      buffers.targetColorFactors[i] = 1; // blue (on white bg)
+      buffers.targetColorFactors[i] = 1;
     }
   },
   update(ctx, _subProgress, _delta, elapsed) {
     const { buffers, count } = ctx;
     const { driftAmplitude, driftFrequency } = ANIMATION;
+    const tp = buffers.targetPositions;
+    const ph = buffers.phases;
 
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
-      const phase = buffers.phases[i];
+      const phase = ph[i]!;
       const drift = Math.sin(elapsed * driftFrequency * 0.5 + phase) * driftAmplitude * 0.5;
-      buffers.targetPositions[i3] += drift * 0.1;
-      buffers.targetPositions[i3 + 1] += drift * 0.1;
+      tp[i3] = tp[i3]! + drift * 0.1;
+      tp[i3 + 1] = tp[i3 + 1]! + drift * 0.1;
     }
   },
 };
@@ -331,22 +325,17 @@ const morphingHandler: StateHandler = {
       VAULT_GEOMETRY.radius * 1.1,
       VAULT_GEOMETRY.detail,
     );
-    for (let i = 0; i < count * 3; i++) {
-      buffers.targetPositions[i] = morphTarget[i];
-    }
+    buffers.targetPositions.set(morphTarget.subarray(0, count * 3));
     for (let i = 0; i < count; i++) {
       buffers.targetScales[i] = 1;
     }
   },
   update(ctx, subProgress, _delta, elapsed) {
     const { buffers, count } = ctx;
-    // Color transitions from blue (1) to white (0) over the morph
+    const ph = buffers.phases;
     for (let i = 0; i < count; i++) {
       buffers.targetColorFactors[i] = 1 - subProgress;
-
-      // Gentle pulsing during morph
-      const phase = buffers.phases[i];
-      buffers.targetScales[i] = 0.9 + Math.sin(elapsed * 2 + phase) * 0.1;
+      buffers.targetScales[i] = 0.9 + Math.sin(elapsed * 2 + ph[i]!) * 0.1;
     }
   },
 };
@@ -358,37 +347,35 @@ const morphingHandler: StateHandler = {
 const peacefulHandler: StateHandler = {
   enter(ctx) {
     const { buffers, count, vaultSurfacePositions } = ctx;
-    for (let i = 0; i < count * 3; i++) {
-      buffers.targetPositions[i] = vaultSurfacePositions[i];
-    }
+    buffers.targetPositions.set(vaultSurfacePositions.subarray(0, count * 3));
     for (let i = 0; i < count; i++) {
       buffers.targetScales[i] = 1;
-      buffers.targetColorFactors[i] = 0; // white (on blue bg)
+      buffers.targetColorFactors[i] = 0;
     }
   },
   update(ctx, _subProgress, _delta, elapsed) {
     const { buffers, count, vaultSurfacePositions } = ctx;
     const { peacefulRotationSpeed, driftAmplitude } = ANIMATION;
+    const tp = buffers.targetPositions;
+    const ph = buffers.phases;
 
     const cos = Math.cos(elapsed * peacefulRotationSpeed);
     const sin = Math.sin(elapsed * peacefulRotationSpeed);
 
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
-      const phase = buffers.phases[i];
-      const sx = vaultSurfacePositions[i3];
-      const sy = vaultSurfacePositions[i3 + 1];
-      const sz = vaultSurfacePositions[i3 + 2];
+      const phase = ph[i]!;
+      const sx = vaultSurfacePositions[i3]!;
+      const sy = vaultSurfacePositions[i3 + 1]!;
+      const sz = vaultSurfacePositions[i3 + 2]!;
 
-      // Rotate around Y axis
       const rx = sx * cos - sz * sin;
       const rz = sx * sin + sz * cos;
 
-      // Add gentle orbital drift
       const drift = Math.sin(elapsed * 0.3 + phase) * driftAmplitude;
-      buffers.targetPositions[i3] = rx + drift;
-      buffers.targetPositions[i3 + 1] = sy + drift * 0.5;
-      buffers.targetPositions[i3 + 2] = rz + drift * 0.3;
+      tp[i3] = rx + drift;
+      tp[i3 + 1] = sy + drift * 0.5;
+      tp[i3 + 2] = rz + drift * 0.3;
     }
   },
 };

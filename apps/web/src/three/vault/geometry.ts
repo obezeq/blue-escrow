@@ -131,7 +131,7 @@ export function sampleFaceGroup(
   const positions = new Float32Array(count * 3);
 
   for (let i = 0; i < count; i++) {
-    const faceIdx = faceIndices[Math.floor(Math.random() * faceIndices.length)];
+    const faceIdx = faceIndices[Math.floor(Math.random() * faceIndices.length)]!;
     sampleFace(posAttr, index, faceIdx, positions, i * 3);
   }
 

@@ -93,7 +93,8 @@ export function detectPerformanceTier(): PerformanceTier {
 
 function downgradeTier(current: PerformanceTier): PerformanceTier {
   const idx = TIER_ORDER.indexOf(current);
-  return idx < TIER_ORDER.length - 1 ? TIER_ORDER[idx + 1] : current;
+  const next = TIER_ORDER[idx + 1];
+  return next ?? current;
 }
 
 export function usePerformanceTier() {

@@ -48,7 +48,7 @@ export function OrbitalRings() {
 
     group.children.forEach((child, i) => {
       // Rotate each ring
-      child.rotation.z = elapsed * ROTATION_SPEEDS[i];
+      child.rotation.z = elapsed * (ROTATION_SPEEDS[i] ?? 0.1);
 
       // Update material opacity
       const mesh = child as Mesh | LineSegmentsType;

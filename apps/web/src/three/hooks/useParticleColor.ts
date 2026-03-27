@@ -34,9 +34,9 @@ export function useParticleColor(): React.MutableRefObject<ParticleColorTarget> 
     const progress = scrollRef.current;
 
     // Start with the base color for the current bg
-    let targetR = COLORS.particleOnBlue.r;
-    let targetG = COLORS.particleOnBlue.g;
-    let targetB = COLORS.particleOnBlue.b;
+    let targetR: number = COLORS.particleOnBlue.r;
+    let targetG: number = COLORS.particleOnBlue.g;
+    let targetB: number = COLORS.particleOnBlue.b;
 
     // Check each transition boundary
     for (const transition of COLOR_TRANSITIONS) {
