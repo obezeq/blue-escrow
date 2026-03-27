@@ -13,7 +13,7 @@ const nextConfig = {
     '@blue-escrow/contract-abis',
   ],
   sassOptions: {
-    silenceDeprecations: ['legacy-js-api'],
+    silenceDeprecations: ['legacy-js-api', 'import'],
   },
 };
 
