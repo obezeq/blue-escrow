@@ -1,1 +1,88 @@
-// TODO: Design tokens ($colors, $spacing, $typography, $breakpoints)
+// ============================================================================
+// SCSS VARIABLES — Only for breakpoints (CSS vars cannot be used in @media)
+// ============================================================================
+
+$bp-mobile: 375px;
+$bp-tablet: 768px;
+$bp-desktop: 1024px;
+$bp-wide: 1440px;
+$bp-ultra: 1920px;
+
+// ============================================================================
+// CSS CUSTOM PROPERTIES — The single source of truth for all design tokens
+// ============================================================================
+
+:root {
+  // --- Brand Colors (from Figma tokens) ---
+  --blue-primary: #0066ff;
+  --blue-vivid: #0091ff;
+  --blue-hover: #0077ff;
+
+  // --- Neutrals ---
+  --white: #ffffff;
+  --black: #111111;
+
+  // --- Gray Palette ---
+  --gray-text: #999999;
+  --gray-light: #f5f7fa;
+  --gray-border: #e8ecf0;
+
+  // --- Danger (ONLY for "$2.1B" stat — nowhere else) ---
+  --danger-red: #ff4455;
+
+  // --- Role Colors (no green, no yellow, no amber) ---
+  --role-client: #0066ff;
+  --role-seller: #33aaff;
+  --role-middleman: #999999;
+
+  // --- Spacing Scale (power-of-2, in rem) ---
+  --space-4: 0.25rem;
+  --space-8: 0.5rem;
+  --space-12: 0.75rem;
+  --space-16: 1rem;
+  --space-24: 1.5rem;
+  --space-32: 2rem;
+  --space-48: 3rem;
+  --space-64: 4rem;
+  --space-96: 6rem;
+  --space-128: 8rem;
+
+  // --- Border Radius ---
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  // --- Transitions ---
+  --transition-fast: 150ms ease;
+  --transition-base: 300ms ease;
+  --transition-slow: 500ms ease;
+  --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  // --- Z-Index Scale ---
+  --z-base: 0;
+  --z-above: 1;
+  --z-canvas: 5;
+  --z-header: 100;
+  --z-overlay: 200;
+  --z-modal: 300;
+  --z-toast: 400;
+  --z-preloader: 500;
+
+  // --- Layout ---
+  --container-max: 1400px;
+  --container-padding: var(--space-24);
+  --header-height: 4.5rem;
+
+  // --- Section Contextual Vars (defaults to white/light) ---
+  --section-bg: var(--white);
+  --section-text: var(--black);
+  --section-heading: var(--blue-primary);
+  --section-muted: var(--gray-text);
+  --section-card-bg: var(--gray-light);
+  --section-card-border: var(--gray-border);
+  --section-code-bg: #eef4ff;
+  --section-particle: var(--blue-primary);
+}
