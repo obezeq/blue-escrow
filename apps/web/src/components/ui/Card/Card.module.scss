@@ -1,0 +1,14 @@
+@use '../../../styles/settings/variables' as *;
+@use '../../../styles/tools/mixins' as *;
+
+.card {
+  padding: var(--space-24);
+  border-radius: var(--radius-lg);
+  background: var(--section-card-bg);
+  border: 1px solid var(--section-card-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 3px solid var(--card-accent, transparent);
+
+  @include hover-lift;
+}
