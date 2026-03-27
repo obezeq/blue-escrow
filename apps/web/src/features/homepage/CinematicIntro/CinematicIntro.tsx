@@ -140,12 +140,36 @@ export function CinematicIntro() {
             },
           );
         }
+
+        // Hide fixed overlays when section scrolls out of view
+        ScrollTrigger.create({
+          trigger: sectionRef.current!,
+          start: 'bottom 20%',
+          onEnter: () => {
+            if (brandRef.current) brandRef.current.style.opacity = '0';
+          },
+          onLeaveBack: () => {
+            if (brandRef.current) brandRef.current.style.opacity = '1';
+          },
+        });
       });
 
       mm.add(MATCH_MEDIA.reducedMotion, () => {
         if (overlayRef.current) overlayRef.current.style.display = 'none';
         if (posterRef.current) posterRef.current.style.display = 'none';
         if (brandRef.current) brandRef.current.style.opacity = '1';
+
+        // Hide brand text when section leaves viewport
+        ScrollTrigger.create({
+          trigger: sectionRef.current!,
+          start: 'bottom 20%',
+          onEnter: () => {
+            if (brandRef.current) brandRef.current.style.opacity = '0';
+          },
+          onLeaveBack: () => {
+            if (brandRef.current) brandRef.current.style.opacity = '1';
+          },
+        });
       });
     },
     { dependencies: [isMobile] },
