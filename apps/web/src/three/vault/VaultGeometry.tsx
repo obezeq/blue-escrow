@@ -13,7 +13,11 @@ import { VAULT_GEOMETRY, COLORS } from '../config/vaultConfig';
 import { useVaultTimeline } from '../hooks/useVaultTimeline';
 import { useParticleColor } from '../hooks/useParticleColor';
 
-export function VaultGeometry() {
+interface VaultGeometryProps {
+  reducedMotion?: boolean;
+}
+
+export function VaultGeometry({ reducedMotion = false }: VaultGeometryProps) {
   const lineRef = useRef<LineSegmentsType>(null);
   const { stateRef } = useVaultTimeline();
   const colorRef = useParticleColor();
@@ -32,13 +36,22 @@ export function VaultGeometry() {
     const line = lineRef.current;
     if (!line) return;
 
+    const mat = line.material as LineBasicMaterial;
+
+    if (reducedMotion) {
+      mat.opacity = 0.15;
+      mat.visible = true;
+      const { r, g, b } = colorRef.current;
+      mat.color.setRGB(r, g, b);
+      return;
+    }
+
     const currentState = stateRef.current;
 
     // Hidden during scattered state
     const isScattered = currentState === 'scattered' || currentState === 'shattering';
     const targetOpacity = isScattered ? 0 : 0.15 + Math.sin(state.clock.elapsedTime * 0.8) * 0.05;
 
-    const mat = line.material as LineBasicMaterial;
     mat.opacity += (targetOpacity - mat.opacity) * 0.05;
     mat.visible = mat.opacity > 0.01;
 
