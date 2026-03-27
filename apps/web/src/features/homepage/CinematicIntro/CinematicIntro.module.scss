@@ -1,0 +1,58 @@
+@use '@/styles/settings/variables' as *;
+@use '@/styles/settings/typography' as *;
+@use '@/styles/tools/mixins' as *;
+
+// Section — pinned by ScrollTrigger, provides blue bg behind Three.js
+.intro {
+  position: relative;
+  height: 100vh;
+  margin-top: calc(-1 * var(--header-height));
+  overflow: hidden;
+}
+
+.intro__poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+// Fixed overlay for scroll-driven video canvas
+.intro__videoOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-canvas) + 5);
+  pointer-events: none;
+}
+
+.intro__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+// Fixed overlay for brand text reveal
+.intro__brand {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-canvas) + 3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+
+  :global(html:not(.js-loaded)) & {
+    opacity: 1;
+  }
+}
+
+.intro__brandText {
+  @include type-display;
+
+  color: var(--white);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-align: center;
+}
