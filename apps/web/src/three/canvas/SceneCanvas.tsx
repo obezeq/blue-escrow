@@ -6,9 +6,10 @@
 // Contains the entire 3D scene: vault particles, geometry, rings, bloom
 // ---------------------------------------------------------------------------
 
-import { useEffect, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { useEffect, useRef, useState } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { PerformanceMonitor } from '@react-three/drei';
+import type { Group } from 'three';
 import { usePerformanceTier } from '../config/performanceTiers';
 import { CAMERA } from '../config/vaultConfig';
 import { SceneEnvironment } from './SceneEnvironment';
@@ -29,19 +30,21 @@ function VaultScene({
   reducedMotion: boolean;
 }) {
   const parallaxRef = useMouseParallax();
+  const groupRef = useRef<Group>(null);
+
+  useFrame(() => {
+    const group = groupRef.current;
+    if (!group) return;
+    group.rotation.x = parallaxRef.current.x;
+    group.rotation.y = parallaxRef.current.y;
+  });
 
   return (
-    <group
-      rotation={[
-        parallaxRef.current.x,
-        parallaxRef.current.y,
-        0,
-      ]}
-    >
+    <group ref={groupRef}>
       <SceneEnvironment />
       <VaultParticles count={count} reducedMotion={reducedMotion} />
-      <VaultGeometry />
-      <OrbitalRings />
+      <VaultGeometry reducedMotion={reducedMotion} />
+      <OrbitalRings reducedMotion={reducedMotion} />
       <BloomEffect enabled={bloomEnabled} />
     </group>
   );
@@ -60,7 +63,7 @@ export default function SceneCanvas() {
   }, []);
 
   return (
-    <div className={styles.canvas}>
+    <div className={styles.canvas} aria-hidden="true">
       <Canvas
         gl={{
           alpha: true,
