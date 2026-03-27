@@ -58,6 +58,10 @@
   &:hover {
     color: var(--blue-primary);
   }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
 }
 
 .footer__bottom {
