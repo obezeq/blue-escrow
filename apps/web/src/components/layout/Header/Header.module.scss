@@ -35,6 +35,10 @@
   color: var(--section-heading);
   text-decoration: none;
   letter-spacing: -0.02em;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
 }
 
 // --- Desktop links ---
@@ -75,6 +79,10 @@
   &:hover {
     opacity: 0.7;
   }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
 }
 
 // --- Hamburger (mobile only) ---
@@ -87,6 +95,10 @@
   background: none;
   border: none;
   cursor: pointer;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
 
   @include responsive-max($bp-tablet) {
     display: flex;
