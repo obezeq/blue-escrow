@@ -27,7 +27,11 @@ const RING_TILTS = [
 
 const ROTATION_SPEEDS = [0.15, -0.12, 0.08];
 
-export function OrbitalRings() {
+interface OrbitalRingsProps {
+  reducedMotion?: boolean;
+}
+
+export function OrbitalRings({ reducedMotion = false }: OrbitalRingsProps) {
   const groupRef = useRef<Group>(null);
   const opacityRef = useRef(0);
   const { stateRef, bgRef } = useVaultTimeline();
@@ -43,12 +47,15 @@ export function OrbitalRings() {
     group.visible = opacityRef.current > 0.01;
     if (!group.visible) return;
 
-    const elapsed = state.clock.elapsedTime;
     const onBlue = bgRef.current === 'blue';
 
-    group.children.forEach((child, i) => {
-      // Rotate each ring
-      child.rotation.z = elapsed * (ROTATION_SPEEDS[i] ?? 0.1);
+    for (let i = 0; i < group.children.length; i++) {
+      const child = group.children[i]!;
+
+      // Rotate each ring (skip when reduced motion)
+      if (!reducedMotion) {
+        child.rotation.z = state.clock.elapsedTime * (ROTATION_SPEEDS[i] ?? 0.1);
+      }
 
       // Update material opacity
       const mesh = child as Mesh | LineSegmentsType;
@@ -60,16 +67,14 @@ export function OrbitalRings() {
       // Update color based on section bg
       if (mat.color && i < 2) {
         if (onBlue) {
-          // White-ish on blue bg
           const brightness = i === 0 ? 1 : 0.85;
           mat.color.setRGB(brightness, brightness, brightness);
         } else {
-          // Role color on white bg
           const color = i === 0 ? COLORS.buyer : COLORS.seller;
           mat.color.setRGB(color.r, color.g, color.b);
         }
       }
-    });
+    }
   });
 
   return (
