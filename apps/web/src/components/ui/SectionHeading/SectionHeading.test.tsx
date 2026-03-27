@@ -17,6 +17,6 @@ describe('SectionHeading', () => {
     const { container } = render(
       <SectionHeading className="custom">Heading</SectionHeading>,
     );
-    expect(container.firstChild?.className).toContain('custom');
+    expect((container.firstChild as HTMLElement).className).toContain('custom');
   });
 });

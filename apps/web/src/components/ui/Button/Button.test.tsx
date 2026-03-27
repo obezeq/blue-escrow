@@ -25,7 +25,7 @@ describe('Button', () => {
     const { container } = render(
       <Button className="custom">Styled</Button>,
     );
-    expect(container.firstChild?.className).toContain('custom');
+    expect((container.firstChild as HTMLElement).className).toContain('custom');
   });
 
   it('renders children content', () => {

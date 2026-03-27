@@ -11,6 +11,6 @@ describe('CustomCursor', () => {
 
   it('renders with aria-hidden', () => {
     const { container } = render(<CustomCursor />);
-    expect(container.firstChild?.getAttribute('aria-hidden')).toBe('true');
+    expect((container.firstChild as HTMLElement).getAttribute('aria-hidden')).toBe('true');
   });
 });

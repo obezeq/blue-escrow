@@ -7,7 +7,7 @@ describe('SectionTransition', () => {
     const { container } = render(
       <SectionTransition from="blue" to="white" />,
     );
-    expect(container.firstChild?.getAttribute('aria-hidden')).toBe('true');
+    expect((container.firstChild as HTMLElement).getAttribute('aria-hidden')).toBe('true');
   });
 
   it('applies default height of 200px', () => {

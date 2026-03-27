@@ -1,19 +1,27 @@
 'use client';
 
-import { useRef, type MouseEvent } from 'react';
+import { useRef, type MouseEvent, type ReactNode } from 'react';
 import { gsap, useGSAP } from '@/animations/config/gsap-register';
 import { MATCH_MEDIA } from '@/animations/config/defaults';
-import { Button, type ButtonProps } from '../Button';
+import { Button } from '../Button';
+import type { ButtonProps } from '../Button';
 import styles from './MagneticButton.module.scss';
 
-interface MagneticButtonProps extends ButtonProps {
+interface MagneticButtonOwnProps {
   strength?: number;
+  variant?: 'primary' | 'secondary' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  href?: string;
+  disabled?: boolean;
+  className?: string;
+  children: ReactNode;
 }
 
 export function MagneticButton({
   strength = 8,
+  children,
   ...buttonProps
-}: MagneticButtonProps) {
+}: MagneticButtonOwnProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const isDesktop = useRef(false);
 
@@ -80,7 +88,7 @@ export function MagneticButton({
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      <Button {...buttonProps} />
+      <Button {...(buttonProps as ButtonProps)}>{children}</Button>
     </div>
   );
 }
