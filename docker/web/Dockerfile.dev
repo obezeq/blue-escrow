@@ -1,0 +1,32 @@
+FROM node:24-alpine
+RUN corepack enable && corepack prepare pnpm@10 --activate
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /app
+
+# Layer 1: manifests (cache-friendly)
+COPY .npmrc pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/types/package.json ./packages/types/
+COPY packages/config/package.json ./packages/config/
+COPY packages/contract-abis/package.json ./packages/contract-abis/
+COPY packages/tsconfig/package.json ./packages/tsconfig/
+COPY packages/eslint-config/package.json ./packages/eslint-config/
+
+# Layer 2: install (re-runs only when manifests/lockfile change)
+RUN pnpm install --frozen-lockfile
+
+# Layer 3: workspace package source (transpilePackages needs these)
+COPY packages/types/src ./packages/types/src
+COPY packages/config/src ./packages/config/src
+COPY packages/contract-abis/src ./packages/contract-abis/src
+COPY packages/tsconfig/base.json packages/tsconfig/nextjs.json packages/tsconfig/node.json ./packages/tsconfig/
+COPY packages/eslint-config/base.js ./packages/eslint-config/
+
+# Layer 4: app config files (not source — source is volume-mounted)
+COPY apps/web/next.config.js apps/web/tsconfig.json ./apps/web/
+
+ENV NODE_ENV=development
+EXPOSE 3000
+
+CMD ["pnpm", "--filter", "@blue-escrow/web", "dev"]
