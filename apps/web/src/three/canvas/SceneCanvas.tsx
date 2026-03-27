@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { PerformanceMonitor } from '@react-three/drei';
 import type { Group } from 'three';
+import { useThreeContext } from '@/providers/ThreeProvider';
 import { usePerformanceTier } from '../config/performanceTiers';
 import { CAMERA } from '../config/vaultConfig';
 import { SceneEnvironment } from './SceneEnvironment';
@@ -19,6 +20,16 @@ import { OrbitalRings } from '../vault/OrbitalRing';
 import { BloomEffect } from '../effects/BloomEffect';
 import { useMouseParallax } from '../hooks/useMouseParallax';
 import styles from './SceneCanvas.module.scss';
+
+/** Signals ThreeProvider when the R3F WebGL context is ready. */
+function ReadySignal() {
+  const { setIsThreeReady } = useThreeContext();
+  useEffect(() => {
+    setIsThreeReady(true);
+    return () => setIsThreeReady(false);
+  }, [setIsThreeReady]);
+  return null;
+}
 
 function VaultScene({
   count,
@@ -90,6 +101,7 @@ export default function SceneCanvas() {
           onDecline={onDowngrade}
           onFallback={onDowngrade}
         >
+          <ReadySignal />
           <VaultScene
             count={config.particleCount}
             bloomEnabled={config.bloomEnabled}
