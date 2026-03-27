@@ -1,0 +1,44 @@
+@use '../../../styles/settings/variables' as *;
+
+.cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9999;
+
+  @media (pointer: coarse) {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    display: none;
+  }
+}
+
+.cursor__dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--blue-primary);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  will-change: transform;
+}
+
+.cursor__circle {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--blue-vivid);
+  background: transparent;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  will-change: transform;
+}
