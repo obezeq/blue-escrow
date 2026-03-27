@@ -1,6 +1,4 @@
-import type { TweenVars } from 'gsap';
-
-export const staggerReveal: TweenVars = {
+export const staggerReveal = {
   y: 60,
   opacity: 0,
   stagger: 0.15,

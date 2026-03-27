@@ -31,8 +31,10 @@ function formatNumber(
   const fixed = value.toFixed(decimals);
   if (!separator) return fixed;
 
-  const [intPart, decPart] = fixed.split('.');
-  const withSep = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, separator);
+  const parts = fixed.split('.');
+  const intPart = parts[0];
+  const decPart = parts[1];
+  const withSep = intPart!.replace(/\B(?=(\d{3})+(?!\d))/g, separator);
   return decPart ? `${withSep}.${decPart}` : withSep;
 }
 

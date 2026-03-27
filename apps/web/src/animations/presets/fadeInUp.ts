@@ -1,6 +1,4 @@
-import type { TweenVars } from 'gsap';
-
-export const fadeInUp: TweenVars = {
+export const fadeInUp = {
   y: 60,
   opacity: 0,
   duration: 0.8,
