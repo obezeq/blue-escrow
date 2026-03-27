@@ -1,0 +1,124 @@
+@use '../../../styles/settings/variables' as *;
+@use '../../../styles/settings/typography' as *;
+@use '../../../styles/tools/mixins' as *;
+
+// ============================================================================
+// HEADER — Adaptive color via IO-based class swap
+// ============================================================================
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--header-height);
+  z-index: var(--z-header);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding-inline: var(--container-padding);
+  transition: background 250ms ease;
+}
+
+.header__nav {
+  @include flex-between;
+
+  max-width: var(--container-max);
+  margin-inline: auto;
+  height: 100%;
+}
+
+// --- Logo ---
+
+.header__logo {
+  @include type-mono-nav;
+
+  color: var(--section-heading);
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+// --- Desktop links ---
+
+.header__links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-32);
+
+  @include responsive-max($bp-tablet) {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: var(--header-height);
+    left: 0;
+    width: 100%;
+    padding: var(--space-24);
+    gap: var(--space-16);
+    background: var(--section-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}
+
+.header__links--open {
+  @include responsive-max($bp-tablet) {
+    display: flex;
+  }
+}
+
+.header__link {
+  @include type-body-sm;
+
+  color: var(--section-text);
+  text-decoration: none;
+  transition: opacity 250ms ease;
+
+  &:hover {
+    opacity: 0.7;
+  }
+}
+
+// --- Hamburger (mobile only) ---
+
+.header__hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  padding: var(--space-8);
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  @include responsive-max($bp-tablet) {
+    display: flex;
+  }
+}
+
+.header__hamburgerLine {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--section-heading);
+  border-radius: 1px;
+  transition: background 250ms ease;
+}
+
+// ============================================================================
+// THEME VARIANTS — set contextual vars so child Button auto-adapts
+// Color swap is INSTANT (no transition on color properties)
+// ============================================================================
+
+.header--on-blue {
+  --section-bg: var(--blue-primary);
+  --section-heading: var(--white);
+  --section-text: var(--white);
+
+  background: transparent;
+}
+
+.header--on-white {
+  --section-bg: var(--white);
+  --section-heading: var(--blue-primary);
+  --section-text: var(--black);
+
+  background: rgba(255, 255, 255, 0.9);
+}
