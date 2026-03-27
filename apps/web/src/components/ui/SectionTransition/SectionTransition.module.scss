@@ -1,0 +1,22 @@
+@use '../../../styles/settings/variables' as *;
+
+.transition {
+  position: relative;
+  width: 100%;
+}
+
+.transition--blue-to-white {
+  background: linear-gradient(to bottom, var(--blue-primary), var(--white));
+}
+
+.transition--white-to-blue {
+  background: linear-gradient(to bottom, var(--white), var(--blue-primary));
+}
+
+.transition--blue-to-blue {
+  background: var(--blue-primary);
+}
+
+.transition--white-to-white {
+  background: var(--white);
+}
