@@ -64,7 +64,7 @@ export function CinematicIntro() {
           ScrollTrigger.create({
             trigger: sectionRef.current!,
             start: 'top top',
-            end: '+=300%',
+            end: '+=500%',
             pin: true,
             scrub: 0,
             onUpdate: (self) => {
@@ -81,7 +81,7 @@ export function CinematicIntro() {
           ScrollTrigger.create({
             trigger: sectionRef.current!,
             start: 'top top',
-            end: '+=200%',
+            end: '+=350%',
             pin: true,
             scrub: 0,
             onUpdate: (self) => {
