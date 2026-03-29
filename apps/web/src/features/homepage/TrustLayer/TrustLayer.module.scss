@@ -1,0 +1,104 @@
+@use '../../../styles/settings/variables' as *;
+@use '../../../styles/settings/typography' as *;
+@use '../../../styles/tools/mixins' as *;
+
+// ============================================================================
+// TRUST LAYER — Solidity code (left) + stats (right) on WHITE bg
+// ============================================================================
+
+.trust {
+  display: flex;
+  align-items: center;
+}
+
+.trust__grid {
+  gap: var(--space-64);
+  align-items: center;
+
+  @include responsive-max($bp-tablet) {
+    gap: var(--space-32);
+  }
+}
+
+// --- Code block ---
+
+.trust__pre {
+  background: var(--section-code-bg);
+  border: 1px solid var(--section-card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-32);
+  overflow-x: auto;
+  margin: 0;
+  @include custom-scrollbar;
+}
+
+.trust__codeInner {
+  @include type-mono-body-sm;
+  color: var(--section-text);
+  display: block;
+  white-space: pre;
+  font-variant-numeric: tabular-nums;
+}
+
+// Syntax highlighting — manual classes (no library)
+.code__keyword {
+  color: var(--blue-primary);
+}
+
+.code__type {
+  color: var(--blue-vivid);
+}
+
+.code__comment {
+  color: var(--section-muted);
+  font-style: italic;
+}
+
+.code__var {
+  color: var(--section-text);
+}
+
+// Key line glow — require(to == client || to == seller)
+.trust__keyLine {
+  display: block;
+  background: rgba(0, 102, 255, 0.08);
+  border-radius: var(--radius-sm);
+  padding-inline: var(--space-8);
+  margin-inline: calc(-1 * var(--space-8));
+  box-shadow: 0 0 16px rgba(0, 102, 255, 0.12);
+}
+
+// --- Stats ---
+
+.trust__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-24);
+}
+
+.trust__statCard {
+  @include surface-card;
+  padding: var(--space-24);
+  text-align: center;
+}
+
+.trust__statNumber {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  color: var(--section-text);
+  display: block;
+  margin-block-end: var(--space-8);
+}
+
+.trust__statNumber--primary {
+  color: var(--blue-primary);
+}
+
+.trust__statCaption {
+  @include type-body-sm;
+  color: var(--section-muted);
+  margin: 0;
+}
