@@ -123,3 +123,10 @@ table {
     scroll-behavior: auto !important;
   }
 }
+
+// SplitText word wrappers — force GPU compositing for clean antialiasing
+[data-split-text] div {
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

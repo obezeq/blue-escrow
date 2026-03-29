@@ -96,6 +96,7 @@ function buildPinnedTimeline(container: HTMLElement) {
   gsap.set(impactPhase, { opacity: 0 });
 
   // SplitText on h2 — called before any layout changes
+  h2.setAttribute('data-split-text', '');
   const split = SplitText.create(h2, { type: 'words', autoSplit: true });
 
   // Create pinned timeline

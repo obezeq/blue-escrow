@@ -12,6 +12,7 @@
   align-items: center;
   justify-content: center;
   padding-block: var(--space-128);
+  overflow: hidden;
 
   @include responsive-max($bp-tablet) {
     padding-block: var(--space-96);

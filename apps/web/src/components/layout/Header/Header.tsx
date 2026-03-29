@@ -15,8 +15,9 @@ export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const setupObserver = useCallback(() => {
+    // Only observe <section> elements, not SectionTransition gradient divs
     const sections = document.querySelectorAll(
-      '.o-section--blue, .o-section--white',
+      'section.o-section--blue, section.o-section--white',
     );
     if (sections.length === 0) return;
 
@@ -42,6 +43,14 @@ export function Header() {
           const newTheme = isBlue ? 'blue' : 'white';
           setTheme(newTheme);
           document.documentElement.dataset.sectionTheme = newTheme;
+        } else {
+          // No section intersecting — likely in pinned CinematicIntro zone
+          const scrollProgress = document.documentElement.scrollTop /
+            (document.documentElement.scrollHeight - window.innerHeight);
+          if (scrollProgress < 0.25) {
+            setTheme('blue');
+            document.documentElement.dataset.sectionTheme = 'blue';
+          }
         }
       },
       {

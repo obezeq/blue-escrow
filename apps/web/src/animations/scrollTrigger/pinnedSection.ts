@@ -49,6 +49,17 @@ export function createPinnedTimeline(
   const end = resolveEndOffset(endOffset);
   const tl = gsap.timeline();
 
+  // Visibility lifecycle: hide pinned content when outside its pin zone
+  const triggerEl = typeof trigger === 'string'
+    ? document.querySelector(trigger)
+    : trigger;
+  const visibilityCallbacks = {
+    onEnter: () => { if (triggerEl instanceof HTMLElement) triggerEl.style.visibility = 'visible'; },
+    onLeave: () => { if (triggerEl instanceof HTMLElement) triggerEl.style.visibility = 'hidden'; },
+    onEnterBack: () => { if (triggerEl instanceof HTMLElement) triggerEl.style.visibility = 'visible'; },
+    onLeaveBack: () => { if (triggerEl instanceof HTMLElement) triggerEl.style.visibility = 'hidden'; },
+  };
+
   if (onlyDesktop) {
     const mm = gsap.matchMedia();
 
@@ -60,6 +71,7 @@ export function createPinnedTimeline(
         end,
         pin: true,
         scrub,
+        ...visibilityCallbacks,
       });
     });
   } else {
@@ -70,6 +82,7 @@ export function createPinnedTimeline(
       end,
       pin: true,
       scrub,
+      ...visibilityCallbacks,
     });
   }
 
