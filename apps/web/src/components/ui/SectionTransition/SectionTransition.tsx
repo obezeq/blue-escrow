@@ -18,6 +18,7 @@ export function SectionTransition({
   const classNames = [
     styles.transition,
     styles[`transition--${from}-to-${to}`],
+    `o-section--${to}`,
     className,
   ]
     .filter(Boolean)
