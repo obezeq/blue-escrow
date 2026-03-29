@@ -194,7 +194,7 @@ export function VaultParticles({ count, reducedMotion }: VaultParticlesProps) {
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, count]} frustumCulled={false}>
       <sphereGeometry args={[PARTICLE.radius, PARTICLE.widthSegments, PARTICLE.heightSegments]} />
-      <meshStandardMaterial toneMapped={false} />
+      <meshBasicMaterial toneMapped={false} />
     </instancedMesh>
   );
 }
