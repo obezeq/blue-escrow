@@ -69,27 +69,46 @@ export interface ScrollSection {
   bloomEnabled: boolean;
 }
 
+// Thresholds calibrated for ~2450vh total scroll (including pinned sections):
+// CinematicIntro +=300%, TheProblem +=200vh, TheSolution +=250vh,
+// HowItWorks +=500vh, TheFlow +=300vh
 export const SCROLL_THRESHOLDS: ScrollSection[] = [
-  { state: 'forming',              bg: 'blue',  start: 0.00, end: 0.10, bloomEnabled: true  },
-  { state: 'complete',             bg: 'blue',  start: 0.10, end: 0.20, bloomEnabled: true  },
-  { state: 'shattering',           bg: 'white', start: 0.20, end: 0.35, bloomEnabled: false },
-  { state: 'scattered',            bg: 'white', start: 0.35, end: 0.40, bloomEnabled: false },
-  { state: 'rebuilding_buyer',     bg: 'white', start: 0.40, end: 0.47, bloomEnabled: false },
-  { state: 'rebuilding_seller',    bg: 'white', start: 0.47, end: 0.54, bloomEnabled: false },
-  { state: 'rebuilding_middleman', bg: 'white', start: 0.54, end: 0.60, bloomEnabled: false },
-  { state: 'rebuilt',              bg: 'white', start: 0.60, end: 0.65, bloomEnabled: false },
-  { state: 'morphing',             bg: 'blue',  start: 0.65, end: 0.85, bloomEnabled: true  },
-  { state: 'peaceful',             bg: 'blue',  start: 0.85, end: 1.00, bloomEnabled: true  },
+  // ACT 1 — TRUST IS BORN: CinematicIntro (blue, 0-0.16) + Hero (blue, 0.16-0.20)
+  { state: 'forming',              bg: 'blue',  start: 0.00, end: 0.08, bloomEnabled: true  },
+  { state: 'complete',             bg: 'blue',  start: 0.08, end: 0.20, bloomEnabled: true  },
+
+  // ACT 2 — TRUST IS BROKEN: TheProblem (white, 0.20-0.33)
+  { state: 'shattering',           bg: 'white', start: 0.20, end: 0.28, bloomEnabled: false },
+  { state: 'scattered',            bg: 'white', start: 0.28, end: 0.33, bloomEnabled: false },
+
+  // ACT 3 — TRUST IS ENGINEERED: TheSolution (white, 0.33-0.47)
+  { state: 'rebuilding_buyer',     bg: 'white', start: 0.33, end: 0.38, bloomEnabled: false },
+  { state: 'rebuilding_seller',    bg: 'white', start: 0.38, end: 0.42, bloomEnabled: false },
+  { state: 'rebuilding_middleman', bg: 'white', start: 0.42, end: 0.46, bloomEnabled: false },
+  { state: 'rebuilt',              bg: 'white', start: 0.46, end: 0.47, bloomEnabled: false },
+
+  // ACT 4 — HOW IT WORKS: HowItWorks (blue, 0.47-0.72)
+  { state: 'morphing',             bg: 'blue',  start: 0.47, end: 0.72, bloomEnabled: true  },
+
+  // ACT 5 — THE PROOF: TheFlow (white, 0.72-0.88) + TrustLayer (white, 0.88-0.92)
+  { state: 'rebuilt',              bg: 'white', start: 0.72, end: 0.92, bloomEnabled: false },
+
+  // ACT 6 — THE INVITATION: FeeSection (blue, 0.92-0.95) + CtaSection (blue, 0.95-1.0)
+  { state: 'peaceful',             bg: 'blue',  start: 0.92, end: 1.00, bloomEnabled: true  },
 ];
 
 // --- Color transition zones ---
-// At each bg boundary, particle color lerps over this scroll width
-export const COLOR_TRANSITION_WIDTH = 0.02;
+// At each bg boundary, particle color lerps over this scroll width.
+// Affects wireframe, lights, and orbital rings (NOT particles — those use
+// colorFactors from state handlers). Width of 0.03 ≈ ~73vh smooth lerp.
+export const COLOR_TRANSITION_WIDTH = 0.03;
 
-// Pre-computed transition boundaries (where bg changes)
+// Pre-computed transition boundaries (4 blue↔white crossings in the page)
 export const COLOR_TRANSITIONS = [
-  { at: 0.20, from: COLORS.particleOnBlue, to: COLORS.particleOnWhite },
-  { at: 0.65, from: COLORS.particleOnWhite, to: COLORS.particleOnBlue },
+  { at: 0.20, from: COLORS.particleOnBlue, to: COLORS.particleOnWhite },   // Hero → TheProblem
+  { at: 0.47, from: COLORS.particleOnWhite, to: COLORS.particleOnBlue },   // TheSolution → HowItWorks
+  { at: 0.72, from: COLORS.particleOnBlue, to: COLORS.particleOnWhite },   // HowItWorks → TheFlow
+  { at: 0.92, from: COLORS.particleOnWhite, to: COLORS.particleOnBlue },   // TrustLayer → FeeSection
 ] as const;
 
 // --- Animation ---
