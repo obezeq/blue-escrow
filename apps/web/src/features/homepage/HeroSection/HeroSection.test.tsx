@@ -57,4 +57,10 @@ describe('HeroSection', () => {
     const section = container.querySelector('section');
     expect(section?.className).toContain('o-section--blue');
   });
+
+  it('has aria-label on the section', () => {
+    const { container } = render(<HeroSection />);
+    const section = container.querySelector('section');
+    expect(section?.getAttribute('aria-label')).toBe('Decentralized escrow');
+  });
 });
