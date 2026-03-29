@@ -80,13 +80,13 @@ function buildPinnedTimeline(container: HTMLElement) {
   const impactPhase = container.querySelector('[data-phase="impact"]');
   const h2 = container.querySelector('h2');
   const verdictEl = container.querySelector(
-    '[class*="problem__verdict"]',
+    '[data-animate="verdict"]',
   ) as HTMLElement | null;
   const counterEl = container.querySelector(
-    '[class*="problem__counter"]',
+    '[data-animate="counter"]',
   ) as HTMLElement | null;
   const captionEl = container.querySelector(
-    '[class*="problem__caption"]',
+    '[data-animate="caption"]',
   ) as HTMLElement | null;
 
   if (!h2 || !kineticPhase || !impactPhase) return;
@@ -192,7 +192,7 @@ function buildMobileFallback(container: HTMLElement) {
 
   // Counter still animates on viewport entry
   const counterEl = container.querySelector(
-    '[class*="problem__counter"]',
+    '[data-animate="counter"]',
   ) as HTMLElement | null;
 
   if (counterEl) {

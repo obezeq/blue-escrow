@@ -21,31 +21,31 @@ export function TheSolution() {
           <div className={styles.solution__locks} data-region="locks">
             {/* Phase B: Buyer */}
             <div className={styles.solution__phase} data-phase="buyer">
-              <p className={styles.solution__text}>
+              <p className={styles.solution__text} data-animate="text">
                 Your money goes into a smart contract.
               </p>
-              <p className={styles.solution__text}>
+              <p className={styles.solution__text} data-animate="text">
                 Not a person. Not a company.
               </p>
-              <p className={styles.solution__text}>
+              <p className={styles.solution__text} data-animate="text">
                 A program on the blockchain that no one can change.
               </p>
             </div>
 
             {/* Phase C: Seller */}
             <div className={styles.solution__phase} data-phase="seller">
-              <p className={styles.solution__text}>
+              <p className={styles.solution__text} data-animate="text">
                 You deliver. The smart contract releases your payment.
               </p>
-              <p className={styles.solution__text}>No chasing. No hoping.</p>
+              <p className={styles.solution__text} data-animate="text">No chasing. No hoping.</p>
             </div>
 
             {/* Phase D: Middleman */}
             <div className={styles.solution__phase} data-phase="middleman">
-              <p className={styles.solution__text}>
+              <p className={styles.solution__text} data-animate="text">
                 The middleman resolves disputes.
               </p>
-              <p className={styles.solution__text}>
+              <p className={styles.solution__text} data-animate="text">
                 But the money? Only the smart contract can move it.
               </p>
             </div>
@@ -53,7 +53,7 @@ export function TheSolution() {
 
           {/* Phase E: Closing — replaces heading + locks */}
           <div className={styles.solution__closingWrap} data-phase="closing">
-            <p className={styles.solution__closing}>
+            <p className={styles.solution__closing} data-animate="closing">
               Protected by the blockchain. Not by promises.
             </p>
           </div>

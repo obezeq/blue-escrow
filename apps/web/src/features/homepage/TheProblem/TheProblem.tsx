@@ -25,11 +25,11 @@ export function TheProblem() {
 
           {/* Phase B: Impact stat */}
           <div className={styles.problem__impact} data-phase="impact">
-            <p className={styles.problem__verdict}>And no one can stop it.</p>
+            <p className={styles.problem__verdict} data-animate="verdict">And no one can stop it.</p>
             <p className={styles.problem__stat} aria-label="$2.1 billion">
-              <span className={styles.problem__counter}>$2.1B</span>
+              <span className={styles.problem__counter} data-animate="counter">$2.1B</span>
             </p>
-            <p className={styles.problem__caption}>
+            <p className={styles.problem__caption} data-animate="caption">
               lost to escrow and middleman fraud
             </p>
           </div>

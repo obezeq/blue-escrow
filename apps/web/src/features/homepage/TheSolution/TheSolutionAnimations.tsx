@@ -145,7 +145,7 @@ function buildPinnedTimeline(container: HTMLElement) {
   // --- Phase B (15-40%): buyer lock ---
   tl.to(buyerPhase, { opacity: 1, duration: B.buyerIn });
 
-  const buyerLines = buyerPhase.querySelectorAll('[class*="solution__text"]');
+  const buyerLines = buyerPhase.querySelectorAll('[data-animate="text"]');
   if (buyerLines.length) {
     tl.from(
       buyerLines,
@@ -167,7 +167,7 @@ function buildPinnedTimeline(container: HTMLElement) {
 
   // --- Phase C (40-59%): seller lock ---
   const sellerLines = sellerPhase.querySelectorAll(
-    '[class*="solution__text"]',
+    '[data-animate="text"]',
   );
   if (sellerLines.length) {
     tl.from(sellerLines, {
@@ -186,7 +186,7 @@ function buildPinnedTimeline(container: HTMLElement) {
 
   // --- Phase D (62-78%): middleman lock ---
   const middlemanLines = middlemanPhase.querySelectorAll(
-    '[class*="solution__text"]',
+    '[data-animate="text"]',
   );
   if (middlemanLines.length) {
     tl.from(middlemanLines, {
@@ -206,7 +206,7 @@ function buildPinnedTimeline(container: HTMLElement) {
 
   // --- Phase E (83-100%): closing ---
   tl.to(closingPhase, { opacity: 1, duration: 0.02 });
-  tl.from(closingPhase.querySelector('[class*="solution__closing"]'), {
+  tl.from(closingPhase.querySelector('[data-animate="closing"]'), {
     opacity: 0,
     y: 20,
     scale: 0.95,
