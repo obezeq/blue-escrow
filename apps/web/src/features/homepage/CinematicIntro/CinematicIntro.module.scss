@@ -24,6 +24,7 @@
   inset: 0;
   z-index: calc(var(--z-canvas) + 5);
   pointer-events: none;
+  background: var(--blue-primary);
 }
 
 .intro__canvas {
