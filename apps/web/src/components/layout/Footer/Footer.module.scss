@@ -3,6 +3,8 @@
 @use '../../../styles/tools/mixins' as *;
 
 .footer {
+  position: relative;
+  z-index: 2;
   background: var(--white);
   padding-block: var(--space-64);
   border-top: 1px solid var(--gray-border);

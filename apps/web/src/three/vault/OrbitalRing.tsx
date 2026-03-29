@@ -34,14 +34,18 @@ interface OrbitalRingsProps {
 export function OrbitalRings({ reducedMotion = false }: OrbitalRingsProps) {
   const groupRef = useRef<Group>(null);
   const opacityRef = useRef(0);
-  const { stateRef, bgRef } = useVaultTimeline();
+  const { stateRef, bgRef, scrollRef } = useVaultTimeline();
 
   useFrame((state) => {
     const group = groupRef.current;
     if (!group) return;
 
     const isVisible = VISIBLE_STATES.has(stateRef.current);
-    const targetOpacity = isVisible ? 0.6 : 0;
+    // Fade out near footer (scroll > 0.96)
+    const scrollFade = scrollRef.current > 0.96
+      ? Math.max(0, 1 - (scrollRef.current - 0.96) / 0.04)
+      : 1;
+    const targetOpacity = isVisible ? 0.6 * scrollFade : 0;
     opacityRef.current += (targetOpacity - opacityRef.current) * 0.04;
 
     group.visible = opacityRef.current > 0.01;

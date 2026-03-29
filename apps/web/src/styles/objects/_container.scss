@@ -23,6 +23,7 @@
 
 .o-section {
   position: relative;
+  z-index: 2;
   padding-block: var(--space-96);
   background: var(--section-bg);
   color: var(--section-text);
