@@ -21,6 +21,21 @@ export interface PinnedSectionOptions {
  * tl.to('.child-a', { x: 100 })
  *   .to('.child-b', { opacity: 0 });
  */
+/**
+ * Resolves endOffset strings — converts `vh` units to a functional value
+ * because GSAP's `+=` syntax only supports px and %, not CSS viewport units.
+ */
+function resolveEndOffset(
+  endOffset: string,
+): string | (() => string) {
+  const vhMatch = endOffset.match(/^\+=(\d+(?:\.\d+)?)vh$/);
+  if (vhMatch?.[1]) {
+    const vhValue = parseFloat(vhMatch[1]);
+    return () => `+=${(vhValue / 100) * window.innerHeight}`;
+  }
+  return endOffset;
+}
+
 export function createPinnedTimeline(
   options: PinnedSectionOptions,
 ): gsap.core.Timeline {
@@ -31,6 +46,7 @@ export function createPinnedTimeline(
     onlyDesktop = false,
   } = options;
 
+  const end = resolveEndOffset(endOffset);
   const tl = gsap.timeline();
 
   if (onlyDesktop) {
@@ -41,7 +57,7 @@ export function createPinnedTimeline(
         animation: tl,
         trigger,
         start: 'top top',
-        end: endOffset,
+        end,
         pin: true,
         scrub,
       });
@@ -51,7 +67,7 @@ export function createPinnedTimeline(
       animation: tl,
       trigger,
       start: 'top top',
-      end: endOffset,
+      end,
       pin: true,
       scrub,
     });
