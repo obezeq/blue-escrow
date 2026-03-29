@@ -1,0 +1,47 @@
+@use '@/styles/settings/typography' as *;
+
+.problem {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &__content {
+    text-align: center;
+  }
+
+  &__heading {
+    @include type-h2;
+    color: var(--section-text);
+  }
+
+  &__line {
+    display: block;
+    margin-block-end: var(--space-8);
+  }
+
+  &__impact {
+    margin-block-start: var(--space-48);
+  }
+
+  &__verdict {
+    @include type-h2;
+    color: var(--section-text);
+    margin-block-end: var(--space-32);
+  }
+
+  &__stat {
+    margin-block-end: var(--space-16);
+  }
+
+  &__counter {
+    @include type-hero;
+    color: var(--danger-red);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__caption {
+    @include type-body-lg;
+    color: var(--section-muted);
+  }
+}
