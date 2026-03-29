@@ -3,6 +3,16 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import styles from './TheFlow.module.scss';
 
+// Design-system colors for SVG attributes where CSS vars may not resolve
+// (gradient stops, GSAP attr targets). Mirrors :root tokens in _variables.scss.
+export const FLOW_COLORS = {
+  bluePrimary: '#0066FF',
+  seller: '#33AAFF',
+  middleman: '#999999',
+  contractFill: 'rgba(0, 102, 255, 0.1)',
+  contractGlow: 'rgba(0, 102, 255, 0.3)',
+} as const;
+
 export interface FlowTrailHandle {
   svgEl: SVGSVGElement | null;
   trailPath: SVGPathElement | null;
@@ -58,8 +68,8 @@ export const FlowTrail = forwardRef<FlowTrailHandle>(
             x2="100%"
             y2="0%"
           >
-            <stop offset="0%" stopColor="#0066FF" />
-            <stop offset="100%" stopColor="#33AAFF" />
+            <stop offset="0%" stopColor={FLOW_COLORS.bluePrimary} />
+            <stop offset="100%" stopColor={FLOW_COLORS.seller} />
           </linearGradient>
           <filter id="particle-glow">
             <feGaussianBlur stdDeviation="3" result="blur" />
@@ -102,7 +112,7 @@ export const FlowTrail = forwardRef<FlowTrailHandle>(
             width={80}
             height={60}
             rx={8}
-            fill="rgba(0, 102, 255, 0.1)"
+            fill={FLOW_COLORS.contractFill}
             stroke="var(--gray-border)"
             strokeWidth={1.5}
             data-animate="contract-glow"
@@ -119,7 +129,7 @@ export const FlowTrail = forwardRef<FlowTrailHandle>(
 
         {/* Seller node */}
         <g data-node="seller">
-          <circle cx={900} cy={350} r={8} fill="#33AAFF" />
+          <circle cx={900} cy={350} r={8} fill={FLOW_COLORS.seller} />
           <text
             x={900}
             y={395}
@@ -137,12 +147,12 @@ export const FlowTrail = forwardRef<FlowTrailHandle>(
             y1={220}
             x2={500}
             y2={120}
-            stroke="#999"
+            stroke={FLOW_COLORS.middleman}
             strokeWidth={1.5}
             strokeDasharray="6 4"
             opacity={0.5}
           />
-          <circle cx={500} cy={100} r={6} fill="#999" opacity={0.6} />
+          <circle cx={500} cy={100} r={6} fill={FLOW_COLORS.middleman} opacity={0.6} />
           <text
             x={500}
             y={80}
@@ -171,12 +181,12 @@ export const FlowTrail = forwardRef<FlowTrailHandle>(
             cy={350}
             r={16}
             fill="none"
-            stroke="#33AAFF"
+            stroke={FLOW_COLORS.seller}
             strokeWidth={2}
           />
           <path
             d="M892 350 L898 356 L910 344"
-            stroke="#33AAFF"
+            stroke={FLOW_COLORS.seller}
             strokeWidth={2}
             fill="none"
             strokeLinecap="round"

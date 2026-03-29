@@ -4,7 +4,7 @@ import { type RefObject } from 'react';
 import { gsap, useGSAP } from '@/animations/config/gsap-register';
 import { MATCH_MEDIA } from '@/animations/config/defaults';
 import { createPinnedTimeline } from '@/animations/scrollTrigger/pinnedSection';
-import type { FlowTrailHandle } from './FlowTrail';
+import { FLOW_COLORS, type FlowTrailHandle } from './FlowTrail';
 
 // Timeline budget (normalized durations, sum = 1.0)
 const B = {
@@ -123,14 +123,14 @@ function buildDesktopTimeline(
     tl.to(
       contractGlow,
       {
-        attr: { fill: 'rgba(0, 102, 255, 0.3)' },
+        attr: { fill: FLOW_COLORS.contractGlow },
         duration: B.phase2 * 0.4,
         ease: 'power2.inOut',
       },
       '<',
     );
     tl.to(contractGlow, {
-      attr: { stroke: '#0066FF' },
+      attr: { stroke: FLOW_COLORS.bluePrimary },
       duration: B.phase2 * 0.3,
       ease: 'power2.out',
     });
@@ -223,7 +223,7 @@ function showCompletedState(
   // Contract glow
   if (contractGlow) {
     gsap.set(contractGlow, {
-      attr: { fill: 'rgba(0, 102, 255, 0.3)', stroke: '#0066FF' },
+      attr: { fill: FLOW_COLORS.contractGlow, stroke: FLOW_COLORS.bluePrimary },
     });
   }
 
