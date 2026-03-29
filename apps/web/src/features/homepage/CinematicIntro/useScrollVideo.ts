@@ -74,7 +74,7 @@ export function useScrollVideo(
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    ctxRef.current = canvas.getContext('2d', { alpha: false });
+    ctxRef.current = canvas.getContext('2d', { alpha: true });
   }, [canvasRef]);
 
   const draw = useCallback(
