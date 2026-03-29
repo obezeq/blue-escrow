@@ -6,6 +6,7 @@ body {
   background-color: var(--white);
   color: var(--black);
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
   @include type-body;
 }
 
