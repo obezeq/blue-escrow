@@ -59,7 +59,7 @@ const CODE_LINES: Token[][] = [
   [{ text: '}', type: 'var' }],
 ];
 
-const STYLE_MAP: Record<TokenType, string> = {
+const STYLE_MAP: Record<TokenType, string | undefined> = {
   keyword: styles.code__keyword,
   type: styles.code__type,
   comment: styles.code__comment,
