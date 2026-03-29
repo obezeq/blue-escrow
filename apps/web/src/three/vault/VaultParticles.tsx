@@ -13,6 +13,7 @@ import type { VaultState } from '@/providers/ThreeProvider';
 import { VAULT_GEOMETRY, PARTICLE, ANIMATION, COLORS } from '../config/vaultConfig';
 import { useVaultTimeline } from '../hooks/useVaultTimeline';
 import { useParticleColor, composeParticleColor } from '../hooks/useParticleColor';
+import { useParticleAttraction } from '../hooks/useParticleAttraction';
 import {
   sampleIcosahedronSurface,
   generateRandomPositions,
@@ -35,6 +36,7 @@ export function VaultParticles({ count, reducedMotion }: VaultParticlesProps) {
 
   const { stateRef, subProgressRef, bloomRef } = useVaultTimeline();
   const colorTargetRef = useParticleColor();
+  const applyAttraction = useParticleAttraction();
 
   // Pre-allocate all buffers at mount
   const buffers = useMemo<ParticleBuffers>(() => {
@@ -140,6 +142,11 @@ export function VaultParticles({ count, reducedMotion }: VaultParticlesProps) {
     // Per-frame update
     const handler = STATE_HANDLERS[currentState];
     handler.update(ctx, subProgress, delta, elapsed);
+
+    // Particle attraction toward origin on CTA hover (peaceful state only)
+    if (currentState === 'peaceful') {
+      applyAttraction(buffers, count, delta);
+    }
 
     // Shared lerp loop — positions
     const lerpFactor = 1 - Math.exp(-ANIMATION.lerpSpeed / delta);
