@@ -39,7 +39,7 @@ export function VaultGeometry({ reducedMotion = false }: VaultGeometryProps) {
     const mat = line.material as LineBasicMaterial;
 
     if (reducedMotion) {
-      mat.opacity = 0.15;
+      mat.opacity = 0.08;
       mat.visible = true;
       const { r, g, b } = colorRef.current;
       mat.color.setRGB(r, g, b);
@@ -50,7 +50,7 @@ export function VaultGeometry({ reducedMotion = false }: VaultGeometryProps) {
 
     // Hidden during scattered state
     const isScattered = currentState === 'scattered' || currentState === 'shattering';
-    const targetOpacity = isScattered ? 0 : 0.15 + Math.sin(state.clock.elapsedTime * 0.8) * 0.05;
+    const targetOpacity = isScattered ? 0 : 0.06 + Math.sin(state.clock.elapsedTime * 0.8) * 0.02;
 
     mat.opacity += (targetOpacity - mat.opacity) * 0.05;
     mat.visible = mat.opacity > 0.01;
@@ -62,7 +62,7 @@ export function VaultGeometry({ reducedMotion = false }: VaultGeometryProps) {
 
   return (
     <lineSegments ref={lineRef} geometry={edgesGeo}>
-      <lineBasicMaterial transparent opacity={0.15} color={0xffffff} />
+      <lineBasicMaterial transparent opacity={0.08} color={0xffffff} />
     </lineSegments>
   );
 }
