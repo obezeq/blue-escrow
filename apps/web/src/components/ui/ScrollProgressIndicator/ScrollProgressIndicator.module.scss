@@ -17,4 +17,9 @@
   transform-origin: left;
   transform: scaleX(0);
   will-change: transform;
+  transition: background 200ms ease;
+
+  :global([data-section-theme='blue']) & {
+    background: var(--white);
+  }
 }

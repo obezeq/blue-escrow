@@ -39,7 +39,9 @@ export function Header() {
 
         if (closest) {
           const isBlue = closest.target.classList.contains('o-section--blue');
-          setTheme(isBlue ? 'blue' : 'white');
+          const newTheme = isBlue ? 'blue' : 'white';
+          setTheme(newTheme);
+          document.documentElement.dataset.sectionTheme = newTheme;
         }
       },
       {
