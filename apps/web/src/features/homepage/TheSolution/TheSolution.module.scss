@@ -1,0 +1,47 @@
+@use '@/styles/settings/typography' as *;
+
+.solution {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &__content {
+    text-align: center;
+    width: 100%;
+  }
+
+  &__heading {
+    @include type-h2;
+    color: var(--section-heading);
+    margin-block-end: var(--space-48);
+  }
+
+  &__locks {
+    position: relative;
+    min-height: 12rem;
+  }
+
+  &__phase {
+    margin-block-end: var(--space-48);
+  }
+
+  &__text {
+    @include type-h4;
+    color: var(--section-text);
+    margin-block-end: var(--space-16);
+    max-width: 36ch;
+    margin-inline: auto;
+  }
+
+  &__closingWrap {
+    margin-block-start: var(--space-48);
+  }
+
+  &__closing {
+    @include type-h3;
+    color: var(--section-heading);
+    max-width: 28ch;
+    margin-inline: auto;
+  }
+}
