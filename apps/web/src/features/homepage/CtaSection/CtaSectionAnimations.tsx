@@ -21,17 +21,11 @@ export function CtaSectionAnimations({
 
       // --- Hover dispatch for particle attraction ---
       const primaryCta = container.querySelector('[data-cta="primary"]');
+      const onEnter = () => setCtaHovered(true);
+      const onLeave = () => setCtaHovered(false);
       if (primaryCta) {
-        const onEnter = () => setCtaHovered(true);
-        const onLeave = () => setCtaHovered(false);
         primaryCta.addEventListener('mouseenter', onEnter);
         primaryCta.addEventListener('mouseleave', onLeave);
-        // Cleanup on context revert
-        return () => {
-          primaryCta.removeEventListener('mouseenter', onEnter);
-          primaryCta.removeEventListener('mouseleave', onLeave);
-          setCtaHovered(false);
-        };
       }
 
       // --- Desktop + tablet animations ---
@@ -56,6 +50,15 @@ export function CtaSectionAnimations({
           clearProps: 'all',
         });
       });
+
+      // Cleanup hover listeners on context revert
+      return () => {
+        if (primaryCta) {
+          primaryCta.removeEventListener('mouseenter', onEnter);
+          primaryCta.removeEventListener('mouseleave', onLeave);
+          setCtaHovered(false);
+        }
+      };
     },
     { scope: containerRef },
   );
