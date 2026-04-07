@@ -74,6 +74,11 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-24);
+
+  @include responsive-max($bp-tablet) {
+    grid-template-columns: 1fr;
+    gap: var(--space-16);
+  }
 }
 
 .trust__statCard {

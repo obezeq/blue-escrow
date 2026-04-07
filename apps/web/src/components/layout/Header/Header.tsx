@@ -14,74 +14,48 @@ export function Header() {
   const [theme, setTheme] = useState<HeaderTheme>('blue');
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const setupObserver = useCallback(() => {
-    // Only observe <section> elements, not SectionTransition gradient divs
+  const updateTheme = useCallback(() => {
     const sections = document.querySelectorAll(
       'section.o-section--blue, section.o-section--white',
     );
-    if (sections.length === 0) return;
 
-    const rootMarginBottom = -(window.innerHeight - HEADER_HEIGHT_PX);
+    // Find the section whose top is closest to (but above) the header zone
+    let topmost: Element | null = null;
+    let topmostTop = -Infinity;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Among intersecting entries, pick the one closest to the header
-        let closest: IntersectionObserverEntry | null = null;
-        let closestDist = Infinity;
+    sections.forEach((section) => {
+      const rect = section.getBoundingClientRect();
+      // Section overlaps the header zone (top 72px of viewport)?
+      if (rect.top < HEADER_HEIGHT_PX && rect.bottom > 0 && rect.top > topmostTop) {
+        topmost = section;
+        topmostTop = rect.top;
+      }
+    });
 
-        for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          const dist = Math.abs(entry.boundingClientRect.top);
-          if (dist < closestDist) {
-            closestDist = dist;
-            closest = entry;
-          }
-        }
-
-        if (closest) {
-          const isBlue = closest.target.classList.contains('o-section--blue');
-          const newTheme = isBlue ? 'blue' : 'white';
-          setTheme(newTheme);
-          document.documentElement.dataset.sectionTheme = newTheme;
-        } else {
-          // No section intersecting — likely in pinned CinematicIntro zone
-          const scrollProgress = document.documentElement.scrollTop /
-            (document.documentElement.scrollHeight - window.innerHeight);
-          if (scrollProgress < 0.25) {
-            setTheme('blue');
-            document.documentElement.dataset.sectionTheme = 'blue';
-          }
-        }
-      },
-      {
-        rootMargin: `0px 0px ${rootMarginBottom}px 0px`,
-        threshold: 0,
-      },
-    );
-
-    sections.forEach((section) => observer.observe(section));
-    return observer;
+    if (topmost) {
+      const isBlue = topmost.classList.contains('o-section--blue');
+      const newTheme = isBlue ? 'blue' : 'white';
+      setTheme(newTheme);
+      document.documentElement.dataset.sectionTheme = newTheme;
+    }
   }, []);
 
   useEffect(() => {
-    let observer = setupObserver();
-
-    let resizeTimer: ReturnType<typeof setTimeout>;
-    const handleResize = () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        observer?.disconnect();
-        observer = setupObserver();
-      }, 200);
+    let ticking = false;
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          updateTheme();
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => {
-      observer?.disconnect();
-      window.removeEventListener('resize', handleResize);
-      clearTimeout(resizeTimer);
-    };
-  }, [setupObserver]);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    updateTheme(); // Initial detection
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [updateTheme]);
 
   const themeClass =
     theme === 'blue' ? styles['header--on-blue'] : styles['header--on-white'];
