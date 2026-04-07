@@ -119,14 +119,7 @@ export function useScrollVideo(
         sy = (vh - sh) / 2;
       }
 
-      // Fill with blue, then draw video with multiply compositing
-      // so white video bg becomes blue while blue hands stay visible
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = '#0066FF';
-      ctx.fillRect(0, 0, w * dpr, h * dpr);
-      ctx.globalCompositeOperation = 'multiply';
       ctx.drawImage(video, sx, sy, sw, sh, 0, 0, w * dpr, h * dpr);
-      ctx.globalCompositeOperation = 'source-over';
     },
     [canvasRef],
   );
