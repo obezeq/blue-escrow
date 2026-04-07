@@ -107,7 +107,6 @@ function buildPinnedTimeline(container: HTMLElement) {
   if (!heading || !locksRegion || !buyerPhase || !sellerPhase || !middlemanPhase || !closingPhase) return;
 
   // SplitText on heading BEFORE any layout changes
-  heading.setAttribute('data-split-text', '');
   const headingSplit = SplitText.create(heading, {
     type: 'words',
     autoSplit: true,

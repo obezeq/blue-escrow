@@ -125,7 +125,7 @@ table {
 }
 
 // SplitText word wrappers — force GPU compositing for clean antialiasing
-[data-split-text] div {
+h1 > div, h2 > div, h3 > div {
   backface-visibility: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

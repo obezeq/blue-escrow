@@ -26,7 +26,6 @@ export function HeroAnimations({ children }: { children: React.ReactNode }) {
         // SplitText on h1
         const h1 = container.querySelector('h1');
         if (h1) {
-          h1.setAttribute('data-split-text', '');
           SplitText.create(h1, {
             type: 'words',
             autoSplit: true,

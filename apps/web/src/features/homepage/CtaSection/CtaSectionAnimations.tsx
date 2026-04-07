@@ -78,7 +78,6 @@ function buildDesktopAnimations(container: HTMLElement) {
 
   // Heading: SplitText word reveal
   if (heading) {
-    heading.setAttribute('data-split-text', '');
     SplitText.create(heading, {
       type: 'words',
       autoSplit: true,
