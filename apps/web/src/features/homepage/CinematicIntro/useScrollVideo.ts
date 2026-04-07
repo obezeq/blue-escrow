@@ -18,6 +18,9 @@ interface ScrollVideoState {
  * Manages scroll-driven video playback on a canvas.
  * Creates hidden <video> elements, seeks to the correct frame
  * based on scroll progress, and draws to a shared canvas.
+ *
+ * Videos MUST be encoded with all-keyframe (`-g 1 -bf 0`) for
+ * reliable frame-accurate seeking during scroll scrubbing.
  */
 export function useScrollVideo(
   canvasRef: React.RefObject<HTMLCanvasElement | null>,
@@ -74,8 +77,78 @@ export function useScrollVideo(
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    ctxRef.current = canvas.getContext('2d', { alpha: true });
+    ctxRef.current = canvas.getContext('2d', { alpha: false });
   }, [canvasRef]);
+
+  // Shared paint routine — draws the current video frame to the canvas
+  const paintFrame = useCallback(
+    (video: HTMLVideoElement) => {
+      const ctx = ctxRef.current;
+      const canvas = canvasRef.current;
+      if (!ctx || !canvas) return;
+
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+      if (vw === 0 || vh === 0) return;
+
+      // Size canvas to viewport if needed
+      const dpr = Math.min(window.devicePixelRatio, 2);
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = `${w}px`;
+        canvas.style.height = `${h}px`;
+      }
+
+      // Draw video frame with cover behavior
+      const canvasAspect = (w * dpr) / (h * dpr);
+      const videoAspect = vw / vh;
+
+      let sx = 0;
+      let sy = 0;
+      let sw = vw;
+      let sh = vh;
+
+      if (videoAspect > canvasAspect) {
+        sw = vh * canvasAspect;
+        sx = (vw - sw) / 2;
+      } else {
+        sh = vw / canvasAspect;
+        sy = (vh - sh) / 2;
+      }
+
+      // Fill with blue, then draw video with multiply compositing
+      // so white video bg becomes blue while blue hands stay visible
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = '#0066FF';
+      ctx.fillRect(0, 0, w * dpr, h * dpr);
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.drawImage(video, sx, sy, sw, sh, 0, 0, w * dpr, h * dpr);
+      ctx.globalCompositeOperation = 'source-over';
+    },
+    [canvasRef],
+  );
+
+  // Register seeked listeners on each video so the canvas repaints
+  // when the browser finishes decoding the target frame.
+  useEffect(() => {
+    const videos = videosRef.current;
+    if (videos.length === 0) return;
+
+    const handlers = videos.map((video) => {
+      const onSeeked = () => paintFrame(video);
+      video.addEventListener('seeked', onSeeked);
+      return { video, onSeeked };
+    });
+
+    return () => {
+      handlers.forEach(({ video, onSeeked }) =>
+        video.removeEventListener('seeked', onSeeked),
+      );
+    };
+  }, [segments, paintFrame]);
 
   const draw = useCallback(
     (progress: number) => {
@@ -112,48 +185,16 @@ export function useScrollVideo(
       const targetTime = localProgress * video.duration;
 
       // Only seek if time changed meaningfully (avoid redundant seeks)
-      if (Math.abs(video.currentTime - targetTime) > 0.02) {
+      if (Math.abs(video.currentTime - targetTime) > 0.01) {
         video.currentTime = targetTime;
       }
 
-      // Size canvas to viewport if needed
-      const dpr = Math.min(window.devicePixelRatio, 2);
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
-        canvas.width = w * dpr;
-        canvas.height = h * dpr;
-        canvas.style.width = `${w}px`;
-        canvas.style.height = `${h}px`;
-      }
-
-      // Draw video frame with cover behavior
-      const vw = video.videoWidth;
-      const vh = video.videoHeight;
-      if (vw === 0 || vh === 0) return;
-
-      const canvasAspect = (w * dpr) / (h * dpr);
-      const videoAspect = vw / vh;
-
-      let sx = 0;
-      let sy = 0;
-      let sw = vw;
-      let sh = vh;
-
-      if (videoAspect > canvasAspect) {
-        // Video wider — crop sides
-        sw = vh * canvasAspect;
-        sx = (vw - sw) / 2;
-      } else {
-        // Video taller — crop top/bottom
-        sh = vw / canvasAspect;
-        sy = (vh - sh) / 2;
-      }
-
-      ctx.drawImage(video, sx, sy, sw, sh, 0, 0, w * dpr, h * dpr);
+      // Immediate paint for responsiveness — the `seeked` listener
+      // will repaint with the accurate frame once decoding finishes.
+      paintFrame(video);
       lastSegmentIndex.current = activeIndex;
     },
-    [canvasRef, segments],
+    [canvasRef, segments, paintFrame],
   );
 
   return {
