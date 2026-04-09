@@ -15,11 +15,9 @@ export function TheProblem() {
           {/* Phase A: Kinetic text — single semantic h2, visual line breaks via spans */}
           <div className={styles.problem__kinetic} data-phase="kinetic">
             <h2 className={styles.problem__heading}>
-              <span className={styles.problem__line}>Every day,</span>
-              <span className={styles.problem__line}>
-                someone trusts a stranger
-              </span>
-              <span className={styles.problem__line}>with their money.</span>
+              Every day,<br />
+              someone trusts a stranger<br />
+              with their money.
             </h2>
           </div>
 

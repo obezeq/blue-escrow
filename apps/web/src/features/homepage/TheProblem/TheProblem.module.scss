@@ -15,7 +15,8 @@
     color: var(--section-text);
   }
 
-  &__line {
+  &__heading br {
+    content: '';
     display: block;
     margin-block-end: var(--space-8);
   }

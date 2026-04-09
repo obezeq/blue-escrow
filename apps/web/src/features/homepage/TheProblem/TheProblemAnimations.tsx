@@ -95,8 +95,14 @@ function buildPinnedTimeline(container: HTMLElement) {
   // without JS, CSS keeps it visible)
   gsap.set(impactPhase, { opacity: 0 });
 
-  // SplitText on h2 — called before any layout changes
-  const split = SplitText.create(h2, { type: 'words', autoSplit: true });
+  // SplitText on h2 — try-catch ensures pin is ALWAYS created even if split fails
+  let wordTargets: Element[];
+  try {
+    const split = SplitText.create(h2, { type: 'words', autoSplit: true });
+    wordTargets = split.words;
+  } catch {
+    wordTargets = [h2];
+  }
 
   // Create pinned timeline
   const tl = createPinnedTimeline({
@@ -106,7 +112,7 @@ function buildPinnedTimeline(container: HTMLElement) {
   });
 
   // Phase A (0-45%): kinetic text — words reveal one-by-one synced to scroll
-  tl.from(split.words, {
+  tl.from(wordTargets, {
     y: 40,
     opacity: 0,
     stagger: 0.03,
