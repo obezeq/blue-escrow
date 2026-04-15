@@ -12,9 +12,9 @@ import styles from './CinematicIntro.module.scss';
 
 // Phase boundaries within the pinned scroll (0-1)
 const PHASE_A_END = 0.4;
-const PHASE_B_END = 0.7;
-const PHASE_C_END = 0.85;
-// Phase D: 0.85 - 1.0
+const PHASE_B_END = 0.8;
+const PHASE_C_END = 0.9;
+// Phase D: 0.9 - 1.0
 
 const VIDEO_SEGMENTS: VideoSegment[] = [
   {
@@ -64,7 +64,7 @@ export function CinematicIntro() {
           ScrollTrigger.create({
             trigger: sectionRef.current!,
             start: 'top top',
-            end: '+=500%',
+            end: '+=700%',
             pin: true,
             scrub: 0,
             onUpdate: (self) => {
@@ -81,7 +81,7 @@ export function CinematicIntro() {
           ScrollTrigger.create({
             trigger: sectionRef.current!,
             start: 'top top',
-            end: '+=350%',
+            end: '+=500%',
             pin: true,
             scrub: 0,
             onUpdate: (self) => {
@@ -176,25 +176,31 @@ export function CinematicIntro() {
   );
 
   function handleScrollUpdate(progress: number) {
-    // Draw video frame (phases A & B)
-    if (progress < PHASE_B_END) {
-      draw(progress);
+    // Draw video frame (phases A & B), keep last frame during crossfade (C)
+    if (progress <= PHASE_C_END) {
+      draw(Math.min(progress, PHASE_B_END));
     }
 
-    // Overlay opacity: Phase C crossfade (0.7 → 0.85)
-    if (overlayRef.current) {
+    // Canvas opacity: fades during Phase C crossfade (0.8 → 0.9)
+    if (canvasRef.current) {
       if (progress < PHASE_B_END) {
-        overlayRef.current.style.opacity = '1';
+        canvasRef.current.style.opacity = '1';
       } else if (progress < PHASE_C_END) {
         const fadeProgress =
           (progress - PHASE_B_END) / (PHASE_C_END - PHASE_B_END);
-        overlayRef.current.style.opacity = String(1 - fadeProgress);
+        canvasRef.current.style.opacity = String(1 - fadeProgress);
       } else {
-        overlayRef.current.style.opacity = '0';
+        canvasRef.current.style.opacity = '0';
       }
     }
 
-    // Brand text: Phase D reveal (0.85 → 1.0)
+    // Overlay (blue bg): stays visible throughout — provides blue backdrop
+    // for both video canvas and brand text reveal
+    if (overlayRef.current) {
+      overlayRef.current.style.opacity = '1';
+    }
+
+    // Brand text: Phase D reveal (0.9 → 1.0)
     if (brandRef.current) {
       if (progress < PHASE_C_END) {
         brandRef.current.style.opacity = '0';
@@ -210,12 +216,14 @@ export function CinematicIntro() {
 
   function hideOverlays() {
     if (overlayRef.current) overlayRef.current.style.opacity = '0';
+    if (canvasRef.current) canvasRef.current.style.opacity = '0';
     if (brandRef.current) brandRef.current.style.opacity = '0';
   }
 
   function showOverlays() {
     // Reset to beginning state on scroll back
     if (overlayRef.current) overlayRef.current.style.opacity = '1';
+    if (canvasRef.current) canvasRef.current.style.opacity = '1';
     if (brandRef.current) brandRef.current.style.opacity = '0';
   }
 

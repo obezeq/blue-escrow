@@ -17,7 +17,7 @@ beforeEach(() => {
 
 const SEGMENTS: VideoSegment[] = [
   { mp4: '/video/a.mp4', webm: '/video/a.webm', start: 0, end: 0.4 },
-  { mp4: '/video/b.mp4', webm: '/video/b.webm', start: 0.4, end: 0.7 },
+  { mp4: '/video/b.mp4', webm: '/video/b.webm', start: 0.4, end: 0.8 },
 ];
 
 describe('useScrollVideo', () => {
