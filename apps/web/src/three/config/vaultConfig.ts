@@ -69,29 +69,29 @@ export interface ScrollSection {
   bloomEnabled: boolean;
 }
 
-// Thresholds calibrated for ~24500px total scroll at 900px viewport:
-// CinematicIntro +=500%, TheProblem +=200vh, TheSolution +=250vh,
+// Thresholds calibrated for ~26300px total scroll at 900px viewport:
+// CinematicIntro +=700%, TheProblem +=200vh, TheSolution +=250vh,
 // HowItWorks +=500vh, TheFlow +=300vh
 export const SCROLL_THRESHOLDS: ScrollSection[] = [
-  // ACT 1 — TRUST IS BORN: CinematicIntro (blue, 0→0.23) + Hero (blue, 0.23→0.27)
-  { state: 'forming',              bg: 'blue',  start: 0.00, end: 0.11, bloomEnabled: true  },
-  { state: 'complete',             bg: 'blue',  start: 0.11, end: 0.27, bloomEnabled: true  },
+  // ACT 1 — TRUST IS BORN: CinematicIntro (blue, 0→0.24) + Hero (blue, 0.24→0.32)
+  { state: 'forming',              bg: 'blue',  start: 0.00, end: 0.14, bloomEnabled: true  },
+  { state: 'complete',             bg: 'blue',  start: 0.14, end: 0.32, bloomEnabled: true  },
 
-  // ACT 2 — TRUST IS BROKEN: TheProblem (white, 0.27→0.39)
-  { state: 'shattering',           bg: 'white', start: 0.27, end: 0.34, bloomEnabled: false },
-  { state: 'scattered',            bg: 'white', start: 0.34, end: 0.39, bloomEnabled: false },
+  // ACT 2 — TRUST IS BROKEN: TheProblem (white, 0.32→0.43)
+  { state: 'shattering',           bg: 'white', start: 0.32, end: 0.39, bloomEnabled: false },
+  { state: 'scattered',            bg: 'white', start: 0.39, end: 0.43, bloomEnabled: false },
 
-  // ACT 3 — TRUST IS ENGINEERED: TheSolution (white, 0.39→0.53)
-  { state: 'rebuilding_buyer',     bg: 'white', start: 0.39, end: 0.43, bloomEnabled: false },
-  { state: 'rebuilding_seller',    bg: 'white', start: 0.43, end: 0.48, bloomEnabled: false },
-  { state: 'rebuilding_middleman', bg: 'white', start: 0.48, end: 0.51, bloomEnabled: false },
-  { state: 'rebuilt',              bg: 'white', start: 0.51, end: 0.53, bloomEnabled: false },
+  // ACT 3 — TRUST IS ENGINEERED: TheSolution (white, 0.43→0.56)
+  { state: 'rebuilding_buyer',     bg: 'white', start: 0.43, end: 0.47, bloomEnabled: false },
+  { state: 'rebuilding_seller',    bg: 'white', start: 0.47, end: 0.52, bloomEnabled: false },
+  { state: 'rebuilding_middleman', bg: 'white', start: 0.52, end: 0.54, bloomEnabled: false },
+  { state: 'rebuilt',              bg: 'white', start: 0.54, end: 0.56, bloomEnabled: false },
 
-  // ACT 4 — HOW IT WORKS: HowItWorks (blue, 0.53→0.76)
-  { state: 'morphing',             bg: 'blue',  start: 0.53, end: 0.76, bloomEnabled: true  },
+  // ACT 4 — HOW IT WORKS: HowItWorks (blue, 0.56→0.78)
+  { state: 'morphing',             bg: 'blue',  start: 0.56, end: 0.78, bloomEnabled: true  },
 
-  // ACT 5 — THE PROOF: TheFlow (white, 0.76→0.92) + TrustLayer (white, 0.92→0.94)
-  { state: 'rebuilt',              bg: 'white', start: 0.76, end: 0.94, bloomEnabled: false },
+  // ACT 5 — THE PROOF: TheFlow (white, 0.78→0.94)
+  { state: 'rebuilt',              bg: 'white', start: 0.78, end: 0.94, bloomEnabled: false },
 
   // ACT 6 — THE INVITATION: FeeSection (blue, 0.94→0.98) + CtaSection (blue, 0.98→1.0)
   { state: 'peaceful',             bg: 'blue',  start: 0.94, end: 1.00, bloomEnabled: true  },
