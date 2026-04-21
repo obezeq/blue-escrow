@@ -24,13 +24,9 @@
 .o-section {
   position: relative;
   z-index: 2;
-  padding-block: var(--space-96);
-  background: var(--section-bg);
-  color: var(--section-text);
-
-  @include responsive-max($bp-tablet) {
-    padding-block: var(--space-64);
-  }
+  // Padding intentionally omitted — every homepage section ships its own
+  // vertical rhythm in its .module.scss to match v6's bespoke per-section
+  // paddings (160-200px). .o-section is a positioning anchor only.
 }
 
 // --- Grid ---

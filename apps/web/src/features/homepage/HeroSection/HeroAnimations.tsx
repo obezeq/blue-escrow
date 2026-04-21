@@ -4,17 +4,18 @@ import { useRef } from 'react';
 import { gsap, useGSAP } from '@/animations/config/gsap-register';
 import { MATCH_MEDIA } from '@/animations/config/defaults';
 
-// Timing mirrors v6 hero CSS delays (Blue Escrow v6.html CSS 375-377 + 339/398/409/416/455):
-//  - Title words start after the intro overlay finishes (~3.1s)
-//  - Eyebrow / subtitle / CTAs / bottom meta / ticker fade in from 3.9s onward
-// Kept in JS so reduced-motion can bypass the entire sequence cleanly.
-const INTRO_DELAY_WORDS = 3.1;
+// v6 timing, verified against main.js:77-88 + hero.css:375-416:
+//  - Nav fade-in at 3.5s (during intro exit, before title words land)
+//  - Title words lift at 3.9s stagger 0.08, 1.0s, power4.out (v6 CSS delay 3.25/3.42s)
+//  - Supporting rows (eyebrow / sub / ctas / meta / ticker) fade from 3.9s
+const INTRO_DELAY_NAV = 3.5;
+const INTRO_DELAY_WORDS = 3.9;
 const INTRO_DELAY_SUPPORT = 3.9;
 
 /**
  * Client wrapper that animates the v6 hero content after the preloader exits.
- * Words rise into place, supporting rows fade up, then the title parallaxes as
- * the user scrolls past the hero.
+ * Nav fades in first, words rise into place, supporting rows fade up, then
+ * the title parallaxes as the user scrolls past the hero.
  *
  * Under prefers-reduced-motion: reduce, everything is rendered static at
  * CSS defaults — no tweens, no parallax, no ticker scroll.
@@ -29,6 +30,23 @@ export function HeroAnimations({ children }: { children: React.ReactNode }) {
       const mm = gsap.matchMedia();
 
       mm.add(MATCH_MEDIA.noReducedMotion, () => {
+        // Nav intro fade — matches v6 main.js:79 which fades .nav in at
+        // timeline position -0.55s relative to intro exit (~3.5s absolute).
+        // We query outside the scoped container since <Header> lives in the
+        // marketing layout, above HeroSection in the DOM.
+        const nav = document.querySelector<HTMLElement>(
+          'header[class*="header"]',
+        );
+        if (nav) {
+          gsap.set(nav, { autoAlpha: 0 });
+          gsap.to(nav, {
+            autoAlpha: 1,
+            duration: 0.6,
+            ease: 'power2.out',
+            delay: INTRO_DELAY_NAV,
+          });
+        }
+
         const words = container.querySelectorAll<HTMLElement>(
           '[class*="hero__word"]',
         );
@@ -42,9 +60,9 @@ export function HeroAnimations({ children }: { children: React.ReactNode }) {
           gsap.set(words, { yPercent: 115 });
           gsap.to(words, {
             yPercent: 0,
-            duration: 1.2,
-            ease: 'power3.out',
-            stagger: 0.12,
+            duration: 1.0,
+            ease: 'power4.out',
+            stagger: 0.08,
             delay: INTRO_DELAY_WORDS,
           });
         }
@@ -89,15 +107,19 @@ export function HeroAnimations({ children }: { children: React.ReactNode }) {
       });
 
       mm.add(MATCH_MEDIA.reducedMotion, () => {
-        // Static end state: words fully in place, supporting rows visible,
-        // parallax disabled. clearProps removes any yPercent/opacity the
-        // no-preference branch set above if preference flips at runtime.
+        // Static end state: words in place, supporting rows visible, nav
+        // visible, parallax disabled. clearProps removes any yPercent/opacity
+        // the no-preference branch set if the user flips preference at runtime.
         gsap.set(
           container.querySelectorAll(
             '[class*="hero__word"], [data-animate]',
           ),
           { clearProps: 'all' },
         );
+        const nav = document.querySelector<HTMLElement>(
+          'header[class*="header"]',
+        );
+        if (nav) gsap.set(nav, { clearProps: 'all' });
       });
     },
     { scope: containerRef },

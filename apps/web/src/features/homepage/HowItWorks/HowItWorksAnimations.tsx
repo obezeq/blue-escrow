@@ -128,9 +128,14 @@ export function HowItWorksAnimations({
           seller: ACTOR_POSITIONS.seller,
         };
 
-        // Seed: actors + orbits invisible, packet hidden at client position,
-        // wires dark, ledger amount at 0.
-        gsap.set(Object.values(actors), { opacity: 0 });
+        // Seed: actors + orbits invisible and under-scaled (for the
+        // back.out enter), packet hidden at client position, wires dark,
+        // ledger amount at 0.
+        gsap.set(Object.values(actors), {
+          opacity: 0,
+          scale: 0.9,
+          transformOrigin: '50% 50%',
+        });
         gsap.set(Object.values(wires), { opacity: 0 });
         gsap.set(coreHalo, { fillOpacity: 0 });
         gsap.set(orbits, { opacity: 0 });
@@ -163,8 +168,20 @@ export function HowItWorksAnimations({
         });
 
         // --- Phase 0: Meet ---
+        // Actors pop in with a back.out(1.4) scale + opacity stagger to
+        // match v6 main.js:145-150 ("gsap.from mech-node, back.out, stagger").
         masterTl.addLabel('phase-0');
-        masterTl.to(Object.values(actors), { opacity: 1, duration: 0.5, stagger: 0.1 }, 'phase-0');
+        masterTl.to(
+          Object.values(actors),
+          {
+            opacity: 1,
+            scale: 1,
+            duration: 0.9,
+            stagger: 0.15,
+            ease: 'back.out(1.4)',
+          },
+          'phase-0',
+        );
         masterTl.to(orbits, { opacity: 1, duration: 0.5 }, 'phase-0');
 
         // --- Phase 1: Sign (all 3 wires pulse briefly) ---
@@ -210,15 +227,17 @@ export function HowItWorksAnimations({
 
         masterTl.to(coreHalo, { fillOpacity: 0.25, duration: 0.4 }, 'phase-2+=0.3');
 
-        // Tween ledger amount display 0 -> 2400
+        // Tween ledger amount display 0 -> 2400.
+        // v6 timing: 2.0s with `power3.out` for a deliberate, money-flows-in
+        // feeling. Phase 4 shipped 0.8s `power2.out` — 2.5x too fast vs design.
         if (ledgerAmountEl) {
           const amountProxy = { value: 0 };
           masterTl.to(
             amountProxy,
             {
               value: 2400,
-              duration: 0.8,
-              ease: 'power2.out',
+              duration: 2.0,
+              ease: 'power3.out',
               onUpdate() {
                 ledgerAmountEl.textContent = Math.round(
                   amountProxy.value,

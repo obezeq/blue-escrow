@@ -8,6 +8,14 @@ $bp-desktop: 1024px;
 $bp-wide: 1440px;
 $bp-ultra: 1920px;
 
+// v6-aligned semantic breakpoints (Blue Escrow v6.html CSS uses these):
+// $bp-narrow (720px): wrap padding shrinks, section-head stack
+// $bp-nav    (820px): nav-links collapse, footer top grid 2-col
+// $bp-section (900px): section-head grid 1-col, hiw-head stack
+$bp-narrow:  720px;
+$bp-nav:     820px;
+$bp-section: 900px;
+
 // ============================================================================
 // CSS CUSTOM PROPERTIES — Single source of truth for v6 design tokens
 // ============================================================================
@@ -92,19 +100,10 @@ $bp-ultra: 1920px;
 
   // --- Layout ---
   --container-max:     1440px;
-  --container-padding: var(--space-24);
+  // v6 wraps use 40px horizontal padding at desktop; mobile shrinks to 24px
+  // (v6 base.css:42-43). Fluid clamp hits both bounds without a breakpoint.
+  --container-padding: clamp(1.5rem, 4vw, 2.5rem);
   --header-height:     4.5rem;
-
-  // --- Legacy back-compat (removed in the SectionTransition cleanup commit) ---
-  --white:           #ffffff;
-  --black:           #111111;
-  --gray-text:       #767676;
-  --gray-light:      #f5f7fa;
-  --gray-border:     #e8ecf0;
-  --danger-red:      #ff4455;
-  --role-client:     var(--blue-primary);
-  --role-seller:     var(--blue-text);
-  --role-middleman:  #999999;
 }
 
 // ----------------------------------------------------------------------------
@@ -118,6 +117,7 @@ $bp-ultra: 1920px;
   --bg-tint:       #0d2244;
   --text:          #e6edf3;
   --text-muted:    #8b949e;
+  --muted-2:       #556089; // Secondary muted — darker than --text-muted, used in SVG labels (HIW diagram)
   --border:        #1a2740;
   --border-strong: #2a3b5c;
 
@@ -133,16 +133,6 @@ $bp-ultra: 1920px;
     linear-gradient(180deg, #001b4d 0%, #0b1117 70%);
   --blue-band:
     linear-gradient(135deg, var(--blue-primary) 0%, var(--blue-vivid) 100%);
-
-  // Back-compat contextual aliases — kept until Phase 1 section-class cleanup lands.
-  --section-bg:          var(--bg-page);
-  --section-text:        var(--text);
-  --section-heading:     var(--accent);
-  --section-muted:       var(--text-muted);
-  --section-card-bg:     var(--bg-surface);
-  --section-card-border: var(--border);
-  --section-code-bg:     var(--bg-surface);
-  --section-particle:    var(--accent);
 }
 
 // ----------------------------------------------------------------------------
@@ -155,6 +145,7 @@ $bp-ultra: 1920px;
   --bg-tint:       #e6f1ff;
   --text:          #0a0a0a;
   --text-muted:    #5a6474;
+  --muted-2:       #8591ad; // Secondary muted in light theme (lighter blue-grey for SVG labels)
   --border:        #e0e4ea;
   --border-strong: #c9d2de;
 
@@ -170,13 +161,4 @@ $bp-ultra: 1920px;
     linear-gradient(180deg, #e6f1ff 0%, #ffffff 70%);
   --blue-band:
     linear-gradient(135deg, var(--blue-primary) 0%, var(--blue-vivid) 100%);
-
-  --section-bg:          var(--bg-page);
-  --section-text:        var(--text);
-  --section-heading:     var(--accent);
-  --section-muted:       var(--text-muted);
-  --section-card-bg:     var(--bg-surface);
-  --section-card-border: var(--border);
-  --section-code-bg:     var(--bg-tint);
-  --section-particle:    var(--accent);
 }
