@@ -632,13 +632,23 @@
   max-width: 1440px;
   margin: 32px auto 0;
 
+  // 5 → 3 → 2 cols so each button stays wide enough for comfortable
+  // touch targets (3-col at 900px gives ~280px/btn, 2-col at 560px
+  // gives ~260px/btn). The old 2-col-at-900 collapsed too aggressively.
   @media (max-width: 900px) {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 560px) {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 .hiw__railButton {
-  padding: 18px 24px;
+  padding-inline: clamp(0.75rem, 2vw, 1.5rem);
+  padding-block: clamp(0.875rem, 2vw, 1.125rem);
+  // WCAG 2.2 Success Criterion 2.5.8 — Target Size Enhanced is 44×44 CSS px.
+  min-block-size: 44px;
   font-family: var(--ff-mono);
   font-size: 11px;
   letter-spacing: 0.14em;
@@ -680,9 +690,22 @@
     transition: width 0.5s var(--ease-out-expo);
   }
 
+  // Strip the right-border on the rightmost button of each layout's row so
+  // it doesn't sit against the rail's right edge as a dangling line.
   @media (max-width: 900px) {
+    &:nth-child(3n) {
+      border-right: 0;
+    }
+  }
+
+  @media (max-width: 560px) {
     &:nth-child(2n) {
       border-right: 0;
+    }
+    // Re-assert border-right on position 3 (which was cleared by the 3n
+    // rule above but sits mid-row in the 2-col layout).
+    &:nth-child(3) {
+      border-right: 1px solid var(--border);
     }
   }
 }
