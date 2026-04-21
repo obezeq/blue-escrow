@@ -1,101 +1,86 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 
-// Mock the client animation wrapper
 vi.mock('./HowItWorksAnimations', () => ({
-  HowItWorksAnimations: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
+  HowItWorksAnimations: ({
+    children,
+  }: {
+    children: React.ReactNode;
+    stageRef: unknown;
+    onPhaseChange: (p: 0 | 1 | 2 | 3 | 4) => void;
+  }) => <div>{children}</div>,
 }));
 
 import { HowItWorks } from './HowItWorks';
+import { HIW_STEPS } from './steps';
 
-afterEach(() => cleanup());
+afterEach(cleanup);
 
-describe('HowItWorks', () => {
-  it('renders the section heading', () => {
+describe('HowItWorks (v6)', () => {
+  it('renders the v6 eyebrow + heading with emphasis + subtitle', () => {
     render(<HowItWorks />);
-    const heading = screen.getByRole('heading', {
-      level: 2,
-      name: 'How it works',
+    expect(screen.getByText('How it works')).toBeDefined();
+    const heading = screen.getByRole('heading', { level: 2 });
+    expect(heading.textContent).toContain('Three people');
+    expect(heading.querySelector('em')?.textContent).toBe('smart contract.');
+    expect(
+      screen.getByText(/Scroll to watch one deal unfold/),
+    ).toBeDefined();
+  });
+
+  it('renders all 5 rail buttons with numbers + labels', () => {
+    render(<HowItWorks />);
+    HIW_STEPS.forEach((s) => {
+      expect(screen.getByText(s.rail.num)).toBeDefined();
+      expect(screen.getByText(s.rail.label)).toBeDefined();
     });
-    expect(heading).toBeDefined();
   });
 
-  it('renders all five step titles', () => {
+  it('starts on step 01 with the Meet narration', () => {
     render(<HowItWorks />);
     expect(
-      screen.getByRole('heading', { level: 3, name: 'Create' }),
-    ).toBeDefined();
-    expect(
-      screen.getByRole('heading', { level: 3, name: 'Sign' }),
-    ).toBeDefined();
-    expect(
-      screen.getByRole('heading', { level: 3, name: 'Deposit' }),
-    ).toBeDefined();
-    expect(
-      screen.getByRole('heading', { level: 3, name: 'Deliver' }),
-    ).toBeDefined();
-    expect(
-      screen.getByRole('heading', { level: 3, name: 'Resolve' }),
-    ).toBeDefined();
+      screen.getAllByText(/Step 01 · Meet/).length,
+    ).toBeGreaterThanOrEqual(1);
+    const narrationTitle = screen.getByRole('heading', { level: 3 });
+    expect(narrationTitle.textContent).toContain('Three wallets');
   });
 
-  it('renders all five step descriptions', () => {
+  it('switches the active step when a rail button is clicked', () => {
     render(<HowItWorks />);
+    fireEvent.click(screen.getByText('Lock').closest('button')!);
     expect(
-      screen.getByText(
-        'Any party creates a deal on-chain. Invite others by wallet or link.',
-      ),
-    ).toBeDefined();
-    expect(
-      screen.getByText(
-        'All three parties confirm with their wallet. Terms locked on-chain.',
-      ),
-    ).toBeDefined();
-    expect(
-      screen.getByText(
-        'The buyer sends USDC directly to the smart contract.',
-      ),
-    ).toBeDefined();
-    expect(
-      screen.getByText(
-        'The seller delivers. Both parties confirm completion.',
-      ),
-    ).toBeDefined();
-    expect(
-      screen.getByText(
-        'Funds released to the seller. NFT receipts minted for all parties.',
-      ),
-    ).toBeDefined();
+      screen.getAllByText(/Step 03 · Lock/).length,
+    ).toBeGreaterThanOrEqual(1);
+    const narrationTitle = screen.getByRole('heading', { level: 3 });
+    expect(narrationTitle.textContent).toContain('The contract');
   });
 
-  it('renders step numbers', () => {
+  it('updates the ledger amount when phase advances to Lock', () => {
     render(<HowItWorks />);
-    expect(screen.getByText('01')).toBeDefined();
-    expect(screen.getByText('02')).toBeDefined();
-    expect(screen.getByText('03')).toBeDefined();
-    expect(screen.getByText('04')).toBeDefined();
-    expect(screen.getByText('05')).toBeDefined();
+    fireEvent.click(screen.getByText('Lock').closest('button')!);
+    expect(screen.getByText('2,400')).toBeDefined();
   });
 
-  it('uses an ordered list for semantic step ordering', () => {
+  it('updates the state chip label per phase', () => {
     render(<HowItWorks />);
-    const list = screen.getByRole('list');
-    expect(list).toBeDefined();
-    expect(list.tagName).toBe('OL');
+    expect(screen.getByText('Draft')).toBeDefined();
+    fireEvent.click(screen.getByText('Release').closest('button')!);
+    expect(screen.getByText('Released')).toBeDefined();
   });
 
-  it('renders as a semantic section with correct id', () => {
+  it('marks the active rail button with aria-pressed=true', () => {
+    render(<HowItWorks />);
+    const buttons = screen.getAllByRole('button');
+    expect(buttons[0]!.getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(buttons[2]!);
+    expect(buttons[0]!.getAttribute('aria-pressed')).toBe('false');
+    expect(buttons[2]!.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('renders as <section id="hiw"> with accessible label', () => {
     const { container } = render(<HowItWorks />);
     const section = container.querySelector('section');
-    expect(section).not.toBeNull();
-    expect(section?.id).toBe('how-it-works');
-  });
-
-  it('has aria-label on the section', () => {
-    const { container } = render(<HowItWorks />);
-    const section = container.querySelector('section');
+    expect(section?.id).toBe('hiw');
     expect(section?.getAttribute('aria-label')).toBe(
       'How it works in five steps',
     );

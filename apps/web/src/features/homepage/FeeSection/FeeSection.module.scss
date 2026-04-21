@@ -1,60 +1,136 @@
 @use '../../../styles/settings/variables' as *;
-@use '../../../styles/settings/typography' as *;
-@use '../../../styles/tools/mixins' as *;
 
 // ============================================================================
-// FEE SECTION — Massive "0.33%" typography on BLUE bg
+// FEES — v6 .fees (Blue Escrow v6.html:1577-1596, CSS 988-1018).
+// Two-col: giant "0.33%" gradient-filled number + eyebrow/h2/body/competitor row.
 // ============================================================================
 
-.fee {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-block: var(--space-128);
+.fees {
+  padding: 200px 0;
+  position: relative;
   overflow: hidden;
+  background: var(--bg-page);
 
-  @include responsive-max($bp-tablet) {
-    padding-block: var(--space-96);
+  @media (max-width: 720px) {
+    padding: 120px 0;
   }
 }
 
-.fee__content {
-  text-align: center;
+.fees__wrap {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 40px;
+
+  @media (max-width: 720px) {
+    padding: 0 24px;
+  }
 }
 
-// --- Massive number ---
+.fees__grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 80px;
+  align-items: center;
 
-.fee__number {
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: clamp(96px, 20vw, 320px);
-  font-weight: 700;
-  line-height: 1;
-  color: var(--section-text);
-  margin: 0;
-  will-change: transform;
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+}
+
+.fees__number {
+  font-size: clamp(140px, 28vw, 440px);
+  line-height: 0.82;
+  letter-spacing: -0.07em;
+  font-weight: 600;
+  background: linear-gradient(
+    180deg,
+    var(--text) 0%,
+    var(--accent) 60%,
+    var(--accent) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   font-variant-numeric: tabular-nums;
 }
 
-// --- Comparison ---
-
-.fee__comparison {
-  margin-block-start: var(--space-48);
+.fees__dot {
+  font-size: 0.55em;
 }
 
-.fee__line {
-  @include type-h4;
-  color: var(--section-text);
-  margin: 0 0 var(--space-16);
+.fees__sup {
+  font-size: 0.18em;
+  vertical-align: super;
+  font-weight: 500;
+  color: var(--accent);
+  -webkit-text-fill-color: var(--accent);
 }
 
-.fee__competitor {
-  @include type-body-lg;
-  color: var(--section-muted);
-  margin: 0;
+.fees__copy {
+  display: flex;
+  flex-direction: column;
 }
 
-.fee__highlight {
-  color: var(--section-text);
-  font-weight: 700;
+.fees__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+
+  &::before {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.7;
+  }
+}
+
+.fees__heading {
+  font-size: clamp(40px, 5.6vw, 78px);
+  line-height: 0.96;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+  margin: 14px 0 28px;
+  text-wrap: balance;
+  color: var(--text);
+}
+
+.fees__emphasis {
+  font-style: italic;
+  color: var(--accent);
+  font-weight: 400;
+}
+
+.fees__body {
+  font-size: 17px;
+  color: var(--text-muted);
+  margin: 0 0 20px;
+  max-width: 48ch;
+  line-height: 1.55;
+}
+
+.fees__row {
+  margin-top: 36px;
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+  font-family: var(--ff-mono);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.fees__competitor {
+  b {
+    color: var(--text);
+    font-weight: 500;
+    margin-right: 6px;
+  }
 }

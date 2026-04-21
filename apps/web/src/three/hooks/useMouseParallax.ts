@@ -6,7 +6,11 @@
 import { useEffect, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { MathUtils } from 'three';
-import { ANIMATION } from '../config/vaultConfig';
+
+// Parallax tilt target (degrees) and per-frame lerp factor. Small values
+// because the hero scene is already animated; heavy parallax reads as jittery.
+const MOUSE_PARALLAX_DEGREES = 3;
+const MOUSE_PARALLAX_LERP = 0.08;
 
 interface ParallaxTarget {
   x: number;
@@ -33,7 +37,7 @@ export function useMouseParallax(): React.MutableRefObject<ParallaxTarget> {
     }
 
     enabledRef.current = true;
-    const maxAngle = MathUtils.degToRad(ANIMATION.mouseParallaxDegrees);
+    const maxAngle = MathUtils.degToRad(MOUSE_PARALLAX_DEGREES);
 
     const handleMouseMove = (e: MouseEvent) => {
       // Normalize to -1..1
@@ -50,9 +54,10 @@ export function useMouseParallax(): React.MutableRefObject<ParallaxTarget> {
   useFrame(() => {
     if (!enabledRef.current) return;
 
-    const lerp = ANIMATION.mouseParallaxLerp;
-    smoothedRef.current.x += (targetRef.current.x - smoothedRef.current.x) * lerp;
-    smoothedRef.current.y += (targetRef.current.y - smoothedRef.current.y) * lerp;
+    smoothedRef.current.x +=
+      (targetRef.current.x - smoothedRef.current.x) * MOUSE_PARALLAX_LERP;
+    smoothedRef.current.y +=
+      (targetRef.current.y - smoothedRef.current.y) * MOUSE_PARALLAX_LERP;
   });
 
   return smoothedRef;

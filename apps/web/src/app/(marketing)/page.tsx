@@ -2,12 +2,13 @@ import type { Metadata } from 'next';
 import { ClientShell } from '@/features/homepage/ClientShell';
 import { HeroSection } from '@/features/homepage/HeroSection/HeroSection';
 import { TheProblem } from '@/features/homepage/TheProblem/TheProblem';
-import { TheSolution } from '@/features/homepage/TheSolution/TheSolution';
 import { HowItWorks } from '@/features/homepage/HowItWorks/HowItWorks';
-import { TheFlow } from '@/features/homepage/TheFlow/TheFlow';
 import { TrustLayer } from '@/features/homepage/TrustLayer/TrustLayer';
 import { FeeSection } from '@/features/homepage/FeeSection/FeeSection';
 import { CtaSection } from '@/features/homepage/CtaSection/CtaSection';
+import { Faq } from '@/features/homepage/Faq';
+import { Compare } from '@/features/homepage/Compare';
+import { Receipts } from '@/features/homepage/Receipts';
 
 export const metadata: Metadata = {
   title: 'Blue Escrow — Decentralized Escrow on Arbitrum',
@@ -33,11 +34,12 @@ export default function HomePage() {
       <ClientShell />
       <HeroSection />
       <TheProblem />
-      <TheSolution />
       <HowItWorks />
-      <TheFlow />
+      <Compare />
       <TrustLayer />
+      <Receipts />
       <FeeSection />
+      <Faq />
       <CtaSection />
     </>
   );

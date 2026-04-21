@@ -1,22 +1,19 @@
 'use client';
 
 import { useRef } from 'react';
-import { gsap, useGSAP } from '@/animations/config/gsap-register';
+import { gsap, useGSAP, ScrollTrigger } from '@/animations/config/gsap-register';
 import { MATCH_MEDIA } from '@/animations/config/defaults';
 
 /**
- * Ports the scroll-in reveal for the v6 .fees section:
- * - The giant 0.33% number fades up with a slight scale settle
- * - Eyebrow + h2 stagger in after the number lands
- * - Body paragraphs + competitor row reveal together below
+ * Scroll-in reveal stagger for the v6 FAQ:
+ * - head block (eyebrow + heading + subtitle) staggers in together
+ * - each faq item fades up on entry
  *
- * Reduced motion leaves everything visible.
+ * Expansion itself is pure CSS (max-height transition + icon rotate),
+ * but when a panel opens the page height changes — we refresh
+ * ScrollTrigger so downstream pinned sections (hero, hiw) recompute.
  */
-export function FeeSectionAnimations({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function FaqAnimations({ children }: { children: React.ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
@@ -26,32 +23,16 @@ export function FeeSectionAnimations({
       const mm = gsap.matchMedia();
 
       mm.add('(prefers-reduced-motion: no-preference)', () => {
-        const number = container.querySelector('[data-animate="number"]');
         const eyebrow = container.querySelector('[data-animate="eyebrow"]');
         const heading = container.querySelector('[data-animate="heading"]');
-        const bodies = container.querySelectorAll('[data-animate="body"]');
-        const row = container.querySelector('[data-animate="row"]');
-
-        if (number) {
-          gsap.from(number, {
-            scale: 1.08,
-            opacity: 0,
-            duration: 1.2,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: number,
-              start: 'top 80%',
-              once: true,
-            },
-          });
-        }
+        const subtitle = container.querySelector('[data-animate="subtitle"]');
+        const items = container.querySelectorAll('[data-animate="item"]');
 
         if (eyebrow) {
           gsap.from(eyebrow, {
             y: 20,
             opacity: 0,
             duration: 0.7,
-            delay: 0.15,
             ease: 'power3.out',
             scrollTrigger: {
               trigger: eyebrow,
@@ -66,7 +47,7 @@ export function FeeSectionAnimations({
             y: 30,
             opacity: 0,
             duration: 0.9,
-            delay: 0.2,
+            delay: 0.1,
             ease: 'power3.out',
             scrollTrigger: {
               trigger: heading,
@@ -76,29 +57,30 @@ export function FeeSectionAnimations({
           });
         }
 
-        if (bodies.length) {
-          gsap.from(bodies, {
+        if (subtitle) {
+          gsap.from(subtitle, {
             y: 20,
             opacity: 0,
             duration: 0.7,
-            stagger: 0.1,
+            delay: 0.2,
             ease: 'power3.out',
             scrollTrigger: {
-              trigger: bodies[0],
+              trigger: subtitle,
               start: 'top 85%',
               once: true,
             },
           });
         }
 
-        if (row) {
-          gsap.from(row, {
-            y: 20,
+        if (items.length) {
+          gsap.from(items, {
+            y: 24,
             opacity: 0,
-            duration: 0.7,
+            duration: 0.8,
+            stagger: 0.06,
             ease: 'power3.out',
             scrollTrigger: {
-              trigger: row,
+              trigger: items[0],
               start: 'top 90%',
               once: true,
             },
@@ -111,6 +93,20 @@ export function FeeSectionAnimations({
           clearProps: 'all',
         });
       });
+
+      // When any FAQ item opens/closes the page height changes — refresh
+      // ScrollTrigger so upstream pinned sections stay aligned.
+      const observer = new MutationObserver(() => {
+        ScrollTrigger.refresh();
+      });
+      container.querySelectorAll('[data-animate="item"]').forEach((item) => {
+        observer.observe(item, {
+          attributes: true,
+          attributeFilter: ['class'],
+        });
+      });
+
+      return () => observer.disconnect();
     },
     { scope: containerRef },
   );

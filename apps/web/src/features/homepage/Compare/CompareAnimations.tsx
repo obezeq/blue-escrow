@@ -1,34 +1,21 @@
 'use client';
 
-import { useRef, type RefObject } from 'react';
-import { gsap, ScrollTrigger, useGSAP } from '@/animations/config/gsap-register';
+import { useRef } from 'react';
+import { gsap, useGSAP } from '@/animations/config/gsap-register';
 import { MATCH_MEDIA } from '@/animations/config/defaults';
 
-interface HowItWorksAnimationsProps {
-  children: React.ReactNode;
-  stageRef: RefObject<HTMLDivElement | null>;
-  onPhaseChange: (phase: 0 | 1 | 2 | 3 | 4) => void;
-}
-
 /**
- * Head reveals + scroll-driven phase dispatch for HowItWorks.
- *
- * - Eyebrow + heading + subtitle stagger in at the top of the section
- * - While the stage is in view, scroll progress through it is binned
- *   into 5 phases that drive the parent component's active step. The
- *   rail + narration + ledger then update purely via React state.
- *
- * Heavy pinned choreography with wires, actors orbiting and money
- * packets is intentionally deferred to Phase 3; this is enough for the
- * v6 copy + structure to read correctly.
+ * Scroll-in reveal for the v6 Compare band (.invert).
+ * Eyebrow + heading + subtitle stagger in at the top, then every cell
+ * in the table fades up with a column-first stagger so rows settle
+ * left-to-right. Cheap and sturdy — no pin, no scrub.
  */
-export function HowItWorksAnimations({
+export function CompareAnimations({
   children,
-  stageRef,
-  onPhaseChange,
-}: HowItWorksAnimationsProps) {
+}: {
+  children: React.ReactNode;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const lastPhaseRef = useRef<number>(0);
 
   useGSAP(
     () => {
@@ -40,6 +27,7 @@ export function HowItWorksAnimations({
         const eyebrow = container.querySelector('[data-animate="eyebrow"]');
         const heading = container.querySelector('[data-animate="heading"]');
         const subtitle = container.querySelector('[data-animate="subtitle"]');
+        const cells = container.querySelectorAll('[data-animate="cell"]');
 
         if (eyebrow) {
           gsap.from(eyebrow, {
@@ -71,22 +59,18 @@ export function HowItWorksAnimations({
           });
         }
 
-        if (!stageRef.current) return;
-
-        const trigger = ScrollTrigger.create({
-          trigger: stageRef.current,
-          start: 'top 70%',
-          end: 'bottom 30%',
-          onUpdate(self) {
-            const phase = Math.min(4, Math.floor(self.progress * 5));
-            if (phase !== lastPhaseRef.current) {
-              lastPhaseRef.current = phase;
-              onPhaseChange(phase as 0 | 1 | 2 | 3 | 4);
-            }
-          },
+        cells.forEach((cell, i) => {
+          const col = i % 4;
+          const row = Math.floor(i / 4);
+          gsap.from(cell, {
+            y: 20,
+            opacity: 0,
+            duration: 0.5,
+            delay: col * 0.04 + row * 0.06,
+            ease: 'power3.out',
+            scrollTrigger: { trigger: cell, start: 'top 92%', once: true },
+          });
         });
-
-        return () => trigger.kill();
       });
 
       mm.add(MATCH_MEDIA.reducedMotion, () => {
@@ -95,7 +79,7 @@ export function HowItWorksAnimations({
         });
       });
     },
-    { scope: containerRef, dependencies: [onPhaseChange, stageRef] },
+    { scope: containerRef },
   );
 
   return <div ref={containerRef}>{children}</div>;

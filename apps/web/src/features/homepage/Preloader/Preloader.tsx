@@ -1,169 +1,121 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { gsap, useGSAP } from '@/animations/config/gsap-register';
-import { useThreeContext } from '@/providers/ThreeProvider';
-import { useLenis as useLenisInstance } from 'lenis/react';
+import { useEffect, useRef, useState } from 'react';
+import { useLenis } from 'lenis/react';
 import styles from './Preloader.module.scss';
 
-const VIDEO_SOURCES = ['/video/handshake.mp4', '/video/explosion.mp4'];
-const THREE_WEIGHT = 0.6;
-const VIDEO_WEIGHT = 0.4;
-const TIMEOUT_MS = 3_000;
-const LERP_SPEED = 0.08;
+const BLUE_LETTERS = ['B', 'l', 'u', 'e'];
+const ESCROW_LETTERS = ['E', 's', 'c', 'r', 'o', 'w'];
+
+// Timing mirrors base.css:134 (introOut fires at 2.8s) + 1.1s exit duration.
+// Counter ticks in sync with .track i (2.5s fill with 0.2s delay).
+const COUNTER_START_MS = 200;
+const COUNTER_DURATION_MS = 2500;
+const HIDE_AFTER_MS = 2800 + 1100 + 120; // leave a small safety buffer
 
 export function Preloader() {
-  const { isThreeReady } = useThreeContext();
-  const lenis = useLenisInstance();
-  const [visible, setVisible] = useState(true);
-  const [exiting, setExiting] = useState(false);
-  const videosLoaded = useRef(0);
-  const targetProgress = useRef(0);
-  const displayedProgress = useRef(0);
+  const [hidden, setHidden] = useState(false);
+  const lenis = useLenis();
   const counterRef = useRef<HTMLSpanElement>(null);
-  const dotRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const rafId = useRef(0);
-  const timedOut = useRef(false);
 
-  // Skip preloader for reduced-motion users
+  // Reduced-motion users: never mount the overlay; reveal the page immediately.
   useEffect(() => {
-    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (mql.matches) {
-      setVisible(false);
+    if (
+      typeof window === 'undefined' ||
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      return;
     }
+    setHidden(true);
   }, []);
 
-  // Lock scroll while preloader is visible
+  // Lock Lenis scroll while the overlay is visible; release on exit.
   useEffect(() => {
     if (!lenis) return;
-    if (visible) {
-      lenis.stop();
-    } else {
+    if (hidden) {
       lenis.start();
+    } else {
+      lenis.stop();
     }
-  }, [lenis, visible]);
+  }, [lenis, hidden]);
 
-  // Track video preload
+  // Tick the counter 0 -> 100 via rAF, staying in lockstep with the CSS
+  // progress bar fill (width 0 -> 100% over 2.5s, delayed 0.2s).
   useEffect(() => {
-    if (!visible) return;
+    if (hidden) return;
+    const el = counterRef.current;
+    if (!el) return;
 
-    const videos: HTMLVideoElement[] = [];
-
-    VIDEO_SOURCES.forEach((src) => {
-      const video = document.createElement('video');
-      video.src = src;
-      video.preload = 'auto';
-      video.muted = true;
-      video.playsInline = true;
-      video.addEventListener(
-        'canplaythrough',
-        () => {
-          videosLoaded.current += 1;
-        },
-        { once: true },
-      );
-      video.load();
-      videos.push(video);
-    });
-
-    return () => {
-      videos.forEach((v) => {
-        v.src = '';
-        v.load();
-      });
-    };
-  }, [visible]);
-
-  // 3s hard timeout
-  useEffect(() => {
-    if (!visible) return;
-    const timer = setTimeout(() => {
-      timedOut.current = true;
-    }, TIMEOUT_MS);
-    return () => clearTimeout(timer);
-  }, [visible]);
-
-  const exit = useCallback(() => {
-    if (exiting) return;
-    setExiting(true);
-  }, [exiting]);
-
-  // Smooth progress animation via rAF
-  useEffect(() => {
-    if (!visible) return;
+    let rafId = 0;
+    let startTimeout = 0;
+    let startPerf = 0;
 
     const tick = () => {
-      // Compute target
-      const threeProgress = isThreeReady || timedOut.current ? 1 : 0;
-      const videoProgress =
-        timedOut.current
-          ? 1
-          : videosLoaded.current / VIDEO_SOURCES.length;
-      targetProgress.current =
-        threeProgress * THREE_WEIGHT + videoProgress * VIDEO_WEIGHT;
-
-      // Lerp displayed value
-      displayedProgress.current +=
-        (targetProgress.current - displayedProgress.current) * LERP_SPEED;
-
-      // Clamp to 100
-      if (displayedProgress.current > 0.995) {
-        displayedProgress.current = 1;
+      const elapsed = performance.now() - startPerf;
+      const ratio = Math.min(1, elapsed / COUNTER_DURATION_MS);
+      el.textContent = `${Math.round(ratio * 100).toString().padStart(3, '0')}%`;
+      if (ratio < 1) {
+        rafId = requestAnimationFrame(tick);
       }
-
-      // Update DOM directly (no React re-render)
-      if (counterRef.current) {
-        counterRef.current.textContent = `${Math.round(displayedProgress.current * 100)}%`;
-      }
-
-      // Trigger exit when fully loaded
-      if (displayedProgress.current >= 1) {
-        exit();
-        return;
-      }
-
-      rafId.current = requestAnimationFrame(tick);
     };
 
-    rafId.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId.current);
-  }, [visible, isThreeReady, exit]);
+    startTimeout = window.setTimeout(() => {
+      startPerf = performance.now();
+      rafId = requestAnimationFrame(tick);
+    }, COUNTER_START_MS);
 
-  // Exit animation
-  useGSAP(
-    () => {
-      if (!exiting || !containerRef.current || !dotRef.current) return;
+    return () => {
+      window.clearTimeout(startTimeout);
+      cancelAnimationFrame(rafId);
+    };
+  }, [hidden]);
 
-      const tl = gsap.timeline({
-        onComplete: () => setVisible(false),
-      });
+  // Un-mount once the CSS introOut animation has finished.
+  useEffect(() => {
+    if (hidden) return;
+    const timer = window.setTimeout(() => setHidden(true), HIDE_AFTER_MS);
+    return () => window.clearTimeout(timer);
+  }, [hidden]);
 
-      tl.to(dotRef.current, {
-        scale: 40,
-        duration: 0.6,
-        ease: 'power2.in',
-      }).to(
-        containerRef.current,
-        {
-          opacity: 0,
-          duration: 0.4,
-          ease: 'power2.out',
-        },
-        '-=0.2',
-      );
-    },
-    { dependencies: [exiting] },
-  );
-
-  if (!visible) return null;
+  if (hidden) return null;
 
   return (
-    <div className={styles.preloader} ref={containerRef} aria-live="polite">
-      <div className={styles.preloader__center}>
-        <div className={styles.preloader__dot} ref={dotRef} />
-        <span className={styles.preloader__counter} ref={counterRef}>
-          0%
+    <div id="intro" className={styles.intro} aria-hidden="true">
+      <div className={styles.intro__mark}>
+        <span className={styles.intro__word}>
+          {BLUE_LETTERS.map((char, i) => (
+            <span
+              key={`b-${i}`}
+              className={styles.intro__letter}
+              style={{ animationDelay: `${0.25 + i * 0.05}s` }}
+            >
+              {char}
+            </span>
+          ))}
+        </span>
+        <span>&nbsp;</span>
+        <span
+          className={`${styles.intro__word} ${styles['intro__word--italic']}`}
+        >
+          {ESCROW_LETTERS.map((char, i) => (
+            <span
+              key={`e-${i}`}
+              className={styles.intro__letter}
+              style={{ animationDelay: `${0.55 + i * 0.05}s` }}
+            >
+              {char}
+            </span>
+          ))}
+        </span>
+      </div>
+
+      <div className={styles.intro__bar}>
+        <span>Initializing protocol</span>
+        <span className={styles.intro__track} aria-hidden="true">
+          <i />
+        </span>
+        <span className={styles.intro__num} ref={counterRef}>
+          000%
         </span>
       </div>
     </div>

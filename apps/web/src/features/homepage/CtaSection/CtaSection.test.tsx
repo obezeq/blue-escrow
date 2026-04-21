@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 
-// Mock the client animation wrapper
 vi.mock('./CtaSectionAnimations', () => ({
   CtaSectionAnimations: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -10,54 +9,40 @@ vi.mock('./CtaSectionAnimations', () => ({
 
 import { CtaSection } from './CtaSection';
 
-afterEach(() => cleanup());
+afterEach(cleanup);
 
-describe('CtaSection', () => {
-  it('renders h2 with "Make it flow."', () => {
+describe('CtaSection (v6 closing)', () => {
+  it('renders the v6 eyebrow "Ready when you are"', () => {
+    render(<CtaSection />);
+    expect(screen.getByText('Ready when you are')).toBeDefined();
+  });
+
+  it('renders h2 with the v6 closing line and italic emphasis', () => {
     render(<CtaSection />);
     const heading = screen.getByRole('heading', { level: 2 });
-    expect(heading.textContent).toBe('Make it flow.');
+    expect(heading.textContent).toContain('Trade');
+    expect(heading.textContent).toContain('like you trust');
+    expect(heading.textContent).toContain('the code, not the person.');
+    const em = heading.querySelector('em');
+    expect(em?.textContent).toBe('like you trust');
   });
 
-  it('renders subtitle text', () => {
+  it('renders primary CTA pointing to /app', () => {
     render(<CtaSection />);
-    expect(
-      screen.getByText('No signup. No email. Just your wallet.'),
-    ).toBeDefined();
-  });
-
-  it('renders primary CTA linking to /app', () => {
-    render(<CtaSection />);
-    const link = screen.getByRole('link', { name: 'Connect Wallet' });
-    expect(link).toBeDefined();
+    const link = screen.getByRole('link', { name: /Open your first deal/ });
     expect(link.getAttribute('href')).toBe('/app');
   });
 
-  it('renders secondary CTA linking to /docs', () => {
+  it('renders secondary CTA linking to #hiw', () => {
     render(<CtaSection />);
-    const link = screen.getByRole('link', { name: 'Read Documentation' });
-    expect(link).toBeDefined();
-    expect(link.getAttribute('href')).toBe('/docs');
+    const link = screen.getByRole('link', { name: 'See the flow' });
+    expect(link.getAttribute('href')).toBe('#hiw');
   });
 
-  it('renders as a semantic section with correct id', () => {
+  it('renders as <section id="closing"> with accessible label', () => {
     const { container } = render(<CtaSection />);
     const section = container.querySelector('section');
-    expect(section).not.toBeNull();
-    expect(section?.id).toBe('get-started');
-  });
-
-  it('has aria-label on the section', () => {
-    const { container } = render(<CtaSection />);
-    const section = container.querySelector('section');
+    expect(section?.id).toBe('closing');
     expect(section?.getAttribute('aria-label')).toBe('Get started');
-  });
-
-  it('renders decorative FlowTrail echo SVG', () => {
-    const { container } = render(<CtaSection />);
-    const svg = container.querySelector('svg[aria-hidden="true"]');
-    expect(svg).not.toBeNull();
-    const path = svg?.querySelector('path');
-    expect(path).not.toBeNull();
   });
 });

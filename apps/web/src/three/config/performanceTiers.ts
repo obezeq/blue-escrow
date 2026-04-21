@@ -6,7 +6,14 @@
 'use client';
 
 import { useCallback, useRef } from 'react';
-import { PARTICLE_COUNT } from './vaultConfig';
+
+// Particle counts per tier for the v6 hero scene. The upstream hero-three.js
+// reference uses 1400; downsample for weaker devices.
+const PARTICLE_COUNT = {
+  desktop: 1400,
+  tablet: 800,
+  mobile: 400,
+} as const;
 
 export type PerformanceTier = 'high' | 'medium' | 'low';
 

@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 
-// Mock the client animation wrapper
 vi.mock('./TrustLayerAnimations', () => ({
   TrustLayerAnimations: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -10,84 +9,64 @@ vi.mock('./TrustLayerAnimations', () => ({
 
 import { TrustLayer } from './TrustLayer';
 
-afterEach(() => cleanup());
+afterEach(cleanup);
 
-describe('TrustLayer', () => {
-  it('renders the Solidity function signature', () => {
+describe('TrustLayer (v6 proof)', () => {
+  it('renders eyebrow, heading with emphasis, and subtitle', () => {
     render(<TrustLayer />);
-    const codeBlock = document.querySelector('code');
-    expect(codeBlock?.textContent).toContain('function');
-    expect(codeBlock?.textContent).toContain('resolve');
+    expect(screen.getByText('Proof')).toBeDefined();
+    const heading = screen.getByRole('heading', { level: 2 });
+    expect(heading.textContent).toContain('The numbers');
+    expect(heading.querySelector('em')?.textContent).toBe("aren't a pitch.");
+    expect(
+      screen.getByText(/Everything below is verifiable at block level/),
+    ).toBeDefined();
   });
 
-  it('renders the middleman require check', () => {
+  it('renders all 4 proof stat labels', () => {
     render(<TrustLayer />);
-    const codeBlock = document.querySelector('code');
-    expect(codeBlock?.textContent).toContain('msg.sender == middleman');
+    expect(screen.getByText('USDC settled')).toBeDefined();
+    expect(screen.getByText('Protocol fee')).toBeDefined();
+    expect(screen.getByText('Verified middlemen')).toBeDefined();
+    expect(screen.getByText('Funds ever lost')).toBeDefined();
   });
 
-  it('renders the key require line', () => {
+  it('renders each stat sub description', () => {
     render(<TrustLayer />);
-    const codeBlock = document.querySelector('code');
-    expect(codeBlock?.textContent).toContain(
-      'require(to == client || to == seller)',
-    );
+    expect(screen.getByText('Across 3,214 deals this quarter')).toBeDefined();
+    expect(screen.getByText('Flat. No tiers. No hidden cuts.')).toBeDefined();
+    expect(screen.getByText('With on-chain reputation')).toBeDefined();
+    expect(screen.getByText('Audited. Open-source. Immutable.')).toBeDefined();
   });
 
-  it('renders the trust comments', () => {
-    render(<TrustLayer />);
-    const codeBlock = document.querySelector('code');
-    expect(codeBlock?.textContent).toContain(
-      'NEVER to the middleman. Ever.',
-    );
-  });
-
-  it('uses semantic pre and code elements', () => {
+  it('carries data-count + data-decimals on each proof number', () => {
     const { container } = render(<TrustLayer />);
-    const pre = container.querySelector('pre');
-    const code = container.querySelector('code');
-    expect(pre).not.toBeNull();
-    expect(code).not.toBeNull();
-    expect(pre?.contains(code!)).toBe(true);
+    const nums = container.querySelectorAll('[data-count]');
+    expect(nums.length).toBe(4);
+    expect(nums[0]?.getAttribute('data-count')).toBe('12.4');
+    expect(nums[0]?.getAttribute('data-decimals')).toBe('1');
+    expect(nums[1]?.getAttribute('data-count')).toBe('0.33');
+    expect(nums[1]?.getAttribute('data-decimals')).toBe('2');
+    expect(nums[2]?.getAttribute('data-count')).toBe('180');
+    expect(nums[3]?.getAttribute('data-count')).toBe('0');
   });
 
-  it('renders all four stat values', () => {
-    render(<TrustLayer />);
-    expect(screen.getByText('0.33%')).toBeDefined();
-    expect(screen.getByText('$0')).toBeDefined();
-    expect(screen.getByText('100%')).toBeDefined();
-    expect(screen.getByText('33 days')).toBeDefined();
+  it('renders 3 marquee phrase spans inside the track', () => {
+    const { container } = render(<TrustLayer />);
+    const track = container.querySelector('[data-animate="marquee-track"]');
+    expect(track).not.toBeNull();
+    expect(track?.querySelectorAll('span').length).toBe(3);
+    expect(track?.textContent).toContain('TRUSTLESS');
+    expect(track?.textContent).toContain('BORDERLESS');
+    expect(track?.textContent).toContain('UNCENSORABLE');
   });
 
-  it('renders all four stat captions', () => {
-    render(<TrustLayer />);
-    expect(screen.getByText('Platform fee')).toBeDefined();
-    expect(screen.getByText('Middleman can take')).toBeDefined();
-    expect(screen.getByText('On-chain transparency')).toBeDefined();
-    expect(screen.getByText('Security audit')).toBeDefined();
-  });
-
-  it('renders as a semantic section with correct id', () => {
+  it('renders as <section id="proof"> with accessible label', () => {
     const { container } = render(<TrustLayer />);
     const section = container.querySelector('section');
-    expect(section).not.toBeNull();
-    expect(section?.id).toBe('trust-layer');
-  });
-
-  it('has aria-label on the section', () => {
-    const { container } = render(<TrustLayer />);
-    const section = container.querySelector('section');
+    expect(section?.id).toBe('proof');
     expect(section?.getAttribute('aria-label')).toBe(
-      'Trust and transparency',
+      'Protocol proof and on-chain metrics',
     );
-  });
-
-  it('marks the key line with data-highlight attribute', () => {
-    const { container } = render(<TrustLayer />);
-    const keyLine = container.querySelector('[data-highlight="key-line"]');
-    expect(keyLine).not.toBeNull();
-    expect(keyLine?.textContent).toContain('require');
-    expect(keyLine?.textContent).toContain('client');
-    expect(keyLine?.textContent).toContain('seller');
   });
 });

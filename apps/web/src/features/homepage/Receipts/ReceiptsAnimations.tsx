@@ -1,34 +1,22 @@
 'use client';
 
-import { useRef, type RefObject } from 'react';
-import { gsap, ScrollTrigger, useGSAP } from '@/animations/config/gsap-register';
+import { useRef } from 'react';
+import { gsap, useGSAP } from '@/animations/config/gsap-register';
 import { MATCH_MEDIA } from '@/animations/config/defaults';
-
-interface HowItWorksAnimationsProps {
-  children: React.ReactNode;
-  stageRef: RefObject<HTMLDivElement | null>;
-  onPhaseChange: (phase: 0 | 1 | 2 | 3 | 4) => void;
-}
+import { useCardTilt } from './useCardTilt';
 
 /**
- * Head reveals + scroll-driven phase dispatch for HowItWorks.
- *
- * - Eyebrow + heading + subtitle stagger in at the top of the section
- * - While the stage is in view, scroll progress through it is binned
- *   into 5 phases that drive the parent component's active step. The
- *   rail + narration + ledger then update purely via React state.
- *
- * Heavy pinned choreography with wires, actors orbiting and money
- * packets is intentionally deferred to Phase 3; this is enough for the
- * v6 copy + structure to read correctly.
+ * Scroll-in reveal + mouse-tilt for the v6 Receipts cards.
+ * - Head block (eyebrow + heading + subtitle) staggers in
+ * - Each card enters with a 60px y lift + opacity
+ * - useCardTilt attaches mouse-tracking rotateX/Y on desktop only
  */
-export function HowItWorksAnimations({
+export function ReceiptsAnimations({
   children,
-  stageRef,
-  onPhaseChange,
-}: HowItWorksAnimationsProps) {
+}: {
+  children: React.ReactNode;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const lastPhaseRef = useRef<number>(0);
 
   useGSAP(
     () => {
@@ -40,6 +28,7 @@ export function HowItWorksAnimations({
         const eyebrow = container.querySelector('[data-animate="eyebrow"]');
         const heading = container.querySelector('[data-animate="heading"]');
         const subtitle = container.querySelector('[data-animate="subtitle"]');
+        const cards = container.querySelectorAll('[data-animate="card"]');
 
         if (eyebrow) {
           gsap.from(eyebrow, {
@@ -71,22 +60,16 @@ export function HowItWorksAnimations({
           });
         }
 
-        if (!stageRef.current) return;
-
-        const trigger = ScrollTrigger.create({
-          trigger: stageRef.current,
-          start: 'top 70%',
-          end: 'bottom 30%',
-          onUpdate(self) {
-            const phase = Math.min(4, Math.floor(self.progress * 5));
-            if (phase !== lastPhaseRef.current) {
-              lastPhaseRef.current = phase;
-              onPhaseChange(phase as 0 | 1 | 2 | 3 | 4);
-            }
-          },
-        });
-
-        return () => trigger.kill();
+        if (cards.length) {
+          gsap.from(cards, {
+            y: 60,
+            opacity: 0,
+            duration: 1,
+            stagger: 0.08,
+            ease: 'power3.out',
+            scrollTrigger: { trigger: cards[0], start: 'top 85%', once: true },
+          });
+        }
       });
 
       mm.add(MATCH_MEDIA.reducedMotion, () => {
@@ -95,8 +78,12 @@ export function HowItWorksAnimations({
         });
       });
     },
-    { scope: containerRef, dependencies: [onPhaseChange, stageRef] },
+    { scope: containerRef },
   );
+
+  // Mouse tilt binds to the same ref scope. The hook internally skips
+  // on touch-primary and reduced-motion users.
+  useCardTilt(containerRef, '[data-animate="card"]');
 
   return <div ref={containerRef}>{children}</div>;
 }
