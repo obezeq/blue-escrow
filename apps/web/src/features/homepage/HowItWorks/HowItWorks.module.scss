@@ -1,94 +1,694 @@
-@use '@/styles/settings/typography' as *;
-@use '@/styles/settings/variables' as *;
-@use '@/styles/tools/mixins' as *;
+@use '../../../styles/settings/variables' as *;
 
-.howItWorks {
-  min-height: 100vh;
-  display: flex;
+// ============================================================================
+// HOW IT WORKS — v6 (Blue Escrow v6.html:1374-1524, CSS 517-911).
+// Two-column stage: left live Escrow ledger (state chip, amount, progress,
+// timestamped log), right contract-centered actor diagram. 5-step rail at
+// the bottom dispatches phase; scroll advances through phases automatically.
+//
+// NOTE: Phase 2 commit 3722a9c shipped the TSX markup with .hiw__* class
+// names but accidentally didn't include this SCSS update, so develop was
+// rendering HIW unstyled. This file is the delivery of the intended Phase 2
+// styles — full pin+scrub choreography remains deferred to Phase 4 polish.
+// ============================================================================
+
+.hiw {
+  position: relative;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.hiw__intro {
+  padding: 140px 0 80px;
+
+  @media (max-width: 720px) {
+    padding: 100px 0 60px;
+  }
+}
+
+.hiw__wrap {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 40px;
+
+  @media (max-width: 720px) {
+    padding: 0 24px;
+  }
+}
+
+.hiw__head {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: end;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+.hiw__eyebrow {
+  display: inline-flex;
   align-items: center;
+  gap: 10px;
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+
+  &::before {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.7;
+  }
+}
+
+.hiw__heading {
+  font-size: clamp(42px, 6.4vw, 92px);
+  line-height: 0.96;
+  letter-spacing: -0.04em;
+  font-weight: 600;
+  margin: 18px 0 0;
+  text-wrap: balance;
+  color: var(--text);
+}
+
+.hiw__emphasis {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--accent);
+}
+
+.hiw__subtitle {
+  font-size: 17px;
+  color: var(--text-muted);
+  max-width: 48ch;
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.hiw__stage {
+  padding: 0 40px;
+
+  @media (max-width: 720px) {
+    padding: 0 20px;
+  }
+}
+
+.hiw__grid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 32px;
+  align-items: stretch;
+  max-width: 1440px;
+  margin: 0 auto;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}
+
+// --- Ledger -----------------------------------------------------------------
+
+.hiw__ledger {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background:
+    linear-gradient(135deg, rgba(0, 145, 255, 0.08), transparent 60%),
+    var(--bg-surface);
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 
-  &__container {
-    width: 100%;
+  :root[data-theme='light'] & {
+    background:
+      linear-gradient(135deg, rgba(0, 85, 224, 0.05), transparent 60%),
+      #fff;
   }
+}
 
-  &__heading {
-    @include type-h2;
-    color: var(--section-heading);
-    text-align: center;
-    margin-block-end: var(--space-64);
+.hiw__ledgerHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
 
-    @include responsive-max($bp-tablet) {
-      margin-block-end: var(--space-32);
-    }
+.hiw__ledgerId {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  b {
+    font-family: var(--ff-sans);
+    font-size: 15px;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    text-transform: none;
+    font-weight: 500;
   }
+}
 
-  &__track {
-    overflow: hidden;
-    width: 100%;
+.hiw__state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-strong);
+  background: var(--on-card);
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition:
+    border-color 0.4s,
+    background 0.4s,
+    color 0.4s;
 
-    @include responsive-max($bp-tablet) {
-      overflow: visible;
-    }
+  &::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    transition:
+      background 0.4s,
+      box-shadow 0.4s;
   }
+}
 
-  &__list {
-    display: flex;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    width: 500%;
+.hiw__state--locked {
+  color: var(--accent);
+  border-color: var(--accent);
 
-    @include responsive-max($bp-tablet) {
-      flex-direction: column;
-      width: 100%;
-      gap: var(--space-24);
-    }
+  &::before {
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
   }
+}
 
-  &__item {
-    flex: 0 0 20%;
-    width: 20%;
-    padding-inline: var(--space-24);
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
+.hiw__state--released {
+  color: var(--status-success);
+  border-color: var(--status-success);
 
-    @include responsive-max($bp-tablet) {
-      flex: none;
-      width: 100%;
-      padding-inline: 0;
-    }
+  &::before {
+    background: var(--status-success);
+    box-shadow: 0 0 10px var(--status-success);
   }
+}
 
-  &__card {
-    @include glass-panel;
-    padding: var(--space-32);
-    max-width: 28rem;
-    width: 100%;
-  }
+.hiw__amount {
+  padding: 28px 0 24px;
+  font-size: clamp(56px, 7vw, 98px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
 
-  &__number {
-    @include type-mono-counter;
-    color: var(--section-muted);
+.hiw__amountNumber {
+  transition: color 0.3s;
+}
+
+.hiw__amountUnit {
+  font-family: var(--ff-mono);
+  font-size: 18px;
+  color: var(--accent);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+.hiw__amountLabel {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 500;
+  margin-left: auto;
+  align-self: center;
+}
+
+.hiw__progress {
+  height: 3px;
+  background: var(--border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+
+  i {
     display: block;
-    margin-block-end: var(--space-12);
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--blue-primary), var(--blue-vivid));
+    transition: width 0.6s var(--ease-out-expo);
+  }
+}
+
+.hiw__logs {
+  list-style: none;
+  padding: 24px 0 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+}
+
+.hiw__log {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px dashed var(--border);
+  opacity: 0.3;
+  transition: opacity 0.5s var(--ease-out-expo);
+}
+
+.hiw__log--done,
+.hiw__log--current {
+  opacity: 1;
+}
+
+.hiw__logDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  margin-right: 10px;
+  vertical-align: middle;
+  transition:
+    background 0.3s,
+    box-shadow 0.3s;
+
+  .hiw__log--done & {
+    background: var(--status-success);
   }
 
-  &__icon {
-    color: var(--section-text);
-    margin-block-end: var(--space-16);
+  .hiw__log--current & {
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+  }
+}
+
+.hiw__logTime {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+}
+
+.hiw__logLabel {
+  font-size: 15px;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  font-weight: 500;
+  transition: color 0.3s;
+
+  em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--accent);
   }
 
-  &__title {
-    @include type-h3;
-    color: var(--section-heading);
-    margin-block-end: var(--space-12);
+  .hiw__log--current & {
+    color: var(--accent);
+  }
+}
+
+.hiw__logHash {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+
+  .hiw__log--current & {
+    color: var(--accent);
+  }
+}
+
+// --- Scene ------------------------------------------------------------------
+
+.hiw__scene {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 50% 50%,
+      var(--accent-soft),
+      transparent 70%
+    ),
+    var(--bg-surface);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 460px;
+
+  :root[data-theme='light'] & {
+    background:
+      radial-gradient(
+        ellipse 80% 60% at 50% 50%,
+        rgba(0, 85, 224, 0.06),
+        transparent 70%
+      ),
+      #fff;
+  }
+}
+
+.hiw__sceneHead {
+  padding: 24px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.hiw__sceneStep {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.hiw__sceneBody {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 300px;
+}
+
+.hiw__actors {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+.hiw__actor {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transition: opacity 0.5s var(--ease-out-expo);
+  text-align: center;
+  width: 120px;
+  opacity: 0.4;
+}
+
+.hiw__actor--active {
+  opacity: 1;
+}
+
+.hiw__actor--client {
+  top: 50%;
+  left: 14%;
+}
+
+.hiw__actor--mid {
+  top: 14%;
+  left: 50%;
+}
+
+.hiw__actor--seller {
+  top: 50%;
+  left: 86%;
+}
+
+.hiw__actorPuck {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--bg-page);
+  border: 1px solid var(--border-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ff-mono);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition:
+    border-color 0.5s,
+    box-shadow 0.5s,
+    color 0.5s,
+    transform 0.6s var(--ease-out-expo);
+
+  .hiw__actor--active & {
+    border-color: var(--accent);
+    color: var(--text);
+    box-shadow:
+      0 0 0 4px var(--accent-soft),
+      0 10px 32px -12px var(--accent);
+    transform: scale(1.06);
+  }
+}
+
+.hiw__actorRole {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.hiw__core {
+  position: absolute;
+  top: 58%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hiw__coreDisc {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 50% 30%,
+      rgba(0, 145, 255, 0.35),
+      transparent 70%
+    ),
+    linear-gradient(135deg, var(--blue-primary), var(--blue-deep));
+  box-shadow:
+    0 0 0 1px rgba(0, 145, 255, 0.3),
+    0 20px 60px -10px rgba(0, 145, 255, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  gap: 6px;
+  padding: 10px;
+
+  svg {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+.hiw__coreLabel {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.hiw__coreDisc--locked {
+  animation: hiwCorePulse 2s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes hiwCorePulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(0, 145, 255, 0.3),
+      0 20px 60px -10px rgba(0, 145, 255, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(0, 145, 255, 0.6),
+      0 20px 80px -4px rgba(0, 145, 255, 0.7),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+}
+
+// --- Narration --------------------------------------------------------------
+
+.hiw__narration {
+  padding: 28px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 32px;
+  min-height: 140px;
+}
+
+.hiw__narrationText {
+  flex: 1;
+}
+
+.hiw__narrationStep {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+  text-transform: uppercase;
+  font-weight: 500;
+  margin-bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  &::before {
+    content: '';
+    width: 22px;
+    height: 1px;
+    background: currentColor;
+  }
+}
+
+.hiw__narrationTitle {
+  font-size: clamp(20px, 2.2vw, 28px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  margin: 0 0 8px;
+  text-wrap: balance;
+  color: var(--text);
+
+  em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--accent);
+  }
+}
+
+.hiw__narrationBody {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0;
+  text-wrap: pretty;
+  max-width: 40ch;
+}
+
+// --- Rail -------------------------------------------------------------------
+
+.hiw__rail {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border-top: 1px solid var(--border);
+  background: var(--bg-surface);
+  max-width: 1440px;
+  margin: 32px auto 0;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.hiw__railButton {
+  padding: 18px 24px;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border: none;
+  border-right: 1px solid var(--border);
+  background: transparent;
+  position: relative;
+  transition:
+    color 0.3s,
+    background 0.3s;
+  text-align: left;
+  cursor: pointer;
+  font-weight: inherit;
+
+  &:last-child {
+    border-right: 0;
   }
 
-  &__body {
-    @include type-body-lg;
-    color: var(--section-muted);
-    max-width: 32ch;
+  &:hover {
+    color: var(--text);
+    background: var(--on-card);
   }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: -1px;
+    height: 2px;
+    width: 0;
+    background: var(--accent);
+    transition: width 0.5s var(--ease-out-expo);
+  }
+
+  @media (max-width: 900px) {
+    &:nth-child(2n) {
+      border-right: 0;
+    }
+  }
+}
+
+.hiw__railButton--active {
+  color: var(--text);
+
+  &::after {
+    width: 100%;
+  }
+}
+
+.hiw__railNum {
+  color: var(--accent);
+  margin-right: 10px;
 }

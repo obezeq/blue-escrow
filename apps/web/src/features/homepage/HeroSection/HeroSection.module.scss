@@ -1,39 +1,405 @@
-@use '@/styles/settings/variables' as *;
-@use '@/styles/settings/typography' as *;
-@use '@/styles/tools/mixins' as *;
+@use '../../../styles/settings/variables' as *;
+
+// ============================================================================
+// HERO — v6 (Blue Escrow v6.html:1253-1349, CSS 285-462).
+// Type-first hero: gradient bg, spinning SVG orbits, eyebrow chips, title
+// with line-by-line word lifts, subtitle, CTA pair, 4-col meta, ticker.
+// No WebGL — the orbiting rings are pure SVG + CSS.
+//
+// NOTE: Phase 2 commit 0cc6354 shipped the v6 HeroSection.tsx markup but
+// accidentally didn't include this SCSS update, so develop was rendering
+// hero with the MVP's 39-line stub (just .hero + .hero__title + stacked
+// CTAs). This file delivers the intended Phase 2 styles.
+// ============================================================================
 
 .hero {
   position: relative;
   min-height: 100vh;
+  overflow: hidden;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  padding-top: 112px;
+}
+
+.hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--hero-grad);
+  transition: background 0.6s var(--ease-out-expo);
+}
+
+.hero__orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -46%);
+  width: min(1400px, 120vw);
+  aspect-ratio: 1/1;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.55;
+  mask-image: radial-gradient(
+    ellipse 70% 60% at 50% 50%,
+    #000 45%,
+    transparent 72%
+  );
+  -webkit-mask-image: radial-gradient(
+    ellipse 70% 60% at 50% 50%,
+    #000 45%,
+    transparent 72%
+  );
+
+  svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+}
+
+.hero__orbRing {
+  fill: none;
+  stroke: var(--accent);
+  stroke-opacity: 0.18;
+  stroke-dasharray: 2 6;
+}
+
+.hero__orbRing--r2 {
+  stroke-opacity: 0.12;
+}
+
+.hero__orbRing--r3 {
+  stroke-opacity: 0.08;
+}
+
+.hero__orbDot {
+  fill: var(--accent);
+  filter: drop-shadow(0 0 6px var(--accent));
+}
+
+.hero__orbSpin {
+  transform-origin: 50% 50%;
+  animation: orbSpin 80s linear infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.hero__orbSpinReverse {
+  transform-origin: 50% 50%;
+  animation: orbSpin 120s linear infinite reverse;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes orbSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.hero__fade {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 58%,
+    var(--bg-page) 100%
+  );
+}
+
+.hero__eyebrow {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  gap: 22px;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--text-muted);
+  padding-top: 6px;
+  flex-wrap: wrap;
+}
+
+.hero__chipDot {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::before {
+      animation: none;
+    }
+  }
+}
+
+.hero__chipSep {
+  opacity: 0.4;
+}
+
+@keyframes pulseDot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.7);
+  }
+}
+
+.hero__center {
+  position: relative;
+  z-index: 3;
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
+  justify-content: center;
+  padding: 60px 0 40px;
+}
 
-  &__container {
-    text-align: center;
-    max-width: 960px;
-    margin-inline: auto;
+.hero__title {
+  font-size: clamp(56px, 10.8vw, 178px);
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+  font-weight: 600;
+  margin: 0;
+  text-wrap: balance;
+  text-align: center;
+  max-width: 1240px;
+  color: var(--text);
+}
+
+.hero__line {
+  display: block;
+  overflow: hidden;
+  padding: 0 0.04em 0.04em;
+}
+
+.hero__word {
+  display: inline-block;
+  will-change: transform;
+}
+
+.hero__word--italic {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--accent);
+  letter-spacing: -0.035em;
+}
+
+.hero__sub {
+  position: relative;
+  z-index: 3;
+  text-align: center;
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 0 24px;
+  font-size: clamp(16px, 1.4vw, 19px);
+  line-height: 1.5;
+  color: var(--text-muted);
+  text-wrap: pretty;
+
+  b {
+    color: var(--text);
+    font-weight: 500;
   }
 
-  &__title {
-    @include type-hero;
+  em {
+    color: var(--accent);
+    font-style: italic;
+    font-weight: 400;
+  }
+}
 
-    color: var(--section-heading);
-    margin-block-end: var(--space-24);
+.hero__ctas {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  padding: 30px 24px 0;
+  flex-wrap: wrap;
+}
+
+.hero__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 26px;
+  font-family: var(--ff-mono);
+  font-size: 14px;
+  border-radius: var(--radius-full);
+  text-decoration: none;
+  transition:
+    transform 0.25s var(--ease-out-expo),
+    background 0.25s,
+    color 0.25s,
+    border-color 0.25s;
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+  }
+}
+
+.hero__btn--primary {
+  background: var(--blue-primary);
+  color: #fff;
+  box-shadow:
+    0 10px 30px -10px rgba(0, 102, 255, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+
+  &:hover {
+    background: var(--blue-hover);
+    box-shadow:
+      0 14px 40px -10px rgba(0, 102, 255, 0.8),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+}
+
+.hero__btn--ghost {
+  border: 1px solid var(--on-border);
+  color: var(--text);
+
+  &:hover {
+    border-color: var(--accent);
+    background: var(--on-card);
+  }
+}
+
+.hero__bottom {
+  position: relative;
+  z-index: 3;
+  padding: 56px 40px 28px;
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+
+  @media (max-width: 720px) {
+    padding: 40px 24px 20px;
+  }
+}
+
+.hero__meta {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border);
+  align-items: start;
+
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
   }
 
-  &__subtitle {
-    @include type-body-lg;
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}
 
-    color: var(--section-muted);
-    max-width: 640px;
-    margin-inline: auto;
-    margin-block-end: var(--space-48);
+.hero__metaKey {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &::before {
+    content: '';
+    width: 14px;
+    height: 1px;
+    background: var(--accent);
+  }
+}
+
+.hero__metaValue {
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--text);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+
+  b {
+    color: var(--accent);
+    font-weight: 500;
+  }
+}
+
+.hero__metaMono {
+  display: block;
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.ticker {
+  position: relative;
+  z-index: 3;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  white-space: nowrap;
+  font-family: var(--ff-mono);
+  font-size: 11.5px;
+  color: var(--text-muted);
+  background: var(--on-card);
+}
+
+.ticker__track {
+  display: inline-block;
+  animation: tickScroll 65s linear infinite;
+
+  span {
+    padding: 0 24px;
   }
 
-  &__ctas {
-    display: flex;
-    gap: var(--space-16);
-    justify-content: center;
-    flex-wrap: wrap;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.ticker__dot {
+  color: var(--accent);
+}
+
+.ticker__ok {
+  color: var(--status-success);
+}
+
+@keyframes tickScroll {
+  to {
+    transform: translateX(-50%);
   }
 }

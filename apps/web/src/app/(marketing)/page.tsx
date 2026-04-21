@@ -36,9 +36,9 @@ export default function HomePage() {
       <TheProblem />
       <HowItWorks />
       <Compare />
+      <FeeSection />
       <TrustLayer />
       <Receipts />
-      <FeeSection />
       <Faq />
       <CtaSection />
     </>
