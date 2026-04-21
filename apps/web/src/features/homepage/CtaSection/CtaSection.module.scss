@@ -64,7 +64,13 @@
   overflow-wrap: anywhere;
 }
 
-.closing__emphasis {
+// Extends gradient clip to SplitText's <div> children so the italic
+// emphasis renders with its blue gradient even after word-splitting.
+// Without the `> div` selector, SplitText wraps words in divs, leaving
+// the parent <em>'s direct text empty — background-clip: text has
+// nothing to clip against, and the gradient paints invisibly.
+.closing__emphasis,
+.closing__emphasis > div {
   font-style: italic;
   font-weight: 400;
   background: var(--blue-band);
