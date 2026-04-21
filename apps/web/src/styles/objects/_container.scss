@@ -1,95 +1,98 @@
 // ============================================================================
 // LAYOUT OBJECTS — Containers, sections, grids
+// Wrapped in @layer objects.
 // ============================================================================
 
 @use '../settings/variables' as *;
 @use '../tools/mixins' as *;
 
-// --- Container ---
+@layer objects {
+  // --- Container ---
 
-.o-container {
-  width: 100%;
-  max-width: var(--container-max);
-  margin-inline: auto;
-  padding-inline: var(--container-padding);
-}
+  .o-container {
+    width: 100%;
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding-inline: var(--container-padding);
+  }
 
-.o-container--narrow {
-  max-width: 960px;
-}
+  .o-container--narrow {
+    max-width: 960px;
+  }
 
-.o-container--wide {
-  max-width: 1600px;
-}
+  .o-container--wide {
+    max-width: 1600px;
+  }
 
-// --- Section ---
+  // --- Section ---
 
-.o-section {
-  position: relative;
-  z-index: 2;
-  // Padding intentionally omitted — every homepage section ships its own
-  // vertical rhythm in its .module.scss to match v6's bespoke per-section
-  // paddings (160-200px). .o-section is a positioning anchor only.
-}
+  .o-section {
+    position: relative;
+    z-index: 2;
+    // Padding intentionally omitted — every homepage section ships its own
+    // vertical rhythm in its .module.scss to match v6's bespoke per-section
+    // paddings (160-200px). .o-section is a positioning anchor only.
+  }
 
-// --- Grid ---
+  // --- Grid ---
 
-.o-grid {
-  display: grid;
-  gap: var(--space-24);
-}
+  .o-grid {
+    display: grid;
+    gap: var(--space-24);
+  }
 
-.o-grid--2 {
-  grid-template-columns: 1fr;
+  .o-grid--2 {
+    grid-template-columns: 1fr;
 
-  @include responsive($bp-tablet) {
+    @include responsive($bp-tablet) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .o-grid--3 {
+    grid-template-columns: 1fr;
+
+    @include responsive($bp-tablet) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @include responsive($bp-desktop) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .o-grid--4 {
     grid-template-columns: repeat(2, 1fr);
-  }
-}
 
-.o-grid--3 {
-  grid-template-columns: 1fr;
+    @include responsive($bp-tablet) {
+      grid-template-columns: repeat(3, 1fr);
+    }
 
-  @include responsive($bp-tablet) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @include responsive($bp-desktop) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.o-grid--4 {
-  grid-template-columns: repeat(2, 1fr);
-
-  @include responsive($bp-tablet) {
-    grid-template-columns: repeat(3, 1fr);
+    @include responsive($bp-desktop) {
+      grid-template-columns: repeat(4, 1fr);
+    }
   }
 
-  @include responsive($bp-desktop) {
-    grid-template-columns: repeat(4, 1fr);
+  // --- Stack (vertical spacing) ---
+
+  .o-stack {
+    display: flex;
+    flex-direction: column;
   }
-}
 
-// --- Stack (vertical spacing) ---
+  .o-stack--sm {
+    gap: var(--space-8);
+  }
 
-.o-stack {
-  display: flex;
-  flex-direction: column;
-}
+  .o-stack--md {
+    gap: var(--space-16);
+  }
 
-.o-stack--sm {
-  gap: var(--space-8);
-}
+  .o-stack--lg {
+    gap: var(--space-32);
+  }
 
-.o-stack--md {
-  gap: var(--space-16);
-}
-
-.o-stack--lg {
-  gap: var(--space-32);
-}
-
-.o-stack--xl {
-  gap: var(--space-64);
+  .o-stack--xl {
+    gap: var(--space-64);
+  }
 }

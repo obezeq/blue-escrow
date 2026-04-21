@@ -1,4 +1,17 @@
 // ============================================================================
+// @layer cascade — declared here (first file @used by globals.scss) so the
+// order locks BEFORE any layered content is emitted by downstream partials.
+//
+// Normal priority:    [unlayered modules] > utilities > components > objects > elements > reset
+// !important priority (reversed): reset > elements > objects > components > utilities > [unlayered]
+//
+// The reversed !important means reset's reduced-motion kill-switch overrides
+// component animations, and .u-* utilities still beat unlayered CSS Module
+// rules via their explicit !important.
+// ============================================================================
+@layer reset, elements, objects, components, utilities;
+
+// ============================================================================
 // SCSS VARIABLES — Only for breakpoints (CSS vars cannot be used in @media)
 // ============================================================================
 

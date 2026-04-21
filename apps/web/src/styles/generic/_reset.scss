@@ -1,132 +1,136 @@
 // ============================================================================
 // MODERN CSS RESET (2026)
 // Hybrid: Josh Comeau + Andy Bell + modern additions
+// Wrapped in @layer reset — lowest normal-priority layer, highest !important
+// (so reduced-motion kill-switch beats component overrides).
 // ============================================================================
 
-// --- Box Sizing ---
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-// --- Remove Default Margins and Padding ---
-* {
-  margin: 0;
-  padding: 0;
-}
-
-// --- Smooth Scrolling (respecting user preference) ---
-html {
-  scroll-behavior: smooth;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-  overflow-x: clip;
-
-  @media (prefers-reduced-motion: reduce) {
-    scroll-behavior: auto;
-  }
-}
-
-// --- Body Defaults ---
-body {
-  min-height: 100dvh;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-}
-
-// --- Typography Wrapping ---
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  text-wrap: balance;
-}
-
-p,
-li,
-figcaption {
-  text-wrap: pretty;
-  max-inline-size: 75ch;
-}
-
-// --- Media Defaults ---
-img,
-picture,
-video,
-canvas,
-svg {
-  display: block;
-  max-width: 100%;
-}
-
-img {
-  height: auto;
-  font-style: italic;
-}
-
-// --- Form Element Font Inheritance ---
-input,
-button,
-textarea,
-select {
-  font: inherit;
-  color: inherit;
-}
-
-// --- Button Reset ---
-button {
-  cursor: pointer;
-  background: none;
-  border: none;
-}
-
-// --- Link Reset ---
-a {
-  color: inherit;
-  text-decoration: inherit;
-}
-
-// --- List Reset ---
-ul,
-ol {
-  list-style: none;
-}
-
-// --- Table Reset ---
-table {
-  border-collapse: collapse;
-  border-spacing: 0;
-}
-
-// --- Focus Visible ---
-:focus-visible {
-  outline: 2px solid var(--blue-vivid);
-  outline-offset: 2px;
-}
-
-:focus:not(:focus-visible) {
-  outline: none;
-}
-
-// --- Reduced Motion: kill all animations ---
-@media (prefers-reduced-motion: reduce) {
+@layer reset {
+  // --- Box Sizing ---
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+    box-sizing: border-box;
   }
-}
 
-// SplitText word wrappers — force GPU compositing for clean antialiasing
-h1 > div, h2 > div, h3 > div {
-  backface-visibility: hidden;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  // --- Remove Default Margins and Padding ---
+  * {
+    margin: 0;
+    padding: 0;
+  }
+
+  // --- Smooth Scrolling (respecting user preference) ---
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overflow-x: clip;
+
+    @media (prefers-reduced-motion: reduce) {
+      scroll-behavior: auto;
+    }
+  }
+
+  // --- Body Defaults ---
+  body {
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  // --- Typography Wrapping ---
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    text-wrap: balance;
+  }
+
+  p,
+  li,
+  figcaption {
+    text-wrap: pretty;
+    max-inline-size: 75ch;
+  }
+
+  // --- Media Defaults ---
+  img,
+  picture,
+  video,
+  canvas,
+  svg {
+    display: block;
+    max-width: 100%;
+  }
+
+  img {
+    height: auto;
+    font-style: italic;
+  }
+
+  // --- Form Element Font Inheritance ---
+  input,
+  button,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  // --- Button Reset ---
+  button {
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+
+  // --- Link Reset ---
+  a {
+    color: inherit;
+    text-decoration: inherit;
+  }
+
+  // --- List Reset ---
+  ul,
+  ol {
+    list-style: none;
+  }
+
+  // --- Table Reset ---
+  table {
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+
+  // --- Focus Visible ---
+  :focus-visible {
+    outline: 2px solid var(--blue-vivid);
+    outline-offset: 2px;
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  // --- Reduced Motion: kill all animations ---
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  // SplitText word wrappers — force GPU compositing for clean antialiasing
+  h1 > div, h2 > div, h3 > div {
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }

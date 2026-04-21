@@ -2,120 +2,123 @@
 // BASE ELEMENT STYLES — Bare HTML elements styled with v6 theme tokens.
 // Every color reads from :root[data-theme] so both dark/light themes paint
 // correctly on any unstyled element.
+// Wrapped in @layer elements.
 // ============================================================================
 
 @use '../settings/typography' as *;
 @use '../tools/mixins' as *;
 
-body {
-  background-color: var(--bg-page);
-  color: var(--text);
-  font-family: var(--ff-sans);
-  overflow-x: hidden;
-  @include type-body;
-}
-
-// --- Headings ---
-
-h1 {
-  @include type-h1;
-  color: var(--text);
-}
-
-h2 {
-  @include type-h2;
-  color: var(--text);
-}
-
-h3 {
-  @include type-h3;
-  color: var(--text);
-}
-
-h4 {
-  @include type-h4;
-}
-
-h5 {
-  @include type-h5;
-}
-
-h6 {
-  @include type-caption;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-// --- Paragraphs ---
-
-p {
-  color: var(--text);
-}
-
-// --- Links ---
-
-a {
-  color: var(--accent);
-  text-decoration: none;
-  transition: color var(--transition-fast);
-
-  &:hover {
-    color: var(--blue-hover);
+@layer elements {
+  body {
+    background-color: var(--bg-page);
+    color: var(--text);
+    font-family: var(--ff-sans);
+    overflow-x: hidden;
+    @include type-body;
   }
-}
 
-// --- Inline Code ---
+  // --- Headings ---
 
-code {
-  font-family: var(--ff-mono);
-  font-size: 0.875em;
-  padding: 0.125em 0.375em;
-  background: var(--bg-surface);
-  border-radius: var(--radius-sm);
-}
+  h1 {
+    @include type-h1;
+    color: var(--text);
+  }
 
-// --- Code Blocks ---
+  h2 {
+    @include type-h2;
+    color: var(--text);
+  }
 
-pre {
-  font-family: var(--ff-mono);
-  font-size: 0.875rem;
-  line-height: 1.6;
-  padding: var(--space-16) var(--space-24);
-  background: var(--bg-surface);
-  border-radius: var(--radius-md);
-  overflow-x: auto;
+  h3 {
+    @include type-h3;
+    color: var(--text);
+  }
+
+  h4 {
+    @include type-h4;
+  }
+
+  h5 {
+    @include type-h5;
+  }
+
+  h6 {
+    @include type-caption;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  // --- Paragraphs ---
+
+  p {
+    color: var(--text);
+  }
+
+  // --- Links ---
+
+  a {
+    color: var(--accent);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+
+    &:hover {
+      color: var(--blue-hover);
+    }
+  }
+
+  // --- Inline Code ---
 
   code {
-    padding: 0;
-    background: none;
+    font-family: var(--ff-mono);
+    font-size: 0.875em;
+    padding: 0.125em 0.375em;
+    background: var(--bg-surface);
+    border-radius: var(--radius-sm);
   }
-}
 
-// --- Horizontal Rule ---
+  // --- Code Blocks ---
 
-hr {
-  border: none;
-  border-block-start: 1px solid var(--border);
-  margin-block: var(--space-32);
-}
+  pre {
+    font-family: var(--ff-mono);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    padding: var(--space-16) var(--space-24);
+    background: var(--bg-surface);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
 
-// --- Strong ---
+    code {
+      padding: 0;
+      background: none;
+    }
+  }
 
-strong,
-b {
-  font-weight: 600;
-}
+  // --- Horizontal Rule ---
 
-// --- Selection ---
+  hr {
+    border: none;
+    border-block-start: 1px solid var(--border);
+    margin-block: var(--space-32);
+  }
 
-::selection {
-  background-color: var(--accent);
-  color: #fff;
-}
+  // --- Strong ---
 
-// --- Custom Scrollbar (body) ---
+  strong,
+  b {
+    font-weight: 600;
+  }
 
-body {
-  @include custom-scrollbar(6px, transparent, var(--border));
+  // --- Selection ---
+
+  ::selection {
+    background-color: var(--accent);
+    color: #fff;
+  }
+
+  // --- Custom Scrollbar (body) ---
+
+  body {
+    @include custom-scrollbar(6px, transparent, var(--border));
+  }
 }
