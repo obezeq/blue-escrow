@@ -137,14 +137,14 @@ $bp-section: 900px;
   --border-strong: #2a3b5c;
 
   --accent:        var(--blue-vivid);
-  --accent-soft:   rgba(0, 145, 255, 0.12);
+  --accent-soft:   color-mix(in srgb, var(--blue-vivid) 12%, transparent);
 
   --on-card:       rgba(255, 255, 255, 0.06);
   --on-border:     rgba(255, 255, 255, 0.12);
 
   --hero-grad:
-    radial-gradient(ellipse 60% 50% at 50% 30%, rgba(0, 145, 255, 0.35), transparent 70%),
-    radial-gradient(ellipse 80% 60% at 80% 90%, rgba(0, 102, 255, 0.25), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 50% 30%, color-mix(in srgb, var(--blue-vivid) 35%, transparent), transparent 70%),
+    radial-gradient(ellipse 80% 60% at 80% 90%, color-mix(in srgb, var(--blue-primary) 25%, transparent), transparent 70%),
     linear-gradient(180deg, #001b4d 0%, #0b1117 70%);
   --blue-band:
     linear-gradient(135deg, var(--blue-primary) 0%, var(--blue-vivid) 100%);
@@ -167,14 +167,14 @@ $bp-section: 900px;
   --border-strong: #c9d2de;
 
   --accent:        var(--blue-primary);
-  --accent-soft:   rgba(0, 102, 255, 0.08);
+  --accent-soft:   color-mix(in srgb, var(--blue-primary) 8%, transparent);
 
   --on-card:       rgba(0, 27, 77, 0.04);
   --on-border:     rgba(0, 27, 77, 0.10);
 
   --hero-grad:
-    radial-gradient(ellipse 70% 60% at 50% 30%, rgba(0, 145, 255, 0.18), transparent 70%),
-    radial-gradient(ellipse 80% 60% at 80% 90%, rgba(0, 102, 255, 0.10), transparent 70%),
+    radial-gradient(ellipse 70% 60% at 50% 30%, color-mix(in srgb, var(--blue-vivid) 18%, transparent), transparent 70%),
+    radial-gradient(ellipse 80% 60% at 80% 90%, color-mix(in srgb, var(--blue-primary) 10%, transparent), transparent 70%),
     linear-gradient(180deg, #e6f1ff 0%, #ffffff 70%);
   --blue-band:
     linear-gradient(135deg, var(--blue-primary) 0%, var(--blue-vivid) 100%);
