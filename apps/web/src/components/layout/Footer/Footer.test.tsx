@@ -76,6 +76,45 @@ describe('Footer (v6)', () => {
     ).toBeDefined();
   });
 
+  it('wraps each link column in a <nav> with an accessible name (Product/Protocol/Directory)', () => {
+    render(<Footer />);
+    const footer = screen.getByRole('contentinfo');
+    const navs = within(footer).getAllByRole('navigation');
+    // Product + Protocol + Directory + the bottom legal <nav> = 4
+    expect(navs).toHaveLength(4);
+    const navLabels = navs.map((n) => n.getAttribute('aria-label'));
+    // Legal nav uses aria-label directly; 3 column navs use aria-labelledby
+    // pointing at the visible h3, so accessible name is derived from h3 text.
+    const productNav = within(footer).getByRole('navigation', {
+      name: 'Product',
+    });
+    const protocolNav = within(footer).getByRole('navigation', {
+      name: 'Protocol',
+    });
+    const directoryNav = within(footer).getByRole('navigation', {
+      name: 'Directory',
+    });
+    expect(productNav.tagName).toBe('NAV');
+    expect(protocolNav.tagName).toBe('NAV');
+    expect(directoryNav.tagName).toBe('NAV');
+    // Legal nav covered by the last test; sanity-check it's still in the list
+    expect(
+      navLabels.some((l) => /legal/i.test(l ?? '')),
+    ).toBe(true);
+  });
+
+  it('uses <h3> (not <h4>) for column headings so heading order is valid', () => {
+    const { container } = render(<Footer />);
+    const footer = container.querySelector('footer')!;
+    const colHeadings = footer.querySelectorAll<HTMLElement>(
+      '[class*="footer__colHeading"]',
+    );
+    expect(colHeadings.length).toBe(3);
+    colHeadings.forEach((h) => {
+      expect(h.tagName).toBe('H3');
+    });
+  });
+
   it('renders the 4 v6 legal bottom links (Terms, Privacy, Bug bounty, Legal)', () => {
     render(<Footer />);
     const footer = screen.getByRole('contentinfo');

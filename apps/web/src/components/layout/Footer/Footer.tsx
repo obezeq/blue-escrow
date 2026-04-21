@@ -62,23 +62,32 @@ export function Footer() {
             <p className={styles.footer__tagline}>{TAGLINE}</p>
           </div>
 
-          {FOOTER_COLS.map((col) => (
-            <div key={col.heading} className={styles.footer__col}>
-              <h4 className={styles.footer__colHeading}>{col.heading}</h4>
-              <ul className={styles.footer__list}>
-                {col.links.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className={styles.footer__link}
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {FOOTER_COLS.map((col) => {
+            const headingId = `footer-col-${col.heading.toLowerCase()}`;
+            return (
+              <nav
+                key={col.heading}
+                className={styles.footer__col}
+                aria-labelledby={headingId}
+              >
+                <h3 id={headingId} className={styles.footer__colHeading}>
+                  {col.heading}
+                </h3>
+                <ul className={styles.footer__list}>
+                  {col.links.map((link) => (
+                    <li key={link.label}>
+                      <Link
+                        href={link.href}
+                        className={styles.footer__link}
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            );
+          })}
         </div>
 
         <div className={styles.footer__bottom}>
