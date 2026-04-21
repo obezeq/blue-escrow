@@ -5,4 +5,5 @@ export { CustomCursor } from './CustomCursor';
 export { ScrollProgressIndicator } from './ScrollProgressIndicator';
 export { SectionHeading } from './SectionHeading';
 export { Card } from './Card';
+export { GrainOverlay } from './GrainOverlay';
 export { ThemeToggle } from './ThemeToggle';

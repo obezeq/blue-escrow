@@ -14,8 +14,16 @@ const CustomCursor = dynamic(
   { ssr: false },
 );
 
+const GrainOverlay = dynamic(
+  () =>
+    import('@/components/ui/GrainOverlay/GrainOverlay').then(
+      (m) => m.GrainOverlay,
+    ),
+  { ssr: false },
+);
+
 /**
- * Browser-only enhancements (Three.js canvas, custom cursor).
+ * Browser-only enhancements (Three.js canvas, custom cursor, film grain).
  * Extracted to a client component because next/dynamic with ssr:false
  * is not allowed in Server Components (Next.js 16+).
  */
@@ -24,6 +32,7 @@ export function ClientEnhancements() {
     <>
       <SceneCanvas />
       <CustomCursor />
+      <GrainOverlay />
     </>
   );
 }
