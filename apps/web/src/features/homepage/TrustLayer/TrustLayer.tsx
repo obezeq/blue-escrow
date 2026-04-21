@@ -1,170 +1,117 @@
 import { TrustLayerAnimations } from './TrustLayerAnimations';
 import styles from './TrustLayer.module.scss';
 
-// ---------------------------------------------------------------------------
-// Solidity token types for manual syntax highlighting
-// ---------------------------------------------------------------------------
-
-type TokenType = 'keyword' | 'type' | 'comment' | 'var';
-
-interface Token {
-  text: string;
-  type: TokenType;
+interface ProofStat {
+  count: number;
+  decimals: number;
+  start: string;
+  unit?: string;
+  label: string;
+  sub: string;
+  key: string;
 }
 
-/** Key line index (0-based) that gets the glow highlight */
-const KEY_LINE_INDEX = 3;
-
-const CODE_LINES: Token[][] = [
-  [
-    { text: 'function', type: 'keyword' },
-    { text: ' ', type: 'var' },
-    { text: 'resolve', type: 'var' },
-    { text: '(', type: 'var' },
-    { text: 'address', type: 'type' },
-    { text: ' to) ', type: 'var' },
-    { text: 'external', type: 'keyword' },
-    { text: ' {', type: 'var' },
-  ],
-  [
-    { text: '    ', type: 'var' },
-    { text: 'Deal', type: 'type' },
-    { text: ' ', type: 'var' },
-    { text: 'storage', type: 'keyword' },
-    { text: ' deal = deals[dealId];', type: 'var' },
-  ],
-  [
-    { text: '    ', type: 'var' },
-    { text: 'require', type: 'keyword' },
-    { text: '(msg.sender == middleman);', type: 'var' },
-  ],
-  [
-    { text: '    ', type: 'var' },
-    { text: 'require', type: 'keyword' },
-    { text: '(to == client || to == seller);', type: 'var' },
-  ],
-  [
-    { text: '    ', type: 'var' },
-    { text: '// Funds can ONLY go to client or seller', type: 'comment' },
-  ],
-  [
-    { text: '    ', type: 'var' },
-    { text: '// NEVER to the middleman. Ever.', type: 'comment' },
-  ],
-  [
-    { text: '    usdc.', type: 'var' },
-    { text: 'transfer', type: 'keyword' },
-    { text: '(to, deal.amount);', type: 'var' },
-  ],
-  [{ text: '}', type: 'var' }],
-];
-
-const STYLE_MAP: Record<TokenType, string | undefined> = {
-  keyword: styles.code__keyword,
-  type: styles.code__type,
-  comment: styles.code__comment,
-  var: styles.code__var,
-};
-
-// ---------------------------------------------------------------------------
-// Stat data
-// ---------------------------------------------------------------------------
-
-interface Stat {
-  value: string;
-  caption: string;
-  animateKey: string;
-  primary?: boolean;
-}
-
-const STATS: Stat[] = [
+// Verbatim from v6 Blue Escrow v6.html:1610-1629.
+const PROOF_STATS: ProofStat[] = [
   {
-    value: '0.33%',
-    caption: 'Platform fee',
-    animateKey: 'counter-fee',
-    primary: true,
+    key: 'settled',
+    count: 12.4,
+    decimals: 1,
+    start: '0.0',
+    unit: 'M',
+    label: 'USDC settled',
+    sub: 'Across 3,214 deals this quarter',
   },
   {
-    value: '$0',
-    caption: 'Middleman can take',
-    animateKey: 'counter-middleman',
-    primary: true,
+    key: 'fee',
+    count: 0.33,
+    decimals: 2,
+    start: '0.00',
+    unit: '%',
+    label: 'Protocol fee',
+    sub: 'Flat. No tiers. No hidden cuts.',
   },
   {
-    value: '100%',
-    caption: 'On-chain transparency',
-    animateKey: 'counter-onchain',
+    key: 'middlemen',
+    count: 180,
+    decimals: 0,
+    start: '0',
+    unit: '+',
+    label: 'Verified middlemen',
+    sub: 'With on-chain reputation',
   },
   {
-    value: '33 days',
-    caption: 'Security audit',
-    animateKey: 'counter-audit',
+    key: 'lost',
+    count: 0,
+    decimals: 0,
+    start: '0',
+    label: 'Funds ever lost',
+    sub: 'Audited. Open-source. Immutable.',
   },
 ];
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
+const MARQUEE_PHRASE = 'TRUSTLESS  ·  BORDERLESS  ·  UNCENSORABLE  ·  ';
 
 export function TrustLayer() {
   return (
     <section
-      className={`o-section ${styles.trust}`}
-      id="trust-layer"
-      aria-label="Trust and transparency"
+      className={`o-section ${styles.proof}`}
+      id="proof"
+      aria-label="Protocol proof and on-chain metrics"
     >
       <TrustLayerAnimations>
-        <div className="o-container">
-          <div className={`o-grid o-grid--2 ${styles.trust__grid}`}>
-            {/* LEFT — Solidity code block */}
-            <div data-animate="code-block">
-              <pre className={styles.trust__pre}>
-                <code className={styles.trust__codeInner}>
-                  {CODE_LINES.map((line, lineIdx) => {
-                    const isKeyLine = lineIdx === KEY_LINE_INDEX;
-                    return (
-                      <span
-                        key={lineIdx}
-                        data-line={lineIdx}
-                        {...(isKeyLine
-                          ? {
-                              'data-highlight': 'key-line',
-                              className: styles.trust__keyLine,
-                            }
-                          : {})}
-                      >
-                        {line.map((token, tokenIdx) =>
-                          [...token.text].map((char, charIdx) => (
-                            <span
-                              key={`${tokenIdx}-${charIdx}`}
-                              data-char
-                              className={STYLE_MAP[token.type]}
-                            >
-                              {char}
-                            </span>
-                          )),
-                        )}
-                        {lineIdx < CODE_LINES.length - 1 ? '\n' : ''}
-                      </span>
-                    );
-                  })}
-                </code>
-              </pre>
+        <div className={styles.proof__wrap}>
+          <div className={styles.proof__head}>
+            <div>
+              <div className={styles.proof__eyebrow} data-animate="eyebrow">
+                Proof
+              </div>
+              <h2 className={styles.proof__heading} data-animate="heading">
+                The numbers{' '}
+                <em className={styles.proof__emphasis}>aren&apos;t a pitch.</em>{' '}
+                They&apos;re on-chain.
+              </h2>
             </div>
+            <p className={styles.proof__subtitle} data-animate="subtitle">
+              Everything below is verifiable at block level. Read the contract,
+              check the math yourself.
+            </p>
+          </div>
 
-            {/* RIGHT — Stats */}
-            <div className={styles.trust__stats} data-animate="stats">
-              {STATS.map((stat) => (
-                <div key={stat.animateKey} className={styles.trust__statCard}>
-                  <span
-                    className={`${styles.trust__statNumber}${stat.primary ? ` ${styles['trust__statNumber--primary']}` : ''}`}
-                    data-animate={stat.animateKey}
-                  >
-                    {stat.value}
+          <div className={styles.proof__row}>
+            {PROOF_STATS.map((stat) => (
+              <div
+                key={stat.key}
+                className={styles.proof__item}
+                data-animate="item"
+              >
+                <div
+                  className={styles.proof__num}
+                  data-count={stat.count}
+                  data-decimals={stat.decimals}
+                  aria-label={`${stat.count}${stat.unit ?? ''} ${stat.label}`}
+                >
+                  <span className={styles.proof__number} data-animate-number>
+                    {stat.start}
                   </span>
-                  <p className={styles.trust__statCaption}>{stat.caption}</p>
+                  {stat.unit ? (
+                    <span className={styles.proof__unit}>{stat.unit}</span>
+                  ) : null}
                 </div>
-              ))}
+                <div className={styles.proof__label}>{stat.label}</div>
+                <div className={styles.proof__sub}>{stat.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className={styles.proof__marquee} aria-hidden="true">
+            <div
+              className={styles.proof__marqueeTrack}
+              data-animate="marquee-track"
+            >
+              <span>{MARQUEE_PHRASE}</span>
+              <span>{MARQUEE_PHRASE}</span>
+              <span>{MARQUEE_PHRASE}</span>
             </div>
           </div>
         </div>
