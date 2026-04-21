@@ -34,69 +34,74 @@ export function Compare() {
             </p>
           </div>
 
-          <div className={styles.compare__table} role="table" aria-label="Comparison table">
-            <div
-              className={styles.compare__headerCell}
-              role="columnheader"
-              data-animate="cell"
-            >
-              Criteria
-            </div>
-            <div
-              className={styles.compare__headerCell}
-              role="columnheader"
-              data-animate="cell"
-            >
-              Escrow.com
-            </div>
-            <div
-              className={styles.compare__headerCell}
-              role="columnheader"
-              data-animate="cell"
-            >
-              Telegram middleman
-            </div>
-            <div
-              className={`${styles.compare__headerCell} ${styles['compare__headerCell--be']}`}
-              role="columnheader"
-              data-animate="cell"
-            >
-              Blue Escrow
-            </div>
-
-            {COMPARE_ROWS.map((row) => (
-              <div key={row.criterion} className={styles.compare__rowGroup} role="row">
-                <div
-                  className={styles.compare__criterion}
-                  role="rowheader"
+          <table
+            className={styles.compare__table}
+            aria-label="Comparison table"
+          >
+            <thead>
+              <tr className={styles.compare__headerRow}>
+                <th
+                  scope="col"
+                  className={styles.compare__headerCell}
                   data-animate="cell"
                 >
-                  {row.criterion}
-                </div>
-                <div
-                  className={`${styles.compare__cell} ${STATUS_CLASS[row.escrow.status]}`}
-                  role="cell"
+                  Criteria
+                </th>
+                <th
+                  scope="col"
+                  className={styles.compare__headerCell}
                   data-animate="cell"
                 >
-                  {row.escrow.label}
-                </div>
-                <div
-                  className={`${styles.compare__cell} ${STATUS_CLASS[row.telegram.status]}`}
-                  role="cell"
+                  Escrow.com
+                </th>
+                <th
+                  scope="col"
+                  className={styles.compare__headerCell}
                   data-animate="cell"
                 >
-                  {row.telegram.label}
-                </div>
-                <div
-                  className={`${styles.compare__cell} ${styles['compare__cell--be']} ${STATUS_CLASS[row.blueEscrow.status]}`}
-                  role="cell"
+                  Telegram middleman
+                </th>
+                <th
+                  scope="col"
+                  className={`${styles.compare__headerCell} ${styles['compare__headerCell--be']}`}
                   data-animate="cell"
                 >
-                  {row.blueEscrow.label}
-                </div>
-              </div>
-            ))}
-          </div>
+                  Blue Escrow
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {COMPARE_ROWS.map((row) => (
+                <tr key={row.criterion} className={styles.compare__rowGroup}>
+                  <th
+                    scope="row"
+                    className={styles.compare__criterion}
+                    data-animate="cell"
+                  >
+                    {row.criterion}
+                  </th>
+                  <td
+                    className={`${styles.compare__cell} ${STATUS_CLASS[row.escrow.status]}`}
+                    data-animate="cell"
+                  >
+                    {row.escrow.label}
+                  </td>
+                  <td
+                    className={`${styles.compare__cell} ${STATUS_CLASS[row.telegram.status]}`}
+                    data-animate="cell"
+                  >
+                    {row.telegram.label}
+                  </td>
+                  <td
+                    className={`${styles.compare__cell} ${styles['compare__cell--be']} ${STATUS_CLASS[row.blueEscrow.status]}`}
+                    data-animate="cell"
+                  >
+                    {row.blueEscrow.label}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </CompareAnimations>
     </section>

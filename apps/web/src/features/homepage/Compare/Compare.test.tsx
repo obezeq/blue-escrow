@@ -24,18 +24,33 @@ describe('Compare (v6 .invert)', () => {
     ).toBeDefined();
   });
 
-  it('renders all 4 column headers', () => {
+  it('renders all 4 column headers as native <th scope="col">', () => {
     render(<Compare />);
-    expect(screen.getByText('Criteria')).toBeDefined();
-    expect(screen.getByText('Escrow.com')).toBeDefined();
-    expect(screen.getByText('Telegram middleman')).toBeDefined();
-    expect(screen.getByText('Blue Escrow')).toBeDefined();
+    const headers = screen.getAllByRole('columnheader');
+    expect(headers).toHaveLength(4);
+    expect(headers.map((h) => h.textContent?.trim())).toEqual([
+      'Criteria',
+      'Escrow.com',
+      'Telegram middleman',
+      'Blue Escrow',
+    ]);
+    // Every columnheader must be a <th> with scope="col"
+    headers.forEach((h) => {
+      expect(h.tagName).toBe('TH');
+      expect(h.getAttribute('scope')).toBe('col');
+    });
   });
 
-  it('renders every criterion row', () => {
+  it('renders every criterion row with native <th scope="row"> + 3 <td>', () => {
     render(<Compare />);
+    const rowheaders = screen.getAllByRole('rowheader');
+    expect(rowheaders).toHaveLength(COMPARE_ROWS.length);
+    rowheaders.forEach((rh, i) => {
+      expect(rh.tagName).toBe('TH');
+      expect(rh.getAttribute('scope')).toBe('row');
+      expect(rh.textContent).toBe(COMPARE_ROWS[i]!.criterion);
+    });
     COMPARE_ROWS.forEach((row) => {
-      expect(screen.getByText(row.criterion)).toBeDefined();
       expect(screen.getByText(row.escrow.label)).toBeDefined();
       expect(screen.getByText(row.telegram.label)).toBeDefined();
       expect(screen.getByText(row.blueEscrow.label)).toBeDefined();
@@ -51,9 +66,11 @@ describe('Compare (v6 .invert)', () => {
     );
   });
 
-  it('exposes a table via role semantics', () => {
-    render(<Compare />);
+  it('exposes a native <table> landmark with accessible name', () => {
+    const { container } = render(<Compare />);
     const table = screen.getByRole('table', { name: 'Comparison table' });
-    expect(table).toBeDefined();
+    expect(table.tagName).toBe('TABLE');
+    expect(container.querySelector('table thead')).not.toBeNull();
+    expect(container.querySelector('table tbody')).not.toBeNull();
   });
 });
