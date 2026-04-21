@@ -69,7 +69,10 @@ export function HowItWorks() {
               </header>
 
               <div className={styles.hiw__amount}>
-                <span className={styles.hiw__amountNumber}>
+                <span
+                  className={styles.hiw__amountNumber}
+                  data-hiw-ledger="amount"
+                >
                   {step.ledger.amount.toLocaleString()}
                 </span>
                 <span className={styles.hiw__amountUnit}>USDC</span>
@@ -138,6 +141,7 @@ export function HowItWorks() {
               <button
                 key={s.index}
                 type="button"
+                data-hiw-rail={s.index}
                 className={`${styles.hiw__railButton} ${active === s.index ? styles['hiw__railButton--active'] : ''}`}
                 aria-pressed={active === s.index}
                 onClick={() => setActive(s.index)}
