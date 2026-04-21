@@ -5,10 +5,12 @@ import { gsap, useGSAP } from '@/animations/config/gsap-register';
 import { MATCH_MEDIA } from '@/animations/config/defaults';
 
 /**
- * Client wrapper that adds GSAP animations to FeeSection.
- * Desktop+tablet: scrub scale on "0.33%", fade-in comparison.
- * Mobile: same scrub, simpler fade.
- * Reduced motion: all content visible, no animation.
+ * Ports the scroll-in reveal for the v6 .fees section:
+ * - The giant 0.33% number fades up with a slight scale settle
+ * - Eyebrow + h2 stagger in after the number lands
+ * - Body paragraphs + competitor row reveal together below
+ *
+ * Reduced motion leaves everything visible.
  */
 export function FeeSectionAnimations({
   children,
@@ -23,23 +25,87 @@ export function FeeSectionAnimations({
       const container = containerRef.current;
       const mm = gsap.matchMedia();
 
-      // Desktop + tablet
-      mm.add(
-        '(min-width: 768px) and (prefers-reduced-motion: no-preference)',
-        () => {
-          buildDesktopAnimations(container);
-        },
-      );
+      mm.add('(prefers-reduced-motion: no-preference)', () => {
+        const number = container.querySelector('[data-animate="number"]');
+        const eyebrow = container.querySelector('[data-animate="eyebrow"]');
+        const heading = container.querySelector('[data-animate="heading"]');
+        const bodies = container.querySelectorAll('[data-animate="body"]');
+        const row = container.querySelector('[data-animate="row"]');
 
-      // Mobile
-      mm.add(
-        '(max-width: 767px) and (prefers-reduced-motion: no-preference)',
-        () => {
-          buildMobileFallback(container);
-        },
-      );
+        if (number) {
+          gsap.from(number, {
+            scale: 1.08,
+            opacity: 0,
+            duration: 1.2,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: number,
+              start: 'top 80%',
+              once: true,
+            },
+          });
+        }
 
-      // Reduced motion: all visible
+        if (eyebrow) {
+          gsap.from(eyebrow, {
+            y: 20,
+            opacity: 0,
+            duration: 0.7,
+            delay: 0.15,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: eyebrow,
+              start: 'top 85%',
+              once: true,
+            },
+          });
+        }
+
+        if (heading) {
+          gsap.from(heading, {
+            y: 30,
+            opacity: 0,
+            duration: 0.9,
+            delay: 0.2,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: heading,
+              start: 'top 85%',
+              once: true,
+            },
+          });
+        }
+
+        if (bodies.length) {
+          gsap.from(bodies, {
+            y: 20,
+            opacity: 0,
+            duration: 0.7,
+            stagger: 0.1,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: bodies[0],
+              start: 'top 85%',
+              once: true,
+            },
+          });
+        }
+
+        if (row) {
+          gsap.from(row, {
+            y: 20,
+            opacity: 0,
+            duration: 0.7,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: row,
+              start: 'top 90%',
+              once: true,
+            },
+          });
+        }
+      });
+
       mm.add(MATCH_MEDIA.reducedMotion, () => {
         gsap.set(container.querySelectorAll('[data-animate]'), {
           clearProps: 'all',
@@ -50,90 +116,4 @@ export function FeeSectionAnimations({
   );
 
   return <div ref={containerRef}>{children}</div>;
-}
-
-// ---------------------------------------------------------------------------
-// Desktop + tablet
-// ---------------------------------------------------------------------------
-
-function buildDesktopAnimations(container: HTMLElement) {
-  const feeNumber = container.querySelector('[data-animate="fee-number"]');
-  const comparison = container.querySelector('[data-animate="comparison"]');
-
-  // Massive number: scrub scale + opacity
-  if (feeNumber) {
-    gsap.fromTo(
-      feeNumber,
-      { scale: 1.5, opacity: 0.3 },
-      {
-        scale: 1,
-        opacity: 1,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: feeNumber,
-          start: 'top 80%',
-          end: 'top 30%',
-          scrub: 1,
-        },
-      },
-    );
-  }
-
-  // Comparison text fades in after number settles
-  if (comparison) {
-    gsap.from(comparison, {
-      y: 30,
-      opacity: 0,
-      duration: 0.8,
-      ease: 'power3.out',
-      scrollTrigger: {
-        trigger: comparison,
-        start: 'top 60%',
-        once: true,
-      },
-    });
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Mobile
-// ---------------------------------------------------------------------------
-
-function buildMobileFallback(container: HTMLElement) {
-  const feeNumber = container.querySelector('[data-animate="fee-number"]');
-  const comparison = container.querySelector('[data-animate="comparison"]');
-
-  // Number still scrubs but with adjusted range
-  if (feeNumber) {
-    gsap.fromTo(
-      feeNumber,
-      { scale: 1.3, opacity: 0.3 },
-      {
-        scale: 1,
-        opacity: 1,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: feeNumber,
-          start: 'top 90%',
-          end: 'top 50%',
-          scrub: 1,
-        },
-      },
-    );
-  }
-
-  // Comparison simple fade
-  if (comparison) {
-    gsap.from(comparison, {
-      y: 40,
-      opacity: 0,
-      duration: 0.6,
-      ease: 'power3.out',
-      scrollTrigger: {
-        trigger: comparison,
-        start: 'top 80%',
-        once: true,
-      },
-    });
-  }
 }

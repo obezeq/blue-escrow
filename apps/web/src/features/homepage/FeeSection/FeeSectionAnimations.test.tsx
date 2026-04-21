@@ -1,26 +1,21 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 
-// Mock GSAP
 vi.mock('@/animations/config/gsap-register', () => ({
   gsap: {
-    matchMedia: () => ({
-      add: vi.fn(),
-    }),
+    matchMedia: () => ({ add: vi.fn() }),
     from: vi.fn(),
-    to: vi.fn(),
     set: vi.fn(),
-    fromTo: vi.fn(),
   },
   useGSAP: vi.fn(),
 }));
 
 import { FeeSectionAnimations } from './FeeSectionAnimations';
 
-afterEach(() => cleanup());
+afterEach(cleanup);
 
 describe('FeeSectionAnimations', () => {
-  it('renders children content', () => {
+  it('renders children', () => {
     render(
       <FeeSectionAnimations>
         <p>0.33%</p>
@@ -29,21 +24,12 @@ describe('FeeSectionAnimations', () => {
     expect(screen.getByText('0.33%')).toBeDefined();
   });
 
-  it('wraps children in a div container', () => {
+  it('wraps children in a div', () => {
     const { container } = render(
       <FeeSectionAnimations>
         <span>Child</span>
       </FeeSectionAnimations>,
     );
     expect(container.firstChild?.nodeName).toBe('DIV');
-  });
-
-  it('preserves child elements for SSR accessibility', () => {
-    render(
-      <FeeSectionAnimations>
-        <p aria-label="0.33 percent">0.33%</p>
-      </FeeSectionAnimations>,
-    );
-    expect(screen.getByLabelText('0.33 percent')).toBeDefined();
   });
 });
