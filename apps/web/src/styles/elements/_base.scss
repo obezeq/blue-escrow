@@ -4,6 +4,9 @@
 // correctly on any unstyled element.
 // ============================================================================
 
+@use '../settings/typography' as *;
+@use '../tools/mixins' as *;
+
 body {
   background-color: var(--bg-page);
   color: var(--text);
