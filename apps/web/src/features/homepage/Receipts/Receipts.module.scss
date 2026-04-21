@@ -1,0 +1,226 @@
+@use '../../../styles/settings/variables' as *;
+
+// ============================================================================
+// RECEIPTS — v6 .receipts (Blue Escrow v6.html:1643-1717, CSS 1061-1118).
+// Three tilting 3D cards (Middleman Soulbound / Client / Seller), each with
+// an inline SVG visual. The client and seller variants re-theme in light
+// mode; soul stays dark to read as a premium NFT card regardless.
+// ============================================================================
+
+.receipts {
+  padding: 180px 0 200px;
+  overflow: hidden;
+
+  @media (max-width: 720px) {
+    padding: 120px 0 140px;
+  }
+}
+
+.receipts__wrap {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 40px;
+
+  @media (max-width: 720px) {
+    padding: 0 24px;
+  }
+}
+
+.receipts__head {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  padding: 0 0 60px;
+  align-items: end;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding-bottom: 40px;
+  }
+}
+
+.receipts__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+
+  &::before {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.7;
+  }
+}
+
+.receipts__heading {
+  font-size: clamp(42px, 6.6vw, 96px);
+  line-height: 0.96;
+  letter-spacing: -0.04em;
+  font-weight: 600;
+  margin: 18px 0 0;
+  text-wrap: balance;
+  color: var(--text);
+}
+
+.receipts__emphasis {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--accent);
+}
+
+.receipts__subtitle {
+  font-size: 17px;
+  color: var(--text-muted);
+  max-width: 46ch;
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.receipts__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 24px;
+  margin-top: 60px;
+  perspective: 1400px;
+
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.receipts__card {
+  aspect-ratio: 3/4;
+  border-radius: 24px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--on-border);
+  transition: transform 0.6s var(--ease-out-expo);
+  transform-style: preserve-3d;
+  will-change: transform;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.receipts__card--soul {
+  background:
+    radial-gradient(
+      circle at 20% 0%,
+      rgba(120, 180, 255, 0.55),
+      transparent 60%
+    ),
+    radial-gradient(circle at 80% 100%, rgba(0, 20, 60, 1), transparent 60%),
+    linear-gradient(135deg, #0066ff 0%, #001b4d 100%);
+  color: #fff;
+}
+
+.receipts__card--client {
+  background:
+    radial-gradient(
+      circle at 80% 0%,
+      rgba(51, 170, 255, 0.4),
+      transparent 60%
+    ),
+    linear-gradient(180deg, var(--bg-tint), var(--bg-page));
+  color: var(--text);
+
+  :root[data-theme='light'] & {
+    background:
+      radial-gradient(
+        circle at 80% 0%,
+        rgba(0, 145, 255, 0.15),
+        transparent 60%
+      ),
+      linear-gradient(180deg, #fff, var(--bg-tint));
+    border-color: var(--border);
+  }
+}
+
+.receipts__card--seller {
+  background:
+    radial-gradient(
+      circle at 0% 100%,
+      rgba(0, 145, 255, 0.4),
+      transparent 60%
+    ),
+    linear-gradient(135deg, #0a1b44, #071230);
+  color: #fff;
+
+  :root[data-theme='light'] & {
+    background:
+      radial-gradient(
+        circle at 0% 100%,
+        rgba(0, 85, 224, 0.18),
+        transparent 60%
+      ),
+      linear-gradient(135deg, var(--bg-tint), #fff);
+    color: var(--text);
+    border-color: var(--border);
+  }
+}
+
+.receipts__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.78;
+
+  strong {
+    opacity: 1;
+    font-weight: 500;
+  }
+}
+
+.receipts__visual {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
+
+  svg {
+    width: 75%;
+    max-width: 240px;
+  }
+}
+
+.receipts__title {
+  font-style: italic;
+  font-weight: 400;
+  font-size: 32px;
+  letter-spacing: -0.025em;
+  margin: 0 0 10px;
+  line-height: 1.08;
+}
+
+.receipts__meta {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  opacity: 0.82;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.receipts__hash {
+  font-size: 10px;
+  opacity: 0.6;
+}
