@@ -126,6 +126,7 @@ $bp-section: 900px;
   --bg-tint:       #0d2244;
   --text:          #e6edf3;
   --text-muted:    #8b949e;
+  --muted-2:       #556089; // Secondary muted — darker than --text-muted, used in SVG labels (HIW diagram)
   --border:        #1a2740;
   --border-strong: #2a3b5c;
 
@@ -163,6 +164,7 @@ $bp-section: 900px;
   --bg-tint:       #e6f1ff;
   --text:          #0a0a0a;
   --text-muted:    #5a6474;
+  --muted-2:       #8591ad; // Secondary muted in light theme (lighter blue-grey for SVG labels)
   --border:        #e0e4ea;
   --border-strong: #c9d2de;
 

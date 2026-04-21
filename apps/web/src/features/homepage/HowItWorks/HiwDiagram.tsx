@@ -164,7 +164,7 @@ export function HiwDiagram() {
           textAnchor="middle"
           fontFamily="Geist Mono, ui-monospace"
           fontSize="11"
-          fill="#7B88B0"
+          fill="var(--muted-2)"
           letterSpacing="2"
         >
           SMART CONTRACT
@@ -175,7 +175,7 @@ export function HiwDiagram() {
           textAnchor="middle"
           fontFamily="Geist, ui-sans-serif"
           fontSize="13"
-          fill="#F3F6FF"
+          fill="var(--text)"
         >
           Escrow #4821
         </text>
