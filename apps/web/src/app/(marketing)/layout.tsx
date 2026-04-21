@@ -1,6 +1,7 @@
 import { LenisProvider } from '@/providers/LenisProvider';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { SkipLink } from '@/components/layout/SkipLink';
 import { ScrollProgressIndicator } from '@/components/ui/ScrollProgressIndicator';
 import { ClientEnhancements } from '@/components/layout/ClientEnhancements';
 
@@ -11,10 +12,13 @@ export default function MarketingLayout({
 }) {
   return (
     <LenisProvider>
+      <SkipLink />
       <ScrollProgressIndicator />
       <Header />
       <ClientEnhancements />
-      <main style={{ paddingTop: 'var(--header-height)' }}>{children}</main>
+      <main id="main-content" style={{ paddingTop: 'var(--header-height)' }}>
+        {children}
+      </main>
       <Footer />
     </LenisProvider>
   );
