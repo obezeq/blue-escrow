@@ -1,48 +1,153 @@
-@use '@/styles/settings/typography' as *;
+@use '../../../styles/settings/variables' as *;
+
+// ============================================================================
+// PROBLEM — v6 .problem (Blue Escrow v6.html:1352-1371, CSS 470-509).
+// Four kinetic lines, one of which strikes through "a stranger too" on entry,
+// followed by a 3-col answer grid (label / body / note) titled "The fix".
+// ============================================================================
 
 .problem {
-  min-height: 100vh;
-  display: flex;
+  padding: 180px 0 160px;
+  position: relative;
+
+  @media (max-width: 720px) {
+    padding: 120px 0 100px;
+  }
+}
+
+.problem__wrap {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 40px;
+
+  @media (max-width: 720px) {
+    padding: 0 24px;
+  }
+}
+
+.problem__eyebrow {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 10px;
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
 
-  &__content {
-    text-align: center;
-  }
-
-  &__heading {
-    @include type-h2;
-    color: var(--section-text);
-  }
-
-  &__heading br {
+  &::before {
     content: '';
-    display: block;
-    margin-block-end: var(--space-8);
+    width: 24px;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.7;
+  }
+}
+
+.problem__lines {
+  margin-top: 60px;
+}
+
+.problem__line {
+  font-size: clamp(40px, 7vw, 116px);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  font-weight: 500;
+  margin: 0 0 0.04em;
+  text-wrap: balance;
+  color: var(--text-muted);
+  max-width: 22ch;
+}
+
+.problem__highlight {
+  color: var(--text);
+}
+
+.problem__red {
+  color: var(--status-error);
+  position: relative;
+  display: inline-block;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: -0.05em;
+    right: -0.05em;
+    top: 54%;
+    height: 4px;
+    background: var(--status-error);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 1s var(--ease-out-expo) 0.35s;
   }
 
-  &__impact {
-    margin-block-start: var(--space-48);
+  // .problem__line--struck is added by the animation wrapper when the
+  // matching line enters the viewport.
+  .problem__line--struck &::after {
+    transform: scaleX(1);
   }
 
-  &__verdict {
-    @include type-h2;
-    color: var(--section-text);
-    margin-block-end: var(--space-32);
+  @media (prefers-reduced-motion: reduce) {
+    &::after {
+      transition: none;
+      transform: scaleX(1);
+    }
   }
+}
 
-  &__stat {
-    margin-block-end: var(--space-16);
+.problem__italic {
+  color: var(--accent);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.problem__answer {
+  margin-top: 120px;
+  padding-top: 44px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 220px 1fr 1fr;
+  gap: 56px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
   }
+}
 
-  &__counter {
-    @include type-hero;
-    color: var(--danger-red);
-    font-variant-numeric: tabular-nums;
+.problem__label {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.problem__body {
+  font-size: clamp(20px, 2.2vw, 30px);
+  line-height: 1.32;
+  letter-spacing: -0.015em;
+  max-width: 34ch;
+  text-wrap: pretty;
+  color: var(--text);
+
+  b {
+    color: var(--accent);
+    font-weight: 500;
   }
+}
 
-  &__caption {
-    @include type-body-lg;
-    color: var(--section-muted);
+.problem__note {
+  font-family: var(--ff-mono);
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.55;
+  max-width: 28ch;
+  padding-top: 4px;
+
+  span {
+    color: var(--text);
   }
 }
