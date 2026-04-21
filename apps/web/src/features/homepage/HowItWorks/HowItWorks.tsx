@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { HowItWorksAnimations } from './HowItWorksAnimations';
+import { HiwDiagram } from './HiwDiagram';
 import { HIW_STEPS, LEDGER_LOGS } from './steps';
 import styles from './HowItWorks.module.scss';
 
@@ -112,51 +113,7 @@ export function HowItWorks() {
               </div>
 
               <div className={styles.hiw__sceneBody}>
-                <div className={styles.hiw__actors}>
-                  {(['client', 'mid', 'seller'] as const).map((pos) => {
-                    const isActive =
-                      step.activeActor === 'all' || step.activeActor === pos;
-                    return (
-                      <div
-                        key={pos}
-                        className={`${styles.hiw__actor} ${styles[`hiw__actor--${pos}`]} ${isActive ? styles['hiw__actor--active'] : ''}`}
-                      >
-                        <div className={styles.hiw__actorPuck}>
-                          {pos === 'client' ? 'C' : pos === 'mid' ? 'M' : 'S'}
-                        </div>
-                        <div className={styles.hiw__actorRole}>
-                          {pos === 'client'
-                            ? 'Client'
-                            : pos === 'mid'
-                              ? 'Middleman'
-                              : 'Seller'}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className={styles.hiw__core}>
-                  <div
-                    className={`${styles.hiw__coreDisc} ${step.ledger.state === 'locked' ? styles['hiw__coreDisc--locked'] : ''}`}
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <rect x="4" y="10" width="16" height="10" rx="2" />
-                      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-                    </svg>
-                    <span className={styles.hiw__coreLabel}>
-                      Smart contract
-                    </span>
-                  </div>
-                </div>
+                <HiwDiagram />
               </div>
 
               <div className={styles.hiw__narration} aria-live="polite">
