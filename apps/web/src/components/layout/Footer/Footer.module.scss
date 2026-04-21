@@ -19,11 +19,20 @@
   max-width: var(--container-max);
   margin-inline: auto;
   padding-inline: var(--container-padding);
+  // Establishes a size-query context so .footer__giant's font-size can
+  // track this wrap's actual inline width (container_max − padding),
+  // not the viewport. Eliminates the overflow/clip at 375-900px viewports
+  // where viewport-based clamp outran the padded container width.
+  container-type: inline-size;
 }
 
 // Giant wordmark — "Blue" outlined via text-stroke, "Escrow." filled italic
 .footer__giant {
-  font-size: clamp(80px, 20vw, 300px);
+  // cqw scales with .footer__wrap (≈ viewport − container padding).
+  // Math: 6em per "Blue Escrow." → at 375px viewport (327px wrap),
+  // 16cqw = 52.3 → text 314 < 327 ✓. At 1440px viewport (1360px wrap),
+  // 16cqw = 218 → text 1308 < 1360 ✓. Floor 44 keeps tiny viewports clean.
+  font-size: clamp(44px, 16cqw, 300px);
   line-height: 0.85;
   letter-spacing: -0.055em;
   font-weight: 500;
