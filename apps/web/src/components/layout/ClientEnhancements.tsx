@@ -2,10 +2,6 @@
 
 import dynamic from 'next/dynamic';
 
-const SceneCanvas = dynamic(() => import('@/three/canvas/SceneCanvas'), {
-  ssr: false,
-});
-
 const CustomCursor = dynamic(
   () =>
     import('@/components/ui/CustomCursor/CustomCursor').then(
@@ -23,14 +19,15 @@ const GrainOverlay = dynamic(
 );
 
 /**
- * Browser-only enhancements (Three.js canvas, custom cursor, film grain).
- * Extracted to a client component because next/dynamic with ssr:false
- * is not allowed in Server Components (Next.js 16+).
+ * Browser-only enhancements (custom cursor + film grain).
+ * The Three.js hero scene is mounted inside HeroSection now, not at the
+ * layout level, so there's no persistent full-viewport canvas anymore.
+ * next/dynamic with ssr:false lives here because Server Components
+ * cannot use it directly (Next.js 16+).
  */
 export function ClientEnhancements() {
   return (
     <>
-      <SceneCanvas />
       <CustomCursor />
       <GrainOverlay />
     </>
