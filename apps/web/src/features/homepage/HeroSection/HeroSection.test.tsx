@@ -68,11 +68,11 @@ describe('HeroSection (v6)', () => {
     expect(container.textContent?.match(/Deal #4821 signed/g)?.length).toBe(4);
   });
 
-  it('renders as <header id="hero"> with accessible label', () => {
+  it('renders as <section id="hero"> with accessible label', () => {
     const { container } = render(<HeroSection />);
-    const header = container.querySelector('header');
-    expect(header?.id).toBe('hero');
-    expect(header?.getAttribute('aria-label')).toBe(
+    const section = container.querySelector('section#hero');
+    expect(section).not.toBeNull();
+    expect(section?.getAttribute('aria-label')).toBe(
       'Decentralized escrow protocol',
     );
   });

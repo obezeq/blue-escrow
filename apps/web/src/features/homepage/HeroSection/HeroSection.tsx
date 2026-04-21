@@ -88,7 +88,7 @@ function renderTicker(prefix: string) {
 
 export function HeroSection() {
   return (
-    <header
+    <section
       className={styles.hero}
       id="hero"
       aria-label="Decentralized escrow protocol"
@@ -216,6 +216,6 @@ export function HeroSection() {
           </div>
         </div>
       </HeroAnimations>
-    </header>
+    </section>
   );
 }
