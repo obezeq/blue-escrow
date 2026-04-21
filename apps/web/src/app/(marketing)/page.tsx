@@ -8,7 +8,6 @@ import { TheFlow } from '@/features/homepage/TheFlow/TheFlow';
 import { TrustLayer } from '@/features/homepage/TrustLayer/TrustLayer';
 import { FeeSection } from '@/features/homepage/FeeSection/FeeSection';
 import { CtaSection } from '@/features/homepage/CtaSection/CtaSection';
-import { SectionTransition } from '@/components/ui';
 
 export const metadata: Metadata = {
   title: 'Blue Escrow — Decentralized Escrow on Arbitrum',
@@ -33,18 +32,13 @@ export default function HomePage() {
     <>
       <ClientShell />
       <HeroSection />
-      <SectionTransition from="blue" to="white" />
       <TheProblem />
       <TheSolution />
-      <SectionTransition from="white" to="blue" />
       <HowItWorks />
-      <SectionTransition from="blue" to="white" />
       <TheFlow />
       <TrustLayer />
-      <SectionTransition from="white" to="blue" />
       <FeeSection />
       <CtaSection />
-      <SectionTransition from="blue" to="white" />
     </>
   );
 }

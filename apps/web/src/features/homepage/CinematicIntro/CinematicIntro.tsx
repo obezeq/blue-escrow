@@ -230,7 +230,7 @@ export function CinematicIntro() {
   return (
     <>
       <section
-        className={`o-section o-section--blue ${styles.intro}`}
+        className={`o-section ${styles.intro}`}
         ref={sectionRef}
         aria-label="Introduction"
       >

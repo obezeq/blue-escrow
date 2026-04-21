@@ -4,7 +4,7 @@ import styles from './TheProblem.module.scss';
 export function TheProblem() {
   return (
     <section
-      className={`o-section o-section--white ${styles.problem}`}
+      className={`o-section ${styles.problem}`}
       id="the-problem"
       aria-label="The problem with trust"
     >

@@ -4,7 +4,7 @@ import styles from './FeeSection.module.scss';
 export function FeeSection() {
   return (
     <section
-      className={`o-section o-section--blue ${styles.fee}`}
+      className={`o-section ${styles.fee}`}
       id="fees"
       aria-label="Platform fees"
     >

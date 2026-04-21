@@ -13,13 +13,8 @@
 .progress__bar {
   width: 100%;
   height: 100%;
-  background: var(--blue-primary);
+  background: var(--accent);
   transform-origin: left;
   transform: scaleX(0);
   will-change: transform;
-  transition: background 200ms ease;
-
-  :global([data-section-theme='blue']) & {
-    background: var(--white);
-  }
 }

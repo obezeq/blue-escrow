@@ -33,36 +33,6 @@
   }
 }
 
-// Section variants — override contextual vars + apply background
-
-.o-section--blue {
-  --section-bg: var(--blue-primary);
-  --section-text: var(--white);
-  --section-heading: var(--white);
-  --section-muted: rgba(255, 255, 255, 0.7);
-  --section-card-bg: rgba(255, 255, 255, 0.1);
-  --section-card-border: rgba(255, 255, 255, 0.15);
-  --section-code-bg: rgba(0, 0, 0, 0.2);
-  --section-particle: var(--white);
-
-  background: linear-gradient(135deg, var(--blue-primary) 0%, var(--blue-vivid) 100%);
-  color: var(--section-text);
-}
-
-.o-section--white {
-  --section-bg: var(--white);
-  --section-text: var(--black);
-  --section-heading: var(--blue-primary);
-  --section-muted: var(--gray-text);
-  --section-card-bg: var(--gray-light);
-  --section-card-border: var(--gray-border);
-  --section-code-bg: #eef4ff;
-  --section-particle: var(--blue-primary);
-
-  background: var(--white);
-  color: var(--section-text);
-}
-
 // --- Grid ---
 
 .o-grid {

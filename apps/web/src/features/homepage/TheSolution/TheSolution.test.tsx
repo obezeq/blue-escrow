@@ -73,12 +73,6 @@ describe('TheSolution', () => {
     expect(section?.id).toBe('the-solution');
   });
 
-  it('has o-section--white class for white background', () => {
-    const { container } = render(<TheSolution />);
-    const section = container.querySelector('section');
-    expect(section?.className).toContain('o-section--white');
-  });
-
   it('has aria-label on the section', () => {
     const { container } = render(<TheSolution />);
     const section = container.querySelector('section');
