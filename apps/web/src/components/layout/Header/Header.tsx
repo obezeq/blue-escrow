@@ -1,100 +1,83 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useRef } from 'react';
 import Link from 'next/link';
-import { MagneticButton } from '@/components/ui/MagneticButton';
+import { useGSAP } from '@gsap/react';
+import { ScrollTrigger } from '@/animations/config/gsap-register';
+import { ThemeToggle } from '@/components/ui';
 import styles from './Header.module.scss';
 
-type HeaderTheme = 'blue' | 'white';
-
-const HEADER_HEIGHT_PX = 72; // var(--header-height) = 4.5rem ≈ 72px
+const SCROLL_THRESHOLD = 40;
 
 export function Header() {
   const headerRef = useRef<HTMLElement>(null);
-  const [theme, setTheme] = useState<HeaderTheme>('blue');
-  const [menuOpen, setMenuOpen] = useState(false);
 
-  const updateTheme = useCallback(() => {
-    const sections = document.querySelectorAll(
-      'section.o-section--blue, section.o-section--white',
-    );
+  useGSAP(() => {
+    if (!headerRef.current) return;
+    const header = headerRef.current;
+    const scrolledClass = styles['header--scrolled'] ?? 'header--scrolled';
 
-    // Find the section whose top is closest to (but above) the header zone
-    let topmost: Element | null = null;
-    let topmostTop = -Infinity;
-
-    sections.forEach((section) => {
-      const rect = section.getBoundingClientRect();
-      // Section overlaps the header zone (top 72px of viewport)?
-      if (rect.top < HEADER_HEIGHT_PX && rect.bottom > 0 && rect.top > topmostTop) {
-        topmost = section;
-        topmostTop = rect.top;
-      }
+    const trigger = ScrollTrigger.create({
+      start: 'top -40',
+      end: 'max',
+      onUpdate: (self) => {
+        if (self.scroll() > SCROLL_THRESHOLD) {
+          header.classList.add(scrolledClass);
+        } else {
+          header.classList.remove(scrolledClass);
+        }
+      },
     });
 
-    if (topmost) {
-      const el = topmost as Element;
-      const isBlue = el.classList.contains('o-section--blue');
-      const newTheme = isBlue ? 'blue' : 'white';
-      setTheme(newTheme);
-      document.documentElement.dataset.sectionTheme = newTheme;
-    }
+    return () => {
+      trigger.kill();
+    };
   }, []);
 
-  useEffect(() => {
-    let ticking = false;
-    const onScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          updateTheme();
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    updateTheme(); // Initial detection
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [updateTheme]);
-
-  const themeClass =
-    theme === 'blue' ? styles['header--on-blue'] : styles['header--on-white'];
-
   return (
-    <header
-      ref={headerRef}
-      className={`${styles.header} ${themeClass}`}
-    >
+    <header ref={headerRef} className={styles.header}>
       <nav aria-label="Main navigation" className={styles.header__nav}>
         <Link href="/" className={styles.header__logo}>
-          Blue Escrow
+          <span className={styles.header__logoDot} aria-hidden="true" />
+          <span>
+            Blue <span className={styles.header__logoItalic}>Escrow</span>
+          </span>
         </Link>
 
-        <div
-          className={`${styles.header__links} ${menuOpen ? styles['header__links--open'] : ''}`}
-        >
-          <Link href="#how-it-works" className={styles.header__link}>
-            How It Works
-          </Link>
-          <Link href="/docs" className={styles.header__link}>
-            Docs
-          </Link>
-          <MagneticButton href="/app" variant="primary" size="sm">
-            Launch App
-          </MagneticButton>
-        </div>
+        <ul className={styles.header__links}>
+          <li>
+            <Link href="#problem" className={styles.header__link}>
+              The problem
+            </Link>
+          </li>
+          <li>
+            <Link href="#hiw" className={styles.header__link}>
+              How it works
+            </Link>
+          </li>
+          <li>
+            <Link href="#compare" className={styles.header__link}>
+              Compare
+            </Link>
+          </li>
+          <li>
+            <Link href="#fees" className={styles.header__link}>
+              Fees
+            </Link>
+          </li>
+          <li>
+            <Link href="#faq" className={styles.header__link}>
+              FAQ
+            </Link>
+          </li>
+        </ul>
 
-        <button
-          className={styles.header__hamburger}
-          onClick={() => setMenuOpen((prev) => !prev)}
-          aria-expanded={menuOpen}
-          aria-label="Toggle navigation menu"
-        >
-          <span className={styles.header__hamburgerLine} />
-          <span className={styles.header__hamburgerLine} />
-          <span className={styles.header__hamburgerLine} />
-        </button>
+        <div className={styles.header__right}>
+          <ThemeToggle />
+          <Link href="/app" className={styles.header__cta}>
+            Launch app <span aria-hidden="true">→</span>
+          </Link>
+        </div>
       </nav>
     </header>
   );
