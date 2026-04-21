@@ -1,0 +1,8 @@
+@use '../../styles/settings/variables' as *;
+
+.canvas {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-canvas);
+  pointer-events: none;
+}

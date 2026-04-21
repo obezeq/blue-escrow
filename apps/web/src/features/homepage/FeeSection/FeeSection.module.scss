@@ -1,0 +1,60 @@
+@use '../../../styles/settings/variables' as *;
+@use '../../../styles/settings/typography' as *;
+@use '../../../styles/tools/mixins' as *;
+
+// ============================================================================
+// FEE SECTION — Massive "0.33%" typography on BLUE bg
+// ============================================================================
+
+.fee {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: var(--space-128);
+  overflow: hidden;
+
+  @include responsive-max($bp-tablet) {
+    padding-block: var(--space-96);
+  }
+}
+
+.fee__content {
+  text-align: center;
+}
+
+// --- Massive number ---
+
+.fee__number {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: clamp(96px, 20vw, 320px);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--section-text);
+  margin: 0;
+  will-change: transform;
+  font-variant-numeric: tabular-nums;
+}
+
+// --- Comparison ---
+
+.fee__comparison {
+  margin-block-start: var(--space-48);
+}
+
+.fee__line {
+  @include type-h4;
+  color: var(--section-text);
+  margin: 0 0 var(--space-16);
+}
+
+.fee__competitor {
+  @include type-body-lg;
+  color: var(--section-muted);
+  margin: 0;
+}
+
+.fee__highlight {
+  color: var(--section-text);
+  font-weight: 700;
+}

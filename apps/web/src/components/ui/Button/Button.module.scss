@@ -1,0 +1,90 @@
+@use '../../../styles/settings/variables' as *;
+@use '../../../styles/settings/typography' as *;
+@use '../../../styles/tools/mixins' as *;
+
+// ============================================================================
+// BUTTON — Auto-adapts via contextual --section-* CSS vars
+// On blue sections: primary = white bg + blue text
+// On white sections: primary = blue bg + white text
+// ============================================================================
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background 250ms ease,
+    color 250ms ease,
+    border-color 250ms ease,
+    opacity 250ms ease;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+
+  &:disabled,
+  &[aria-disabled='true'] {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+// --- Variants ---
+
+.button--primary {
+  background: var(--section-heading);
+  color: var(--section-bg);
+  border: 1.5px solid transparent;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+.button--secondary {
+  background: transparent;
+  color: var(--section-heading);
+  border: 1.5px solid var(--section-heading);
+
+  &:hover {
+    background: var(--section-heading);
+    color: var(--section-bg);
+  }
+}
+
+.button--ghost {
+  background: transparent;
+  color: var(--section-heading);
+  border: 1.5px solid transparent;
+
+  &:hover {
+    background: color-mix(in srgb, var(--section-heading) 10%, transparent);
+  }
+}
+
+// --- Sizes ---
+
+.button--sm {
+  @include type-body-sm;
+
+  padding: var(--space-12) var(--space-16);
+}
+
+.button--md {
+  @include type-body;
+
+  padding: var(--space-12) var(--space-24);
+}
+
+.button--lg {
+  @include type-body-lg;
+
+  padding: var(--space-16) var(--space-32);
+}

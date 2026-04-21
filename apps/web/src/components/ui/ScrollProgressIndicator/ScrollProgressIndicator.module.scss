@@ -1,0 +1,25 @@
+@use '../../../styles/settings/variables' as *;
+
+.progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  z-index: 110; // Above header (--z-header: 100)
+  pointer-events: none;
+}
+
+.progress__bar {
+  width: 100%;
+  height: 100%;
+  background: var(--blue-primary);
+  transform-origin: left;
+  transform: scaleX(0);
+  will-change: transform;
+  transition: background 200ms ease;
+
+  :global([data-section-theme='blue']) & {
+    background: var(--white);
+  }
+}

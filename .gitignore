@@ -38,6 +38,13 @@ playwright-report/
 blob-report/
 playwright/.cache/
 playwright/.auth/
+.playwright-mcp/
+
+# Next.js (auto-generated)
+apps/web/next-env.d.ts
+
+# Debug artifacts
+debug-*.png
 
 # Foundry — build outputs and caches
 apps/contracts/out/
