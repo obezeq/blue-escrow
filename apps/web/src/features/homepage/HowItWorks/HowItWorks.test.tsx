@@ -85,4 +85,43 @@ describe('HowItWorks (v6)', () => {
       'How it works in five steps',
     );
   });
+
+  it('renders the v6 SVG diagram with 3 actors, a packet, and wire overlays', () => {
+    const { container } = render(<HowItWorks />);
+    const svg = container.querySelector('svg[viewBox="0 0 1200 720"]');
+    expect(svg).not.toBeNull();
+    expect(
+      svg?.querySelector('[data-hiw="actor-client"]'),
+    ).not.toBeNull();
+    expect(svg?.querySelector('[data-hiw="actor-mid"]')).not.toBeNull();
+    expect(
+      svg?.querySelector('[data-hiw="actor-seller"]'),
+    ).not.toBeNull();
+    expect(svg?.querySelector('[data-hiw="packet"]')).not.toBeNull();
+    expect(
+      svg?.querySelector('[data-hiw="wire-active-C"]'),
+    ).not.toBeNull();
+    expect(
+      svg?.querySelector('[data-hiw="wire-active-M"]'),
+    ).not.toBeNull();
+    expect(
+      svg?.querySelector('[data-hiw="wire-active-S"]'),
+    ).not.toBeNull();
+  });
+
+  it('tags the ledger amount so the timeline can tween its text content', () => {
+    const { container } = render(<HowItWorks />);
+    const amount = container.querySelector('[data-hiw-ledger="amount"]');
+    expect(amount).not.toBeNull();
+    expect(amount?.textContent).toBe('0');
+  });
+
+  it('tags every rail button with its phase index for scroll-seek', () => {
+    const { container } = render(<HowItWorks />);
+    const rails = container.querySelectorAll('[data-hiw-rail]');
+    expect(rails.length).toBe(5);
+    rails.forEach((btn, i) => {
+      expect(btn.getAttribute('data-hiw-rail')).toBe(String(i));
+    });
+  });
 });
