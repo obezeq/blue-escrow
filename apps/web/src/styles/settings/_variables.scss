@@ -9,80 +9,174 @@ $bp-wide: 1440px;
 $bp-ultra: 1920px;
 
 // ============================================================================
-// CSS CUSTOM PROPERTIES — The single source of truth for all design tokens
+// CSS CUSTOM PROPERTIES — Single source of truth for v6 design tokens
 // ============================================================================
+// Dark-first with light toggle via [data-theme='light'] on <html>.
+// Mirrored from .scratch/claude-design/styles/tokens.css.
+
+// ----------------------------------------------------------------------------
+// :root — invariants across both themes
+// ----------------------------------------------------------------------------
 
 :root {
-  // --- Brand Colors (from Figma tokens) ---
+  // --- Brand blues (invariant) ---
   --blue-primary: #0066ff;
-  --blue-vivid: #0091ff;
-  --blue-hover: #0077ff;
+  --blue-vivid:   #0091ff;
+  --blue-hover:   #0077ff;
+  --blue-text:    #33aaff;
+  --blue-muted:   #66bbff;
+  --blue-deep:    #0044cc;
+  --blue-ink:     #001b4d;
 
-  // --- Neutrals ---
-  --white: #ffffff;
-  --black: #111111;
+  // --- Status colors (used in Compare dots, form validation, etc.) ---
+  --status-success: #22cc66;
+  --status-warning: #ffaa33;
+  --status-error:   #ff5566;
 
-  // --- Gray Palette ---
-  --gray-text: #767676;
-  --gray-light: #f5f7fa;
-  --gray-border: #e8ecf0;
+  // --- Font stacks — bridge next/font's --font-sans/--font-mono to v6 tokens ---
+  --ff-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --ff-mono: var(--font-mono), ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
-  // --- Danger (ONLY for "$2.1B" stat — nowhere else) ---
-  --danger-red: #ff4455;
+  // --- Easings ---
+  --ease-out-expo:     cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-in-out-quart: cubic-bezier(0.77, 0, 0.175, 1);
 
-  // --- Role Colors (no green, no yellow, no amber) ---
-  --role-client: #0066ff;
-  --role-seller: #33aaff;
-  --role-middleman: #999999;
+  // --- Type scale (px) ---
+  --t-hero:    128px;
+  --t-display: 96px;
+  --t-h1:      64px;
+  --t-h2:      48px;
+  --t-h3:      40px;
+  --t-h4:      32px;
+  --t-h5:      24px;
+  --t-body-lg: 18px;
+  --t-body:    16px;
+  --t-body-sm: 14px;
+  --t-caption: 12px;
 
-  // --- Spacing Scale (power-of-2, in rem) ---
-  --space-4: 0.25rem;
-  --space-8: 0.5rem;
-  --space-12: 0.75rem;
-  --space-16: 1rem;
-  --space-24: 1.5rem;
-  --space-32: 2rem;
-  --space-48: 3rem;
-  --space-64: 4rem;
-  --space-96: 6rem;
+  // --- Spacing scale ---
+  --space-4:   0.25rem;
+  --space-8:   0.5rem;
+  --space-12:  0.75rem;
+  --space-16:  1rem;
+  --space-24:  1.5rem;
+  --space-32:  2rem;
+  --space-48:  3rem;
+  --space-64:  4rem;
+  --space-96:  6rem;
   --space-128: 8rem;
 
-  // --- Border Radius ---
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
+  // --- Border radius ---
+  --radius-sm:   0.25rem;
+  --radius-md:   0.5rem;
+  --radius-lg:   0.75rem;
+  --radius-xl:   1rem;
+  --radius-2xl:  1.5rem;
   --radius-full: 9999px;
 
   // --- Transitions ---
-  --transition-fast: 150ms ease;
-  --transition-base: 300ms ease;
-  --transition-slow: 500ms ease;
+  --transition-fast:   150ms ease;
+  --transition-base:   300ms ease;
+  --transition-slow:   500ms ease;
   --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  // --- Z-Index Scale ---
-  --z-base: 0;
-  --z-above: 1;
-  --z-canvas: 1;
-  --z-header: 100;
-  --z-overlay: 200;
-  --z-modal: 300;
-  --z-toast: 400;
+  // --- Z-index scale ---
+  --z-base:      0;
+  --z-above:     1;
+  --z-canvas:    1;
+  --z-header:    100;
+  --z-overlay:   200;
+  --z-modal:     300;
+  --z-toast:     400;
   --z-preloader: 500;
 
   // --- Layout ---
-  --container-max: 1400px;
+  --container-max:     1440px;
   --container-padding: var(--space-24);
-  --header-height: 4.5rem;
+  --header-height:     4.5rem;
 
-  // --- Section Contextual Vars (defaults to white/light) ---
-  --section-bg: var(--white);
-  --section-text: var(--black);
-  --section-heading: var(--blue-primary);
-  --section-muted: var(--gray-text);
-  --section-card-bg: var(--gray-light);
-  --section-card-border: var(--gray-border);
-  --section-code-bg: #eef4ff;
-  --section-particle: var(--blue-primary);
+  // --- Legacy back-compat (removed in the SectionTransition cleanup commit) ---
+  --white:           #ffffff;
+  --black:           #111111;
+  --gray-text:       #767676;
+  --gray-light:      #f5f7fa;
+  --gray-border:     #e8ecf0;
+  --danger-red:      #ff4455;
+  --role-client:     var(--blue-primary);
+  --role-seller:     var(--blue-text);
+  --role-middleman:  #999999;
+}
+
+// ----------------------------------------------------------------------------
+// Dark theme — default (applied when data-theme is missing OR 'dark')
+// ----------------------------------------------------------------------------
+
+:root,
+:root[data-theme='dark'] {
+  --bg-page:       #0b1117;
+  --bg-surface:    #111b2a;
+  --bg-tint:       #0d2244;
+  --text:          #e6edf3;
+  --text-muted:    #8b949e;
+  --border:        #1a2740;
+  --border-strong: #2a3b5c;
+
+  --accent:        var(--blue-vivid);
+  --accent-soft:   rgba(0, 145, 255, 0.12);
+
+  --on-card:       rgba(255, 255, 255, 0.06);
+  --on-border:     rgba(255, 255, 255, 0.12);
+
+  --hero-grad:
+    radial-gradient(ellipse 60% 50% at 50% 30%, rgba(0, 145, 255, 0.35), transparent 70%),
+    radial-gradient(ellipse 80% 60% at 80% 90%, rgba(0, 102, 255, 0.25), transparent 70%),
+    linear-gradient(180deg, #001b4d 0%, #0b1117 70%);
+  --blue-band:
+    linear-gradient(135deg, var(--blue-primary) 0%, var(--blue-vivid) 100%);
+
+  // Back-compat contextual aliases — kept until Phase 1 section-class cleanup lands.
+  --section-bg:          var(--bg-page);
+  --section-text:        var(--text);
+  --section-heading:     var(--accent);
+  --section-muted:       var(--text-muted);
+  --section-card-bg:     var(--bg-surface);
+  --section-card-border: var(--border);
+  --section-code-bg:     var(--bg-surface);
+  --section-particle:    var(--accent);
+}
+
+// ----------------------------------------------------------------------------
+// Light theme
+// ----------------------------------------------------------------------------
+
+:root[data-theme='light'] {
+  --bg-page:       #ffffff;
+  --bg-surface:    #f5f8fc;
+  --bg-tint:       #e6f1ff;
+  --text:          #0a0a0a;
+  --text-muted:    #5a6474;
+  --border:        #e0e4ea;
+  --border-strong: #c9d2de;
+
+  --accent:        var(--blue-primary);
+  --accent-soft:   rgba(0, 102, 255, 0.08);
+
+  --on-card:       rgba(0, 27, 77, 0.04);
+  --on-border:     rgba(0, 27, 77, 0.10);
+
+  --hero-grad:
+    radial-gradient(ellipse 70% 60% at 50% 30%, rgba(0, 145, 255, 0.18), transparent 70%),
+    radial-gradient(ellipse 80% 60% at 80% 90%, rgba(0, 102, 255, 0.10), transparent 70%),
+    linear-gradient(180deg, #e6f1ff 0%, #ffffff 70%);
+  --blue-band:
+    linear-gradient(135deg, var(--blue-primary) 0%, var(--blue-vivid) 100%);
+
+  --section-bg:          var(--bg-page);
+  --section-text:        var(--text);
+  --section-heading:     var(--accent);
+  --section-muted:       var(--text-muted);
+  --section-card-bg:     var(--bg-surface);
+  --section-card-border: var(--border);
+  --section-code-bg:     var(--bg-tint);
+  --section-particle:    var(--accent);
 }
