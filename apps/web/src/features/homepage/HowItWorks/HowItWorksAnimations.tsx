@@ -210,15 +210,17 @@ export function HowItWorksAnimations({
 
         masterTl.to(coreHalo, { fillOpacity: 0.25, duration: 0.4 }, 'phase-2+=0.3');
 
-        // Tween ledger amount display 0 -> 2400
+        // Tween ledger amount display 0 -> 2400.
+        // v6 timing: 2.0s with `power3.out` for a deliberate, money-flows-in
+        // feeling. Phase 4 shipped 0.8s `power2.out` — 2.5x too fast vs design.
         if (ledgerAmountEl) {
           const amountProxy = { value: 0 };
           masterTl.to(
             amountProxy,
             {
               value: 2400,
-              duration: 0.8,
-              ease: 'power2.out',
+              duration: 2.0,
+              ease: 'power3.out',
               onUpdate() {
                 ledgerAmountEl.textContent = Math.round(
                   amountProxy.value,
