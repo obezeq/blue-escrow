@@ -20,22 +20,19 @@
 }
 
 .hiw__intro {
-  padding: 140px 0 80px;
-
-  @media (max-width: 720px) {
-    padding: 100px 0 60px;
-  }
+  // Fluid vertical rhythm — no 720px step. Floor = 100/60 (matches
+  // the old mobile fallback), ceiling = 140/80 (matches old desktop).
+  padding-block-start: clamp(100px, 10vw, 140px);
+  padding-block-end: clamp(60px, 6vw, 80px);
 }
 
 .hiw__wrap {
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
-  padding: 0 40px;
-
-  @media (max-width: 720px) {
-    padding: 0 24px;
-  }
+  // Mirror --container-padding (clamp(1.5rem, 4vw, 2.5rem)) — same tokens
+  // used by .o-container, eliminating the 720px step.
+  padding-inline: clamp(1.5rem, 4vw, 2.5rem);
 }
 
 .hiw__head {
@@ -95,24 +92,23 @@
 }
 
 .hiw__stage {
-  padding: 0 40px;
-
-  @media (max-width: 720px) {
-    padding: 0 20px;
-  }
+  // Same fluid rule as .hiw__wrap — 20px min matches the old mobile
+  // fallback, 40px max matches desktop.
+  padding-inline: clamp(1.25rem, 4vw, 2.5rem);
 }
 
 .hiw__grid {
   display: grid;
   grid-template-columns: 1fr 1.1fr;
-  gap: 32px;
+  // Fluid gap — shrinks from 32px desktop down to 16px at narrow widths,
+  // freeing horizontal space for the ledger + diagram cards on mobile.
+  gap: clamp(1rem, 3vw, 2rem);
   align-items: stretch;
   max-width: 1440px;
   margin: 0 auto;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
-    gap: 18px;
   }
 }
 
