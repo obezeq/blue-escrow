@@ -57,6 +57,11 @@
   text-wrap: balance;
   max-width: 14ch;
   color: var(--text);
+  // Belt-and-suspenders: text-wrap: balance may pick an unbalanced
+  // break at some widths; overflow-wrap: anywhere lets a single word
+  // break if it ever exceeds max-width (defensive; no known trigger
+  // with current copy "Trade like you trust the code, not the person.").
+  overflow-wrap: anywhere;
 }
 
 .closing__emphasis {
