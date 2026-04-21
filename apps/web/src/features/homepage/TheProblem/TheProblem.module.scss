@@ -77,9 +77,8 @@
   &::after {
     content: '';
     position: absolute;
-    left: -0.05em;
-    right: -0.05em;
-    top: 54%;
+    inset-inline: -0.05em;
+    inset-block-start: 54%;
     height: 4px;
     background: var(--status-error);
     transform: scaleX(0);

@@ -257,7 +257,7 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   font-weight: 500;
-  margin-left: auto;
+  margin-inline-start: auto;
   align-self: center;
 }
 
@@ -308,7 +308,7 @@
   height: 8px;
   border-radius: 50%;
   background: var(--text-muted);
-  margin-right: 10px;
+  margin-inline-end: 10px;
   vertical-align: middle;
   transition:
     background 0.3s,
@@ -669,7 +669,7 @@
   text-transform: uppercase;
   color: var(--text-muted);
   border: none;
-  border-right: 1px solid var(--border);
+  border-inline-end: 1px solid var(--border);
   background: transparent;
   position: relative;
   transition:
@@ -680,7 +680,7 @@
   font-weight: inherit;
 
   &:last-child {
-    border-right: 0;
+    border-inline-end: 0;
   }
 
   &:hover {
@@ -696,8 +696,8 @@
   &::after {
     content: '';
     position: absolute;
-    left: 0;
-    top: -1px;
+    inset-inline-start: 0;
+    inset-block-start: -1px;
     height: 2px;
     width: 0;
     background: var(--accent);
@@ -708,18 +708,18 @@
   // it doesn't sit against the rail's right edge as a dangling line.
   @media (max-width: 900px) {
     &:nth-child(3n) {
-      border-right: 0;
+      border-inline-end: 0;
     }
   }
 
   @media (max-width: 560px) {
     &:nth-child(2n) {
-      border-right: 0;
+      border-inline-end: 0;
     }
     // Re-assert border-right on position 3 (which was cleared by the 3n
     // rule above but sits mid-row in the 2-col layout).
     &:nth-child(3) {
-      border-right: 1px solid var(--border);
+      border-inline-end: 1px solid var(--border);
     }
   }
 }
@@ -734,5 +734,5 @@
 
 .hiw__railNum {
   color: var(--accent);
-  margin-right: 10px;
+  margin-inline-end: 10px;
 }
