@@ -1,72 +1,76 @@
 @use '../../../styles/settings/variables' as *;
-@use '../../../styles/settings/typography' as *;
-@use '../../../styles/tools/mixins' as *;
 
 // ============================================================================
-// CTA SECTION — "Make it flow." on BLUE bg with FlowTrail echo
+// CTA / CLOSING — v6 .closing
+// "Trade like you trust the code, not the person."
+// Centered typographic closer on bg-page with a soft accent bloom at bottom.
+// Ports sections.css:367-392.
 // ============================================================================
 
-.cta {
-  position: relative;
-  min-height: 80vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-block: var(--space-128);
-  overflow: hidden;
-
-  @include responsive-max($bp-tablet) {
-    min-height: 60vh;
-    padding-block: var(--space-96);
-  }
-}
-
-.cta__content {
+.closing {
+  padding: 180px 0 200px;
   text-align: center;
   position: relative;
-  z-index: 1;
-}
+  overflow: hidden;
+  background:
+    radial-gradient(
+      ellipse 70% 90% at 50% 110%,
+      var(--accent-soft),
+      transparent 70%
+    ),
+    var(--bg-page);
 
-// --- Heading ---
-
-.cta__heading {
-  @include type-display;
-  color: var(--section-heading);
-  margin: 0;
-}
-
-// --- Subtitle ---
-
-.cta__subtitle {
-  @include type-body-lg;
-  color: var(--section-muted);
-  margin: var(--space-24) 0 0;
-}
-
-// --- CTA buttons ---
-
-.cta__buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-16);
-  margin-block-start: var(--space-48);
-
-  @include responsive-max($bp-tablet) {
-    flex-direction: column;
-    gap: var(--space-12);
+  @media (max-width: 720px) {
+    padding: 120px 0 140px;
   }
 }
 
-// --- Decorative FlowTrail echo ---
+.closing__wrap {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 40px;
 
-.cta__trailEcho {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(80%, 800px);
-  height: auto;
-  opacity: 0.15;
-  pointer-events: none;
+  @media (max-width: 720px) {
+    padding: 0 24px;
+  }
+}
+
+.closing__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 32px;
+}
+
+.closing__heading {
+  font-size: clamp(60px, 12vw, 200px);
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  font-weight: 600;
+  margin: 0 auto 48px;
+  text-wrap: balance;
+  max-width: 14ch;
+  color: var(--text);
+}
+
+.closing__emphasis {
+  font-style: italic;
+  font-weight: 400;
+  background: var(--blue-band);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.closing__ctas {
+  display: inline-flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
 }

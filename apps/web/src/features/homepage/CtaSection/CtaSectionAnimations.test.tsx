@@ -1,23 +1,19 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 
-// Mock GSAP
 vi.mock('@/animations/config/gsap-register', () => ({
-  gsap: { matchMedia: () => ({ add: vi.fn() }), set: vi.fn(), from: vi.fn() },
+  gsap: {
+    matchMedia: () => ({ add: vi.fn() }),
+    set: vi.fn(),
+    from: vi.fn(),
+  },
   SplitText: { create: vi.fn() },
   useGSAP: vi.fn(),
 }));
 
-// Mock ThreeProvider
-vi.mock('@/providers/ThreeProvider', () => ({
-  useThreeContext: () => ({
-    setCtaHovered: vi.fn(),
-  }),
-}));
-
 import { CtaSectionAnimations } from './CtaSectionAnimations';
 
-afterEach(() => cleanup());
+afterEach(cleanup);
 
 describe('CtaSectionAnimations', () => {
   it('renders children', () => {
