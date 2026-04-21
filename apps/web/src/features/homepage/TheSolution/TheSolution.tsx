@@ -4,7 +4,7 @@ import styles from './TheSolution.module.scss';
 export function TheSolution() {
   return (
     <section
-      className={`o-section o-section--white ${styles.solution}`}
+      className={`o-section ${styles.solution}`}
       id="the-solution"
       aria-label="How your money is protected"
     >

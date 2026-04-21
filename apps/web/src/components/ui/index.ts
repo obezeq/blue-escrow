@@ -5,5 +5,4 @@ export { CustomCursor } from './CustomCursor';
 export { ScrollProgressIndicator } from './ScrollProgressIndicator';
 export { SectionHeading } from './SectionHeading';
 export { Card } from './Card';
-export { SectionTransition } from './SectionTransition';
 export { ThemeToggle } from './ThemeToggle';

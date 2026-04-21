@@ -74,12 +74,6 @@ describe('TrustLayer', () => {
     expect(section?.id).toBe('trust-layer');
   });
 
-  it('has o-section--white class for white background', () => {
-    const { container } = render(<TrustLayer />);
-    const section = container.querySelector('section');
-    expect(section?.className).toContain('o-section--white');
-  });
-
   it('has aria-label on the section', () => {
     const { container } = render(<TrustLayer />);
     const section = container.querySelector('section');

@@ -13,7 +13,7 @@ export function TheFlow() {
 
   return (
     <section
-      className={`o-section o-section--white ${styles.flow}`}
+      className={`o-section ${styles.flow}`}
       id="the-flow"
       aria-label="How your money flows"
     >

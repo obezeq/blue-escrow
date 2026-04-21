@@ -61,12 +61,6 @@ describe('TheFlow', () => {
     expect(section?.id).toBe('the-flow');
   });
 
-  it('has o-section--white class for white background', () => {
-    const { container } = render(<TheFlow />);
-    const section = container.querySelector('section');
-    expect(section?.className).toContain('o-section--white');
-  });
-
   it('has aria-label on the section', () => {
     const { container } = render(<TheFlow />);
     const section = container.querySelector('section');

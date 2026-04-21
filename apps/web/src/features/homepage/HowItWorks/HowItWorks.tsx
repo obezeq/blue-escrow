@@ -38,7 +38,7 @@ const STEPS = [
 export function HowItWorks() {
   return (
     <section
-      className={`o-section o-section--blue ${styles.howItWorks}`}
+      className={`o-section ${styles.howItWorks}`}
       id="how-it-works"
       aria-label="How it works in five steps"
     >

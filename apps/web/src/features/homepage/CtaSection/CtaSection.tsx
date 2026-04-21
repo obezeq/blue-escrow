@@ -9,7 +9,7 @@ const TRAIL_D =
 export function CtaSection() {
   return (
     <section
-      className={`o-section o-section--blue ${styles.cta}`}
+      className={`o-section ${styles.cta}`}
       id="get-started"
       aria-label="Get started"
     >

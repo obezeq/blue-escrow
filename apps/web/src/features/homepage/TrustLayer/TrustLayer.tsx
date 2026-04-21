@@ -109,7 +109,7 @@ const STATS: Stat[] = [
 export function TrustLayer() {
   return (
     <section
-      className={`o-section o-section--white ${styles.trust}`}
+      className={`o-section ${styles.trust}`}
       id="trust-layer"
       aria-label="Trust and transparency"
     >

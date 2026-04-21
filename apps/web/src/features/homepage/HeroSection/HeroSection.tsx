@@ -4,7 +4,7 @@ import styles from './HeroSection.module.scss';
 
 export function HeroSection() {
   return (
-    <section className={`o-section o-section--blue ${styles.hero}`} id="hero" aria-label="Decentralized escrow">
+    <section className={`o-section ${styles.hero}`} id="hero" aria-label="Decentralized escrow">
       <div className={`o-container ${styles.hero__container}`}>
         <HeroAnimations>
           <h1 className={styles.hero__title}>Money flows. Trust stays.</h1>
