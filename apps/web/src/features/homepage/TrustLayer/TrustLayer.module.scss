@@ -8,15 +8,12 @@
 // ============================================================================
 
 .proof {
-  padding: 180px 0 150px;
+  padding-block-start: clamp(120px, 10vw, 180px);
+  padding-block-end: clamp(100px, 9vw, 150px);
   background: var(--bg-surface);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   overflow: hidden;
-
-  @media (max-width: 720px) {
-    padding: 120px 0 100px;
-  }
 }
 
 .proof__wrap {
@@ -24,6 +21,7 @@
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 40px;
+  container-type: inline-size;
 
   @media (max-width: 720px) {
     padding: 0 24px;
@@ -80,6 +78,17 @@
   color: var(--accent);
 }
 
+@container (min-width: 640px) {
+  .proof__emphasis {
+    white-space: nowrap;
+  }
+}
+
+.proof__emphasis > div {
+  padding-inline: 0.06em;
+  margin-inline: -0.06em;
+}
+
 .proof__subtitle {
   font-size: 17px;
   color: var(--text-muted);
@@ -101,15 +110,15 @@
 
 .proof__item {
   padding: 52px 32px 40px;
-  border-right: 1px solid var(--border);
+  border-inline-end: 1px solid var(--border);
 
   &:last-child {
-    border-right: none;
+    border-inline-end: none;
   }
 
   @media (max-width: 960px) {
     &:nth-child(2) {
-      border-right: none;
+      border-inline-end: none;
     }
 
     &:nth-child(-n + 2) {
@@ -137,7 +146,7 @@
   font-size: 0.32em;
   color: var(--accent);
   font-weight: 400;
-  margin-left: 4px;
+  margin-inline-start: 4px;
 }
 
 .proof__label {
@@ -176,6 +185,6 @@
   display: inline-block;
 
   span {
-    padding-right: 60px;
+    padding-inline-end: 60px;
   }
 }

@@ -8,12 +8,9 @@
 // ============================================================================
 
 .receipts {
-  padding: 180px 0 200px;
+  padding-block-start: clamp(120px, 10vw, 180px);
+  padding-block-end: clamp(140px, 11vw, 200px);
   overflow: hidden;
-
-  @media (max-width: 720px) {
-    padding: 120px 0 140px;
-  }
 }
 
 .receipts__wrap {
@@ -21,6 +18,7 @@
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 40px;
+  container-type: inline-size;
 
   @media (max-width: 720px) {
     padding: 0 24px;
@@ -75,6 +73,17 @@
   font-style: italic;
   font-weight: 400;
   color: var(--accent);
+}
+
+@container (min-width: 640px) {
+  .receipts__emphasis {
+    white-space: nowrap;
+  }
+}
+
+.receipts__emphasis > div {
+  padding-inline: 0.06em;
+  margin-inline: -0.06em;
 }
 
 .receipts__subtitle {

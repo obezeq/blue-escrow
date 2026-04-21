@@ -51,9 +51,10 @@ export function Button({
     );
   }
 
-  const { disabled, ...buttonProps } = rest as ButtonAsButton;
+  const { disabled, type, ...buttonProps } = rest as ButtonAsButton;
   return (
     <button
+      type={type ?? 'button'}
       className={classNames}
       disabled={disabled}
       {...buttonProps}

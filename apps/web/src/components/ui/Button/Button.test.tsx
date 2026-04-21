@@ -1,11 +1,25 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, afterEach } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/react';
 import { Button } from './Button';
+
+afterEach(cleanup);
 
 describe('Button', () => {
   it('renders as a button element by default', () => {
     render(<Button>Click me</Button>);
     expect(screen.getByRole('button', { name: 'Click me' })).toBeDefined();
+  });
+
+  it('defaults type to "button" so it never accidentally submits a parent form', () => {
+    render(<Button>No explicit type</Button>);
+    const button = screen.getByRole('button', { name: 'No explicit type' });
+    expect(button.getAttribute('type')).toBe('button');
+  });
+
+  it('honors an explicit type="submit" when provided', () => {
+    render(<Button type="submit">Submit</Button>);
+    const button = screen.getByRole('button', { name: 'Submit' });
+    expect(button.getAttribute('type')).toBe('submit');
   });
 
   it('renders as an anchor when href is provided', () => {
