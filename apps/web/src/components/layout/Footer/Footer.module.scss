@@ -40,7 +40,14 @@
   color: transparent;
   -webkit-text-stroke: 1px var(--accent);
   white-space: nowrap;
-  overflow: hidden;
+  // overflow: hidden removed — cqw sizing mathematically guarantees the
+  // wordmark fits inside .footer__wrap at every viewport, so clipping
+  // has no positive effect. It WAS silently chopping the italic ink on
+  // "Escrow." at the right edge on narrow viewports (the italic slant
+  // extends past the advance-width box). Leaving overflow at its
+  // default (visible) preserves the ink. If math ever drifts, the
+  // failure mode becomes a loud visible overflow instead of a silent
+  // ink clip — easier to spot.
 
   @media (max-width: 640px) {
     margin-bottom: 40px;
