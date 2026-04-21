@@ -44,7 +44,10 @@
 
 .intro__word {
   display: inline-block;
-  overflow: hidden;
+  // overflow: clip (Baseline 2024) replaces `hidden` — same visual clip
+  // for the pre-animation translateY(110%) state, but doesn't establish
+  // a new scroll/containment context (cheaper + more predictable).
+  overflow: clip;
   vertical-align: top;
 }
 
@@ -52,6 +55,13 @@
   font-style: italic;
   font-weight: 400;
   letter-spacing: -0.04em;
+  // Italic letters' ink overshoots the advance-width box at the right
+  // edge (especially the "w" tail of "Escrow"). padding-inline-end
+  // gives the ink room before overflow: clip cuts it; the matching
+  // negative margin-inline-end preserves the visual gap to whatever
+  // follows. Net zero layout impact, ink preserved.
+  padding-inline-end: 0.08em;
+  margin-inline-end: -0.08em;
 }
 
 .intro__letter {
