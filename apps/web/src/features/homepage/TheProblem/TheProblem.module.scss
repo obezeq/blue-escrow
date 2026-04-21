@@ -20,6 +20,10 @@
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 40px;
+  // Size-query context so italic emphasis can toggle nowrap at desktop
+  // container widths (keeps the italic phrase cohesive when text-wrap:
+  // balance would otherwise split it across lines).
+  container-type: inline-size;
 
   @media (max-width: 720px) {
     padding: 0 24px;
@@ -101,6 +105,21 @@
   color: var(--accent);
   font-style: italic;
   font-weight: 400;
+}
+
+// At desktop container widths, keep italic emphasis cohesive (text-wrap:
+// balance on .problem__line can otherwise split phrases like "just leaving"
+// across lines, which reads as a visual cut).
+@container (min-width: 640px) {
+  .problem__italic {
+    white-space: nowrap;
+  }
+}
+
+// Defensive ink cushion for any SplitText children (no-op if not split).
+.problem__italic > div {
+  padding-inline: 0.06em;
+  margin-inline: -0.06em;
 }
 
 .problem__answer {

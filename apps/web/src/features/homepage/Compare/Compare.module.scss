@@ -51,6 +51,7 @@
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 40px;
+  container-type: inline-size;
 
   @media (max-width: 720px) {
     padding: 0 24px;
@@ -105,6 +106,17 @@
   font-style: italic;
   font-weight: 400;
   color: #c5dcff;
+}
+
+@container (min-width: 640px) {
+  .compare__emphasis {
+    white-space: nowrap;
+  }
+}
+
+.compare__emphasis > div {
+  padding-inline: 0.06em;
+  margin-inline: -0.06em;
 }
 
 .compare__subtitle {
