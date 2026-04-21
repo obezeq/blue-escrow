@@ -1,11 +1,13 @@
 // ============================================================================
-// BASE ELEMENT STYLES — Bare HTML elements styled with design tokens
+// BASE ELEMENT STYLES — Bare HTML elements styled with v6 theme tokens.
+// Every color reads from :root[data-theme] so both dark/light themes paint
+// correctly on any unstyled element.
 // ============================================================================
 
 body {
-  background-color: var(--white);
-  color: var(--black);
-  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-page);
+  color: var(--text);
+  font-family: var(--ff-sans);
   overflow-x: hidden;
   @include type-body;
 }
@@ -14,17 +16,17 @@ body {
 
 h1 {
   @include type-h1;
-  color: var(--section-heading, var(--blue-primary));
+  color: var(--text);
 }
 
 h2 {
   @include type-h2;
-  color: var(--section-heading, var(--blue-primary));
+  color: var(--text);
 }
 
 h3 {
   @include type-h3;
-  color: var(--section-heading, var(--blue-primary));
+  color: var(--text);
 }
 
 h4 {
@@ -45,13 +47,13 @@ h6 {
 // --- Paragraphs ---
 
 p {
-  color: var(--section-text, var(--black));
+  color: var(--text);
 }
 
 // --- Links ---
 
 a {
-  color: var(--blue-primary);
+  color: var(--accent);
   text-decoration: none;
   transition: color var(--transition-fast);
 
@@ -63,21 +65,21 @@ a {
 // --- Inline Code ---
 
 code {
-  font-family: var(--font-mono), ui-monospace, 'Cascadia Code', monospace;
+  font-family: var(--ff-mono);
   font-size: 0.875em;
   padding: 0.125em 0.375em;
-  background: var(--section-code-bg, #eef4ff);
+  background: var(--bg-surface);
   border-radius: var(--radius-sm);
 }
 
 // --- Code Blocks ---
 
 pre {
-  font-family: var(--font-mono), ui-monospace, 'Cascadia Code', monospace;
+  font-family: var(--ff-mono);
   font-size: 0.875rem;
   line-height: 1.6;
   padding: var(--space-16) var(--space-24);
-  background: var(--section-code-bg, #eef4ff);
+  background: var(--bg-surface);
   border-radius: var(--radius-md);
   overflow-x: auto;
 
@@ -91,7 +93,7 @@ pre {
 
 hr {
   border: none;
-  border-block-start: 1px solid var(--section-card-border, var(--gray-border));
+  border-block-start: 1px solid var(--border);
   margin-block: var(--space-32);
 }
 
@@ -105,12 +107,12 @@ b {
 // --- Selection ---
 
 ::selection {
-  background-color: var(--blue-primary);
-  color: var(--white);
+  background-color: var(--accent);
+  color: #fff;
 }
 
 // --- Custom Scrollbar (body) ---
 
 body {
-  @include custom-scrollbar(6px, transparent, var(--gray-border));
+  @include custom-scrollbar(6px, transparent, var(--border));
 }
