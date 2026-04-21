@@ -23,7 +23,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--blue-primary);
+  background: var(--accent);
   transform: translate(-50%, -50%);
   opacity: 0;
   will-change: transform;
@@ -36,7 +36,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 1px solid var(--blue-vivid);
+  border: 1px solid var(--accent);
   background: transparent;
   transform: translate(-50%, -50%);
   opacity: 0;
