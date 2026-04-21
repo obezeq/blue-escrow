@@ -1,1 +1,0 @@
-export { BloomEffect } from './BloomEffect';
