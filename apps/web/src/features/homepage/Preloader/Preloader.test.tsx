@@ -1,86 +1,60 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { render, cleanup, act } from '@testing-library/react';
 
-// Mock ThreeProvider
-vi.mock('@/providers/ThreeProvider', () => ({
-  useThreeContext: () => ({
-    isThreeReady: false,
-    setIsThreeReady: vi.fn(),
-    vaultState: 'forming',
-    setVaultState: vi.fn(),
-    currentSectionBg: 'blue',
-    setCurrentSectionBg: vi.fn(),
-    ctaHovered: false,
-    setCtaHovered: vi.fn(),
+const lenisStop = vi.fn();
+const lenisStart = vi.fn();
+
+vi.mock('lenis/react', () => ({
+  useLenis: () => ({
+    stop: lenisStop,
+    start: lenisStart,
   }),
 }));
 
-// Mock Lenis
-vi.mock('lenis/react', () => ({
-  useLenis: () => ({ stop: vi.fn(), start: vi.fn() }),
-}));
-
-// Mock GSAP
-vi.mock('@/animations/config/gsap-register', () => ({
-  gsap: {
-    timeline: () => ({
-      to: vi.fn().mockReturnThis(),
-    }),
-    matchMedia: () => ({
-      add: vi.fn(),
-    }),
-  },
-  useGSAP: vi.fn(),
-}));
-
-// Mock matchMedia
-beforeEach(() => {
-  Object.defineProperty(window, 'matchMedia', {
-    writable: true,
-    value: vi.fn().mockImplementation((query: string) => ({
-      matches: query.includes('prefers-reduced-motion') ? false : false,
-      media: query,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    })),
-  });
-});
-
 import { Preloader } from './Preloader';
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  lenisStop.mockClear();
+  lenisStart.mockClear();
+  vi.useRealTimers();
+});
 
-describe('Preloader', () => {
-  it('renders the preloader overlay', () => {
-    const { container } = render(<Preloader />);
-    const overlay = container.firstChild as HTMLElement;
-    expect(overlay).toBeDefined();
-    expect(overlay.getAttribute('aria-live')).toBe('polite');
+describe('Preloader (v6 intro)', () => {
+  beforeEach(() => {
+    // Default jsdom matchMedia from setup.ts returns matches=false for everything.
+    vi.useFakeTimers();
   });
 
-  it('displays a percentage counter', () => {
+  it('renders the Blue Escrow wordmark split into letters', () => {
     render(<Preloader />);
-    expect(screen.getByText('0%')).toBeDefined();
+    expect(document.getElementById('intro')).not.toBeNull();
+    const letters = document.querySelectorAll(
+      '#intro [class*="letter"]',
+    );
+    // "Blue" (4) + "Escrow" (6) = 10 letters
+    expect(letters.length).toBe(10);
   });
 
-  it('renders the pulsing dot', () => {
+  it('renders the initializing bar with label, track and 000% counter', () => {
     const { container } = render(<Preloader />);
-    const dot = container.querySelector('[class*="dot"]');
-    expect(dot).not.toBeNull();
+    expect(container.textContent).toContain('Initializing protocol');
+    expect(container.textContent).toContain('000%');
+    expect(container.querySelector('[class*="track"] i')).not.toBeNull();
   });
 
-  it('does not render when prefers-reduced-motion is active', () => {
-    Object.defineProperty(window, 'matchMedia', {
-      writable: true,
-      value: vi.fn().mockImplementation((query: string) => ({
-        matches: query.includes('prefers-reduced-motion'),
-        media: query,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      })),
+  it('locks Lenis scroll while visible', () => {
+    render(<Preloader />);
+    expect(lenisStop).toHaveBeenCalled();
+  });
+
+  it('unmounts itself after the intro duration and releases Lenis', () => {
+    render(<Preloader />);
+    expect(document.getElementById('intro')).not.toBeNull();
+    act(() => {
+      vi.advanceTimersByTime(4500);
     });
-
-    const { container } = render(<Preloader />);
-    expect(container.firstChild).toBeNull();
+    expect(document.getElementById('intro')).toBeNull();
+    expect(lenisStart).toHaveBeenCalled();
   });
 });
