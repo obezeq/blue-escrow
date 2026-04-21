@@ -33,7 +33,8 @@ export function Header() {
     });
 
     if (topmost) {
-      const isBlue = topmost.classList.contains('o-section--blue');
+      const el = topmost as Element;
+      const isBlue = el.classList.contains('o-section--blue');
       const newTheme = isBlue ? 'blue' : 'white';
       setTheme(newTheme);
       document.documentElement.dataset.sectionTheme = newTheme;
