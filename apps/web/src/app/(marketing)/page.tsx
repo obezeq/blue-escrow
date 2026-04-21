@@ -3,7 +3,6 @@ import { ClientShell } from '@/features/homepage/ClientShell';
 import { HeroSection } from '@/features/homepage/HeroSection/HeroSection';
 import { TheProblem } from '@/features/homepage/TheProblem/TheProblem';
 import { HowItWorks } from '@/features/homepage/HowItWorks/HowItWorks';
-import { TheFlow } from '@/features/homepage/TheFlow/TheFlow';
 import { TrustLayer } from '@/features/homepage/TrustLayer/TrustLayer';
 import { FeeSection } from '@/features/homepage/FeeSection/FeeSection';
 import { CtaSection } from '@/features/homepage/CtaSection/CtaSection';
@@ -33,7 +32,6 @@ export default function HomePage() {
       <HeroSection />
       <TheProblem />
       <HowItWorks />
-      <TheFlow />
       <TrustLayer />
       <FeeSection />
       <CtaSection />
