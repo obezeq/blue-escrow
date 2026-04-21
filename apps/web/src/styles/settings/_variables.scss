@@ -112,6 +112,8 @@ $bp-section: 900px;
 
 :root,
 :root[data-theme='dark'] {
+  color-scheme: dark;
+
   --bg-page:       #0b1117;
   --bg-surface:    #111b2a;
   --bg-tint:       #0d2244;
@@ -140,6 +142,8 @@ $bp-section: 900px;
 // ----------------------------------------------------------------------------
 
 :root[data-theme='light'] {
+  color-scheme: light;
+
   --bg-page:       #ffffff;
   --bg-surface:    #f5f8fc;
   --bg-tint:       #e6f1ff;
