@@ -8,15 +8,12 @@
 // ============================================================================
 
 .proof {
-  padding: 180px 0 150px;
+  padding-block-start: clamp(120px, 10vw, 180px);
+  padding-block-end: clamp(100px, 9vw, 150px);
   background: var(--bg-surface);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   overflow: hidden;
-
-  @media (max-width: 720px) {
-    padding: 120px 0 100px;
-  }
 }
 
 .proof__wrap {

@@ -7,12 +7,11 @@
 // ============================================================================
 
 .problem {
-  padding: 180px 0 160px;
+  // Fluid vertical rhythm — floor matches old mobile fallback, ceiling
+  // matches old desktop. Eliminates the 720px step.
+  padding-block-start: clamp(120px, 10vw, 180px);
+  padding-block-end: clamp(100px, 9vw, 160px);
   position: relative;
-
-  @media (max-width: 720px) {
-    padding: 120px 0 100px;
-  }
 }
 
 .problem__wrap {

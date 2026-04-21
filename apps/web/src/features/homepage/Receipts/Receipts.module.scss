@@ -8,12 +8,9 @@
 // ============================================================================
 
 .receipts {
-  padding: 180px 0 200px;
+  padding-block-start: clamp(120px, 10vw, 180px);
+  padding-block-end: clamp(140px, 11vw, 200px);
   overflow: hidden;
-
-  @media (max-width: 720px) {
-    padding: 120px 0 140px;
-  }
 }
 
 .receipts__wrap {

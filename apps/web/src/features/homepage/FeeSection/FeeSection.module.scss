@@ -6,14 +6,10 @@
 // ============================================================================
 
 .fees {
-  padding: 200px 0;
+  padding-block: clamp(120px, 11vw, 200px);
   position: relative;
   overflow: hidden;
   background: var(--bg-page);
-
-  @media (max-width: 720px) {
-    padding: 120px 0;
-  }
 }
 
 .fees__wrap {
