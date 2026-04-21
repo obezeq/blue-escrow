@@ -10,7 +10,7 @@
   background:
     radial-gradient(
       ellipse 60% 80% at 0% 50%,
-      rgba(0, 145, 255, 0.5),
+      color-mix(in srgb, var(--blue-vivid) 50%, transparent),
       transparent 60%
     ),
     radial-gradient(
@@ -30,7 +30,7 @@
     background:
       radial-gradient(
         ellipse 60% 80% at 0% 50%,
-        rgba(0, 145, 255, 0.55),
+        color-mix(in srgb, var(--blue-vivid) 55%, transparent),
         transparent 60%
       ),
       radial-gradient(

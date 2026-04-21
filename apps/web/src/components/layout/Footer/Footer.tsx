@@ -50,7 +50,7 @@ const LEGAL_LINKS: FooterLink[] = [
 
 export function Footer() {
   return (
-    <footer className={styles.footer} role="contentinfo">
+    <footer className={styles.footer}>
       <div className={styles.footer__wrap}>
         <div className={styles.footer__giant} aria-hidden="true">
           Blue{' '}

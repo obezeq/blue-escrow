@@ -7,7 +7,7 @@ vi.mock('@/features/homepage/ClientShell', () => ({
   ClientShell: () => <div data-section="preloader" />,
 }));
 vi.mock('@/features/homepage/HeroSection/HeroSection', () => ({
-  HeroSection: () => <header id="hero" />,
+  HeroSection: () => <section id="hero" />,
 }));
 vi.mock('@/features/homepage/TheProblem/TheProblem', () => ({
   TheProblem: () => <section id="problem" />,
