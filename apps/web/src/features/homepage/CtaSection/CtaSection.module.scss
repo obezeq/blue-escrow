@@ -64,10 +64,11 @@
   text-wrap: balance;
   max-width: 14ch;
   color: var(--text);
-  // Belt-and-suspenders: text-wrap: balance may pick an unbalanced
-  // break at some widths; overflow-wrap: anywhere lets a single word
-  // break if it ever exceeds max-width (defensive).
-  overflow-wrap: anywhere;
+  // overflow-wrap: anywhere REMOVED — it conflicts with white-space:
+  // nowrap on .closing__emphasis and causes mid-word breaks (MDN: it
+  // overrides nowrap when an otherwise-unbreakable string would
+  // overflow). Natural word-boundary wrapping is the correct 2026
+  // default; no word in this heading copy needs letter-level breaks.
 }
 
 // Extends gradient clip to SplitText's <div> children so the italic
@@ -83,6 +84,15 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+// Micro-padding on SplitText's word wrappers reserves ink buffer for
+// italic letter slants (especially "t" in "trust") at narrow viewports
+// where the word ends up at a line edge. Matching negative margin keeps
+// visual spacing identical. Net zero layout impact, italic ink preserved.
+.closing__emphasis > div {
+  padding-inline: 0.06em;
+  margin-inline: -0.06em;
 }
 
 // At container widths ≥ 640px, keep the italic phrase "like you trust"
