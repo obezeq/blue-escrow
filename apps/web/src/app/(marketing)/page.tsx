@@ -6,6 +6,7 @@ import { HowItWorks } from '@/features/homepage/HowItWorks/HowItWorks';
 import { TrustLayer } from '@/features/homepage/TrustLayer/TrustLayer';
 import { FeeSection } from '@/features/homepage/FeeSection/FeeSection';
 import { CtaSection } from '@/features/homepage/CtaSection/CtaSection';
+import { Faq } from '@/features/homepage/Faq';
 
 export const metadata: Metadata = {
   title: 'Blue Escrow — Decentralized Escrow on Arbitrum',
@@ -34,6 +35,7 @@ export default function HomePage() {
       <HowItWorks />
       <TrustLayer />
       <FeeSection />
+      <Faq />
       <CtaSection />
     </>
   );
