@@ -21,7 +21,11 @@
   align-items: center;
   justify-content: center;
   color: #fff;
-  overflow: hidden;
+  // No overflow: hidden — fullscreen position: fixed + inset: 0 already
+  // bounds the element to the viewport, and the exit animation (introOut
+  // keyframes) handles its own clip-path during dismissal. Removing it
+  // collapses the cumulative clip stack that was shaving italic ink off
+  // .intro__word letters at the viewport edge.
   // Establish a size-query context so .intro__mark's font-size can track
   // the overlay's actual inline size via cqw, not the viewport.
   container-type: inline-size;
@@ -44,24 +48,22 @@
 
 .intro__word {
   display: inline-block;
-  // overflow: clip (Baseline 2024) replaces `hidden` — same visual clip
-  // for the pre-animation translateY(110%) state, but doesn't establish
-  // a new scroll/containment context (cheaper + more predictable).
-  overflow: clip;
   vertical-align: top;
+  // Asymmetric clip via clip-path (Baseline 2020, universal support):
+  // clip exactly at block-axis edges (top/bottom: 0) so the pre-animation
+  // translateY(110%) letters are hidden below baseline, but extend the
+  // clip 0.25em past the inline edges so italic letters' ink overshoots
+  // (slants, serifs) are NOT shaved. Replaces the previous overflow:
+  // clip + padding-inline-end hack, which only reclaimed space at this
+  // level and was still being cut by .intro's own overflow ancestor.
+  clip-path: inset(0 -0.25em 0 -0.08em);
 }
 
 .intro__word--italic {
   font-style: italic;
   font-weight: 400;
   letter-spacing: -0.04em;
-  // Italic letters' ink overshoots the advance-width box at the right
-  // edge (especially the "w" tail of "Escrow"). padding-inline-end
-  // gives the ink room before overflow: clip cuts it; the matching
-  // negative margin-inline-end preserves the visual gap to whatever
-  // follows. Net zero layout impact, ink preserved.
-  padding-inline-end: 0.08em;
-  margin-inline-end: -0.08em;
+  // clip-path on .intro__word reserves the ink buffer; no padding needed.
 }
 
 .intro__letter {
