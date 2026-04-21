@@ -8,6 +8,14 @@ $bp-desktop: 1024px;
 $bp-wide: 1440px;
 $bp-ultra: 1920px;
 
+// v6-aligned semantic breakpoints (Blue Escrow v6.html CSS uses these):
+// $bp-narrow (720px): wrap padding shrinks, section-head stack
+// $bp-nav    (820px): nav-links collapse, footer top grid 2-col
+// $bp-section (900px): section-head grid 1-col, hiw-head stack
+$bp-narrow:  720px;
+$bp-nav:     820px;
+$bp-section: 900px;
+
 // ============================================================================
 // CSS CUSTOM PROPERTIES — Single source of truth for v6 design tokens
 // ============================================================================
