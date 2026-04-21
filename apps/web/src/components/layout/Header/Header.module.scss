@@ -156,6 +156,11 @@
   font-size: 13px;
   color: var(--text);
   padding: 10px 18px;
+  // WCAG 2.2 SC 2.5.8 Enhanced: touch target ≥ 44×44 CSS px. At 10px
+  // vertical padding + 13px line-height, block-size was ~32px below
+  // target. min-block-size: 44px brings it into compliance without
+  // expanding the visual padding for sighted users.
+  min-block-size: 44px;
   border: 1px solid var(--on-border);
   border-radius: var(--radius-full);
   text-decoration: none;

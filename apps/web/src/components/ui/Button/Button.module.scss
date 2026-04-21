@@ -19,6 +19,8 @@
   cursor: pointer;
   text-decoration: none;
   white-space: nowrap;
+  // WCAG 2.2 SC 2.5.8 Enhanced: touch target ≥ 44×44 CSS px.
+  min-block-size: 44px;
   transition:
     background 250ms ease,
     color 250ms ease,
