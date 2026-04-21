@@ -30,6 +30,10 @@
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 40px;
+  // Establishes a size-query context so .closing__emphasis can toggle
+  // white-space: nowrap on desktop widths (keeps "like you trust" cohesive)
+  // and allow natural wrap on mobile widths.
+  container-type: inline-size;
 
   @media (max-width: 720px) {
     padding: 0 24px;
@@ -49,7 +53,10 @@
 }
 
 .closing__heading {
-  font-size: clamp(60px, 12vw, 200px);
+  // Clamp cap 178 (was 200) so the italic phrase "like you trust" at
+  // ~7em width always fits the 1360px container even when held together
+  // as one unit by the @container query below. Matches v6 hero scale.
+  font-size: clamp(56px, 11vw, 178px);
   line-height: 0.9;
   letter-spacing: -0.05em;
   font-weight: 600;
@@ -59,8 +66,7 @@
   color: var(--text);
   // Belt-and-suspenders: text-wrap: balance may pick an unbalanced
   // break at some widths; overflow-wrap: anywhere lets a single word
-  // break if it ever exceeds max-width (defensive; no known trigger
-  // with current copy "Trade like you trust the code, not the person.").
+  // break if it ever exceeds max-width (defensive).
   overflow-wrap: anywhere;
 }
 
@@ -77,6 +83,18 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+// At container widths ≥ 640px, keep the italic phrase "like you trust"
+// on a single line — text-wrap: balance on the parent h2 can otherwise
+// split the <em>'s words across two lines (e.g., "like you" / "trust"),
+// which reads as a visual cut of the emphasis. At narrower container
+// widths (mobile) the em is allowed to wrap naturally so the heading
+// still fits.
+@container (min-width: 640px) {
+  .closing__emphasis {
+    white-space: nowrap;
+  }
 }
 
 .closing__ctas {
