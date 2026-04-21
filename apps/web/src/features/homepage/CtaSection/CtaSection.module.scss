@@ -11,14 +11,26 @@
   padding: 180px 0 200px;
   text-align: center;
   position: relative;
-  overflow: hidden;
-  background:
-    radial-gradient(
+  background: var(--bg-page);
+  // overflow: hidden removed — it was the outermost clip that was
+  // shaving italic ink from .closing__heading's <em> letters at section
+  // edges. The radial gradient bloom that used to rely on this clip is
+  // now rendered inside a ::before pseudo-element below, which has its
+  // own overflow: hidden and clips the bleed contained to itself.
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(
       ellipse 70% 90% at 50% 110%,
       var(--accent-soft),
       transparent 70%
-    ),
-    var(--bg-page);
+    );
+  }
 
   @media (max-width: 720px) {
     padding: 120px 0 140px;
@@ -30,6 +42,9 @@
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 40px;
+  // Above the ::before gradient bloom.
+  position: relative;
+  z-index: 1;
   // Establishes a size-query context so .closing__emphasis can toggle
   // white-space: nowrap on desktop widths (keeps "like you trust" cohesive)
   // and allow natural wrap on mobile widths.
