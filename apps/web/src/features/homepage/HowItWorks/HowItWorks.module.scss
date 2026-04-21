@@ -20,22 +20,19 @@
 }
 
 .hiw__intro {
-  padding: 140px 0 80px;
-
-  @media (max-width: 720px) {
-    padding: 100px 0 60px;
-  }
+  // Fluid vertical rhythm — no 720px step. Floor = 100/60 (matches
+  // the old mobile fallback), ceiling = 140/80 (matches old desktop).
+  padding-block-start: clamp(100px, 10vw, 140px);
+  padding-block-end: clamp(60px, 6vw, 80px);
 }
 
 .hiw__wrap {
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
-  padding: 0 40px;
-
-  @media (max-width: 720px) {
-    padding: 0 24px;
-  }
+  // Mirror --container-padding (clamp(1.5rem, 4vw, 2.5rem)) — same tokens
+  // used by .o-container, eliminating the 720px step.
+  padding-inline: clamp(1.5rem, 4vw, 2.5rem);
 }
 
 .hiw__head {
@@ -95,24 +92,23 @@
 }
 
 .hiw__stage {
-  padding: 0 40px;
-
-  @media (max-width: 720px) {
-    padding: 0 20px;
-  }
+  // Same fluid rule as .hiw__wrap — 20px min matches the old mobile
+  // fallback, 40px max matches desktop.
+  padding-inline: clamp(1.25rem, 4vw, 2.5rem);
 }
 
 .hiw__grid {
   display: grid;
   grid-template-columns: 1fr 1.1fr;
-  gap: 32px;
+  // Fluid gap — shrinks from 32px desktop down to 16px at narrow widths,
+  // freeing horizontal space for the ledger + diagram cards on mobile.
+  gap: clamp(1rem, 3vw, 2rem);
   align-items: stretch;
   max-width: 1440px;
   margin: 0 auto;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
-    gap: 18px;
   }
 }
 
@@ -636,13 +632,23 @@
   max-width: 1440px;
   margin: 32px auto 0;
 
+  // 5 → 3 → 2 cols so each button stays wide enough for comfortable
+  // touch targets (3-col at 900px gives ~280px/btn, 2-col at 560px
+  // gives ~260px/btn). The old 2-col-at-900 collapsed too aggressively.
   @media (max-width: 900px) {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 560px) {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 .hiw__railButton {
-  padding: 18px 24px;
+  padding-inline: clamp(0.75rem, 2vw, 1.5rem);
+  padding-block: clamp(0.875rem, 2vw, 1.125rem);
+  // WCAG 2.2 Success Criterion 2.5.8 — Target Size Enhanced is 44×44 CSS px.
+  min-block-size: 44px;
   font-family: var(--ff-mono);
   font-size: 11px;
   letter-spacing: 0.14em;
@@ -684,9 +690,22 @@
     transition: width 0.5s var(--ease-out-expo);
   }
 
+  // Strip the right-border on the rightmost button of each layout's row so
+  // it doesn't sit against the rail's right edge as a dangling line.
   @media (max-width: 900px) {
+    &:nth-child(3n) {
+      border-right: 0;
+    }
+  }
+
+  @media (max-width: 560px) {
     &:nth-child(2n) {
       border-right: 0;
+    }
+    // Re-assert border-right on position 3 (which was cleared by the 3n
+    // rule above but sits mid-row in the 2-col layout).
+    &:nth-child(3) {
+      border-right: 1px solid var(--border);
     }
   }
 }

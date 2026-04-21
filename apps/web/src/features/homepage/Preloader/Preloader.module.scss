@@ -22,6 +22,9 @@
   justify-content: center;
   color: #fff;
   overflow: hidden;
+  // Establish a size-query context so .intro__mark's font-size can track
+  // the overlay's actual inline size via cqw, not the viewport.
+  container-type: inline-size;
   animation: introOut 1.1s cubic-bezier(0.77, 0, 0.175, 1) 2.8s forwards;
 }
 
@@ -29,7 +32,10 @@
   position: relative;
   font-family: var(--ff-sans);
   font-weight: 600;
-  font-size: clamp(64px, 13vw, 200px);
+  // cqw scales with the .intro container (100% viewport width here), with a
+  // lower floor than the v6 clamp so "Blue Escrow" never overflows at 320px.
+  // 12cqw at 320px = 38.4 → min 44; text width 5.3em × 44 = 233px fits 320.
+  font-size: clamp(44px, 12cqw, 200px);
   line-height: 0.85;
   letter-spacing: -0.05em;
   white-space: nowrap;
