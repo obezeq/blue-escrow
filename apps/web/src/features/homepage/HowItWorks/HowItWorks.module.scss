@@ -224,7 +224,7 @@
   border: 1px solid var(--border);
   border-radius: 20px;
   background:
-    linear-gradient(135deg, rgba(0, 145, 255, 0.08), transparent 60%),
+    linear-gradient(135deg, var(--accent-soft), transparent 60%),
     var(--bg-surface);
   padding: clamp(18px, 3vh, 28px) clamp(20px, 3vw, 32px);
   display: flex;
@@ -233,7 +233,7 @@
 
   :root[data-theme='light'] & {
     background:
-      linear-gradient(135deg, rgba(0, 85, 224, 0.05), transparent 60%),
+      linear-gradient(135deg, var(--accent-soft), transparent 60%),
       var(--bg-elevated);
     box-shadow: var(--shadow-card);
   }
@@ -515,7 +515,7 @@
     background:
       radial-gradient(
         ellipse 80% 60% at 50% 50%,
-        rgba(0, 85, 224, 0.06),
+        var(--accent-soft),
         transparent 70%
       ),
       var(--bg-elevated);
@@ -668,13 +668,13 @@
   background:
     radial-gradient(
       circle at 50% 30%,
-      rgba(0, 145, 255, 0.35),
+      var(--core-glow-halo),
       transparent 70%
     ),
     linear-gradient(135deg, var(--blue-primary), var(--blue-deep));
   box-shadow:
-    0 0 0 1px rgba(0, 145, 255, 0.3),
-    0 20px 60px -10px rgba(0, 145, 255, 0.4),
+    0 0 0 1px var(--core-glow-ring),
+    0 20px 60px -10px var(--core-glow-halo),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   display: flex;
   flex-direction: column;
@@ -687,6 +687,12 @@
   svg {
     width: 28px;
     height: 28px;
+  }
+
+  :root[data-theme='light'] & {
+    background:
+      radial-gradient(circle at 50% 30%, var(--core-glow-halo), transparent 70%),
+      linear-gradient(135deg, var(--blue-primary), var(--blue-deep-warm));
   }
 }
 
@@ -709,14 +715,14 @@
   0%,
   100% {
     box-shadow:
-      0 0 0 1px rgba(0, 145, 255, 0.3),
-      0 20px 60px -10px rgba(0, 145, 255, 0.4),
+      0 0 0 1px var(--core-glow-ring),
+      0 20px 60px -10px var(--core-glow-halo),
       inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
   50% {
     box-shadow:
-      0 0 0 1px rgba(0, 145, 255, 0.6),
-      0 20px 80px -4px rgba(0, 145, 255, 0.7),
+      0 0 0 1px var(--core-glow-ring-strong),
+      0 20px 80px -4px var(--core-glow-halo-strong),
       inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 }
@@ -1058,7 +1064,7 @@
     background:
       radial-gradient(
         ellipse 80% 60% at 50% 50%,
-        rgba(0, 85, 224, 0.06),
+        var(--accent-soft),
         transparent 70%
       ),
       var(--bg-elevated);
