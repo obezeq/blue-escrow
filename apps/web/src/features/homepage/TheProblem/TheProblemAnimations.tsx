@@ -19,16 +19,18 @@ import { registerProblemEases, PROBLEM_EASE_NAMES } from './problem-eases';
  *  - Each kinetic line reveals word-by-word via clip-path wipe (settle ease).
  *  - Line 2's `middleman` word pulses briefly as it enters viewport.
  *  - Line 3's "a stranger too" chars fall from above with overshoot (fall
- *    ease, from:'random' stagger). The strikethrough (`.problem__struck`
- *    pseudo driven by `--strike-scale`) is scrubbed LTR over a short scroll
- *    segment (strike ease).
+ *    ease, from:'random' stagger). The strikethrough is drawn via an inline
+ *    <svg><path/></svg> inside the <s>; GSAP scrubs `stroke-dashoffset`
+ *    directly on the path (100 → 0) across a ~65vh scroll segment (strike
+ *    ease, near-linear so each scroll pixel maps to proportional stroke).
  *  - Scroll velocity drifts the red phrase down slightly via an Observer
  *    driving `--drift-y` through a `gsap.quickTo`, decaying back to 0.
  *  - The "The fix" answer reveals with rotateX perspective.
  *
- * The reduced-motion branch clears all inline tween state and forces
- * `--strike-scale: 1` + `--drift-y: 0` inline; the SCSS @media fallback
- * does the same at the CSS layer so pre-hydration paint is already legible.
+ * The reduced-motion branch clears all inline tween state, sets the SVG
+ * path's stroke-dashoffset to 0 (fully drawn) and parks --drift-y at 0px.
+ * The SCSS @media fallback also forces stroke-dashoffset: 0 at the CSS
+ * layer so pre-hydration paint is already legible.
  */
 export function TheProblemAnimations({
   children,
@@ -171,27 +173,38 @@ export function TheProblemAnimations({
             },
           });
 
-          // Strikethrough scrubbed LTR via --strike-scale (GPU-smooth
-          // thanks to @property <number> registration in the SCSS module).
-          // Long range (~65% viewport) so the cross traces deliberately —
-          // the user scrolls the stranger from near-bottom (top 85%) to
-          // near-top (center 25%), and the trace follows inertia (scrub:
-          // 0.6) in both directions. Feels satisfying instead of rushed.
-          gsap.fromTo(
-            strangerEl,
-            { '--strike-scale': 0 },
-            {
-              '--strike-scale': 1,
-              ease: PROBLEM_EASE_NAMES.strike,
-              scrollTrigger: {
-                trigger: strangerEl,
-                start: 'top 85%',
-                end: 'center 25%',
-                scrub: 0.6,
-                invalidateOnRefresh: true,
-              },
-            },
+          // Strikethrough: GSAP scrubs the SVG path's `stroke-dashoffset`
+          // directly (bypassing CSS var indirection — browsers occasionally
+          // fail to resolve `calc(100 - var(...))` when the var is typed
+          // `<number>` inside `stroke-dashoffset`). Matches the HowItWorks
+          // wire-flow primitive (HowItWorksAnimations.tsx:296–318).
+          //
+          // `pathLength="100"` normalizes the arc length so offset 100 is
+          // fully hidden and 0 is fully drawn. Near-linear `problem-strike`
+          // ease keeps each scroll pixel mapped to a proportional stroke
+          // increment — the user literally drags the pen tip with scroll.
+          // Bidirectional by nature of scrub (scroll up reverses the draw).
+          const strangerPath = strangerEl.querySelector<SVGPathElement>(
+            '.problem__strike path, svg path',
           );
+          if (strangerPath) {
+            gsap.set(strangerPath, { strokeDasharray: 100 });
+            gsap.fromTo(
+              strangerPath,
+              { strokeDashoffset: 100 },
+              {
+                strokeDashoffset: 0,
+                ease: PROBLEM_EASE_NAMES.strike,
+                scrollTrigger: {
+                  trigger: strangerEl,
+                  start: 'top 85%',
+                  end: 'center 25%',
+                  scrub: 0.6,
+                  invalidateOnRefresh: true,
+                },
+              },
+            );
+          }
 
           // Velocity drift: observe scroll, nudge --drift-y, decay back.
           driftQuickTo = gsap.quickTo(strangerEl, '--drift-y', {
@@ -253,10 +266,13 @@ export function TheProblemAnimations({
           '[data-animate="stranger"]',
         );
         if (strangerEl) {
-          gsap.set(strangerEl, {
-            '--strike-scale': 1,
-            '--drift-y': 0,
-          });
+          gsap.set(strangerEl, { '--drift-y': 0 });
+          const path = strangerEl.querySelector<SVGPathElement>(
+            '.problem__strike path, svg path',
+          );
+          if (path) {
+            gsap.set(path, { strokeDasharray: 100, strokeDashoffset: 0 });
+          }
         }
       });
 
