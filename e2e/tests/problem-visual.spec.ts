@@ -7,11 +7,13 @@ import { primeThemeAndSkipPreloader } from './_utils/prime-theme';
 // theme + preloader-skipped state.
 //
 // The Fall choreography is ~1.2s and includes a scroll-scrubbed strikethrough
-// (`--strike-scale`) plus a velocity-driven `--drift-y` drift on the
+// drawn as an inline SVG path (`--strike-progress` 0 → 100 drives
+// stroke-dashoffset) plus a velocity-driven `--drift-y` drift on the
 // "a stranger too" element. Both are non-deterministic under scrub, so we:
 //   1) wait ~1.4s for the intro tweens to settle,
 //   2) force the final paint state by pinning both custom properties inline
-//      on `[data-animate="stranger"]`,
+//      on `[data-animate="stranger"]` (--strike-progress: 100 fully draws
+//      the pen mark; --drift-y: 0px parks Observer drift),
 //   3) emulate `prefers-reduced-motion: reduce` to silence any remaining
 //      tween ticks and prevent Observer-driven drift while Playwright is
 //      taking the shot.
@@ -54,19 +56,20 @@ test.describe('TheProblem visual parity (The Fall + velocity)', () => {
         // clip-path wipe delays (idx * 0.12 chain).
         await page.waitForTimeout(1400);
 
-        // Lock the stranger line's CSS custom properties to their final
-        // painted state regardless of scrub position. `--strike-scale: 1`
-        // paints the strikethrough pseudo full-width; `--drift-y: 0px`
-        // parks the Observer-driven drift at rest. Also clears any
-        // inline transforms/opacity left by incomplete tweens so reduced
-        // motion + the snapshot see the settled layout.
+        // Lock the stranger's SVG path to its final drawn state regardless
+        // of scrub position. `stroke-dashoffset: 0` draws the pen mark
+        // fully; `--drift-y: 0px` parks the Observer-driven drift at rest.
         await page.evaluate(() => {
           const stranger = document.querySelector<HTMLElement>(
             '#problem [data-animate="stranger"]',
           );
           if (stranger) {
-            stranger.style.setProperty('--strike-scale', '1');
             stranger.style.setProperty('--drift-y', '0px');
+            const path = stranger.querySelector<SVGPathElement>('path');
+            if (path) {
+              path.style.setProperty('stroke-dashoffset', '0');
+              path.style.setProperty('stroke-dasharray', '100');
+            }
           }
         });
 

@@ -8,16 +8,18 @@ import { primeThemeAndSkipPreloader } from './_utils/prime-theme';
 //   • chars inside <s data-animate="stranger"> drop from above with an
 //     overshoot fall (yPercent: -120 → 0, rotationX: -55 → 0), so mid-flight
 //     they carry a non-identity inline transform written by GSAP;
-//   • the strikethrough (::after on .problem__struck) is scrubbed LTR via
-//     `--strike-scale` from 0 → 1, anchored across top 85% → center 25%
-//     (~65% viewport range) for a deliberate, bidirectional trace.
+//   • the strikethrough is drawn via an inline <svg><path/></svg> inside
+//     the <s>. GSAP scrubs `stroke-dashoffset` on the path directly from
+//     100 (hidden) → 0 (fully drawn), anchored across top 85% → center 25%
+//     (~65% viewport range) for a deliberate, bidirectional pen-stroke.
 //
 // This spec is purely behavioural — no pixel snapshots. It verifies:
 //   1) default motion — chars are mid-flight shortly after scroll-in, then
-//      land as identity, and the strike reaches ≥ 0.9 once scrolled past end;
-//   2) reduced-motion parity — the CSS @media fallback forces --strike-scale
-//      to 1 synchronously and GSAP's reduced-motion branch clearProps the
-//      chars, so NO inline transforms remain in-flight;
+//      land as identity, and the path's stroke-dashoffset reaches ≤ 10
+//      once scrolled past the end trigger;
+//   2) reduced-motion parity — the CSS @media fallback forces the path's
+//      stroke-dashoffset to 0 synchronously and GSAP's reduced-motion
+//      branch clearProps the chars, so NO inline transforms remain;
 //   3) velocity drift — skipped on purpose: Observer scroll deltas vary so
 //      aggressively between Chromium / Firefox / WebKit / headless CI that
 //      any numeric assertion here is statistically useless. Verified manually
@@ -72,48 +74,45 @@ test.describe('problem section animations', () => {
     ).toBe(true);
 
     // -------- Checkpoint B — strike reaches completion ---------------------
-    // `--strike-scale` is scrubbed across ~65% viewport (top 85% → center
-    // 25%). Scroll a full viewport past the stranger so the end trigger
-    // is cleared at any breakpoint, then wait for the 0.6s scrub lag to
-    // settle plus a safety margin for RAF jitter.
+    // The path's `stroke-dashoffset` is scrubbed across ~65% viewport
+    // (top 85% → center 25%). Fully drawn = 0, fully hidden = 100. Scroll
+    // a full viewport past the stranger so the end trigger is cleared at
+    // any breakpoint, then wait for the 0.6s scrub lag to settle plus a
+    // safety margin for RAF jitter.
     await page.waitForTimeout(1800);
     await page.evaluate(() => window.scrollBy(0, 900));
     await page.waitForTimeout(900);
 
-    const strikeScale = await page.evaluate(() => {
-      const stranger = document.querySelector(
-        '[data-animate="stranger"]',
-      ) as HTMLElement | null;
-      if (!stranger) return '0';
-      return getComputedStyle(stranger)
-        .getPropertyValue('--strike-scale')
-        .trim();
+    const dashoffsetDrawn = await page.evaluate(() => {
+      const path = document.querySelector(
+        '[data-animate="stranger"] path',
+      ) as SVGPathElement | null;
+      if (!path) return '100';
+      return getComputedStyle(path).getPropertyValue('stroke-dashoffset').trim();
     });
-    // Tolerance 0.9 — scrub: 0.6 introduces tween lag behind scroll, so
-    // asserting exactly 1 is flaky even when the segment has fully passed.
-    expect(Number.parseFloat(strikeScale)).toBeGreaterThanOrEqual(0.9);
+    // Tolerance ≤ 10 — scrub: 0.6 introduces tween lag behind scroll, so
+    // asserting exactly 0 is flaky even when the segment has fully passed.
+    expect(Number.parseFloat(dashoffsetDrawn)).toBeLessThanOrEqual(10);
 
     // -------- Checkpoint C — bidirectional scrub reverses on scroll up ----
-    // The scrubbed `--strike-scale` MUST track scroll in both directions
+    // The scrubbed `stroke-dashoffset` MUST track scroll in both directions
     // (that's the whole point of scrub over toggleActions). Scrolling the
-    // stranger back below the start trigger should drive --strike-scale
-    // back toward 0. We tolerate < 0.3 to absorb scrub: 0.6 lag.
+    // stranger back below the start trigger should drive stroke-dashoffset
+    // back toward 100 (hidden). Tolerate > 70 to absorb scrub: 0.6 lag.
     await page.evaluate(() => window.scrollBy(0, -1500));
     await page.waitForTimeout(900);
 
-    const strikeScaleReverse = await page.evaluate(() => {
-      const stranger = document.querySelector(
-        '[data-animate="stranger"]',
-      ) as HTMLElement | null;
-      if (!stranger) return '1';
-      return getComputedStyle(stranger)
-        .getPropertyValue('--strike-scale')
-        .trim();
+    const dashoffsetReversed = await page.evaluate(() => {
+      const path = document.querySelector(
+        '[data-animate="stranger"] path',
+      ) as SVGPathElement | null;
+      if (!path) return '0';
+      return getComputedStyle(path).getPropertyValue('stroke-dashoffset').trim();
     });
     expect(
-      Number.parseFloat(strikeScaleReverse),
-      `strike-scale must reverse when scrolled up past the start trigger; got ${strikeScaleReverse}`,
-    ).toBeLessThan(0.3);
+      Number.parseFloat(dashoffsetReversed),
+      `stroke-dashoffset must reverse toward 100 when scrolled up past the start trigger; got ${dashoffsetReversed}`,
+    ).toBeGreaterThan(70);
 
     // Re-scroll down before the final identity check so the stranger is
     // back in view and its chars have had time to settle at identity.
@@ -143,11 +142,12 @@ test.describe('problem section animations', () => {
 
   test('reduced-motion snaps to final state', async ({ browser }) => {
     // A fresh context with reducedMotion: 'reduce' triggers BOTH the CSS
-    // @media fallback (forces --strike-scale: 1) AND the GSAP matchMedia
-    // reducedMotion branch (clearProps on all [data-animate], resets strike
-    // + drift). Together they guarantee a synchronous "landed" render —
-    // 500ms is plenty; any longer wait would hide a regression where GSAP
-    // doesn't clearProps under reduced-motion.
+    // @media fallback (forces path stroke-dashoffset: 0 = fully drawn) AND
+    // the GSAP matchMedia reducedMotion branch (clearProps on all
+    // [data-animate], sets path stroke-dashoffset: 0). Together they
+    // guarantee a synchronous "landed" render — 500ms is plenty; any
+    // longer wait would hide a regression where GSAP doesn't clearProps
+    // under reduced-motion.
     const context = await browser.newContext({ reducedMotion: 'reduce' });
     const page = await context.newPage();
 
@@ -163,20 +163,23 @@ test.describe('problem section animations', () => {
           '[data-animate="stranger"]',
         ) as HTMLElement | null;
         if (!stranger) return null;
-        const strikeScale = getComputedStyle(stranger)
-          .getPropertyValue('--strike-scale')
-          .trim();
+        const path = stranger.querySelector('path') as SVGPathElement | null;
+        const dashoffset = path
+          ? getComputedStyle(path).getPropertyValue('stroke-dashoffset').trim()
+          : null;
         const descendants = stranger.querySelectorAll('*');
         const transforms = Array.from(descendants).map(
           (el) => getComputedStyle(el as HTMLElement).transform,
         );
-        return { strikeScale, transforms };
+        return { dashoffset, transforms };
       });
 
       expect(snapshot).not.toBeNull();
-      // CSS fallback writes `--strike-scale: 1` directly; GSAP's reduced
-      // branch also sets it inline. Either path yields '1' (not '0.9998').
-      expect(snapshot!.strikeScale).toBe('1');
+      // CSS fallback writes `stroke-dashoffset: 0` directly; GSAP's reduced
+      // branch also sets it inline. getComputedStyle normalizes lengths to
+      // `<Npx>`, so we parseFloat before comparing to tolerate either
+      // "0" (unitless) or "0px" depending on which writer hit first.
+      expect(Number.parseFloat(snapshot!.dashoffset ?? '')).toBe(0);
       // clearProps on [data-animate] removes inline transforms that the
       // noReducedMotion branch would have written, so every descendant
       // reports identity.
