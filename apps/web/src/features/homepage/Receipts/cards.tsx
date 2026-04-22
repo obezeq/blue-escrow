@@ -13,6 +13,7 @@ export interface ReceiptCard {
   metaLine: string;
   hash: string;
   visual: ReactNode;
+  figCaption: string; // NEW — screen-reader description for <figure><figcaption>
 }
 
 // All white strokes/fills inherit `currentColor` from the parent
@@ -30,6 +31,7 @@ const SoulVisual = (
       </radialGradient>
     </defs>
     <circle
+      data-animate="soul-ring"
       cx="100"
       cy="100"
       r="72"
@@ -83,7 +85,7 @@ const ClientVisual = (
     />
     <path
       d="M 68 108 L 92 130 L 140 76"
-      stroke="#0091FF"
+      stroke="var(--receipt-accent)"
       strokeWidth="3.2"
       fill="none"
       strokeLinecap="round"
@@ -118,16 +120,16 @@ const SellerVisual = (
       <polygon
         points="0,-52 45,-26 45,26 0,52 -45,26 -45,-26"
         fill="none"
-        stroke="#33AAFF"
+        stroke="var(--receipt-accent-soft)"
         strokeWidth="1.5"
       />
       <polygon
         points="0,-32 28,-16 28,16 0,32 -28,16 -28,-16"
-        fill="rgba(0,145,255,.25)"
-        stroke="#0091FF"
+        fill="color-mix(in srgb, var(--receipt-accent) 25%, transparent)"
+        stroke="var(--receipt-accent)"
         strokeWidth="1.5"
       />
-      <circle cx="0" cy="0" r="8" fill="#fff" />
+      <circle cx="0" cy="0" r="8" fill="var(--receipt-center-dot)" />
     </g>
     <text
       x="100"
@@ -158,6 +160,8 @@ export const RECEIPTS_CARDS: ReceiptCard[] = [
     metaLine: 'Non-transferable · 214 deals',
     hash: '0xbe…id4 21c',
     visual: SoulVisual,
+    figCaption:
+      'Soulbound middleman reputation badge — three concentric rings with a radiant inner core and four crosshair marks, representing a non-transferable on-chain identity.',
   },
   {
     variant: 'client',
@@ -173,6 +177,8 @@ export const RECEIPTS_CARDS: ReceiptCard[] = [
     metaLine: 'Client · 2,400 USDC · Arbitrum',
     hash: '0x7a2f…e91c',
     visual: ClientVisual,
+    figCaption:
+      'Client payment receipt illustration — a rounded frame with a checkmark confirming the release of 2,400 USDC on Arbitrum.',
   },
   {
     variant: 'seller',
@@ -188,5 +194,7 @@ export const RECEIPTS_CARDS: ReceiptCard[] = [
     metaLine: 'Seller · Streak 8 · REP 4.96',
     hash: '0xd20e…77ab',
     visual: SellerVisual,
+    figCaption:
+      'Seller completion receipt illustration — a hexagonal medallion with a central dot and +12 reputation indicator, marking a delivered deal.',
   },
 ];
