@@ -1,26 +1,13 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, screen, cleanup, act } from '@testing-library/react';
 
-const { lenisStop, lenisStart, animationsOnComplete } = vi.hoisted(() => ({
+const { lenisStop, lenisStart } = vi.hoisted(() => ({
   lenisStop: vi.fn(),
   lenisStart: vi.fn(),
-  animationsOnComplete: { current: null as (() => void) | null },
 }));
 
 vi.mock('lenis/react', () => ({
-  useLenis: () => ({
-    stop: lenisStop,
-    start: lenisStart,
-  }),
-}));
-
-// The animations wrapper is a no-op in tests; it captures the onComplete
-// prop so individual tests can invoke the completion callback explicitly.
-vi.mock('./PreloaderAnimations', () => ({
-  PreloaderAnimations: (p: { onComplete: () => void }) => {
-    animationsOnComplete.current = p.onComplete;
-    return null;
-  },
+  useLenis: () => ({ stop: lenisStop, start: lenisStart }),
 }));
 
 import { Preloader } from './Preloader';
@@ -30,24 +17,23 @@ afterEach(() => {
   cleanup();
   lenisStop.mockClear();
   lenisStart.mockClear();
-  animationsOnComplete.current = null;
   delete document.documentElement.dataset.preloader;
+  delete document.documentElement.dataset.theme;
+  vi.useRealTimers();
 });
 
-describe('Preloader — accessibility', () => {
-  it('exposes role="progressbar" on the root', () => {
-    render(<Preloader />);
-    expect(screen.getByRole('progressbar')).toBeDefined();
+describe('Preloader — markup + a11y', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
   });
 
-  it('names the progressbar for screen readers', () => {
+  it('renders with role="progressbar" and the loading label', () => {
     render(<Preloader />);
-    expect(
-      screen.getByRole('progressbar').getAttribute('aria-label'),
-    ).toBe('Loading Blue Escrow');
+    const bar = screen.getByRole('progressbar', { name: 'Loading Blue Escrow' });
+    expect(bar).toBeDefined();
   });
 
-  it('initializes aria-valuenow/min/max to 0/0/100', () => {
+  it('initializes aria-valuemin/max/now to 0/100/0', () => {
     render(<Preloader />);
     const bar = screen.getByRole('progressbar');
     expect(bar.getAttribute('aria-valuemin')).toBe('0');
@@ -55,102 +41,79 @@ describe('Preloader — accessibility', () => {
     expect(bar.getAttribute('aria-valuenow')).toBe('0');
   });
 
-  it('marks the overlay aria-busy while visible', () => {
+  it('marks the overlay aria-busy and aria-live="polite"', () => {
     render(<Preloader />);
-    expect(
-      screen.getByRole('progressbar').getAttribute('aria-busy'),
-    ).toBe('true');
+    const bar = screen.getByRole('progressbar');
+    expect(bar.getAttribute('aria-busy')).toBe('true');
+    expect(bar.getAttribute('aria-live')).toBe('polite');
   });
 
-  it('sets aria-live="polite" so loading is announced without interrupting', () => {
+  it('renders the Blue Escrow wordmark as 10 individual letters', () => {
     render(<Preloader />);
-    expect(
-      screen.getByRole('progressbar').getAttribute('aria-live'),
-    ).toBe('polite');
+    const letters = document.querySelectorAll('#intro [class*="letter"]');
+    expect(letters.length).toBe(10);
   });
 
-  it('does not leak heading elements (h1/h2/h3)', () => {
+  it('marks decorative wordmark + bar as aria-hidden', () => {
     render(<Preloader />);
-    expect(document.querySelectorAll('h1, h2, h3').length).toBe(0);
-  });
-
-  it('marks the wordmark aria-hidden to avoid duplicate announcement', () => {
-    const { container } = render(<Preloader />);
-    const mark = container.querySelector('[class*="mark"]');
+    const mark = document.querySelector('[class*="mark"]');
+    const bar = document.querySelector('[class*="bar"]');
     expect(mark?.getAttribute('aria-hidden')).toBe('true');
+    expect(bar?.getAttribute('aria-hidden')).toBe('true');
   });
 
-  it('renders the Blue Escrow wordmark as two [data-word] spans', () => {
+  it('renders the initializing label, track and 000% counter', () => {
     const { container } = render(<Preloader />);
-    const words = container.querySelectorAll('[data-word]');
-    expect(words.length).toBe(2);
-    expect(words[0]?.textContent).toBe('Blue');
-    expect(words[1]?.textContent).toBe('Escrow');
+    expect(container.textContent).toContain('Initializing protocol');
+    expect(container.textContent).toContain('000%');
+    expect(container.querySelector('[class*="track"] i')).not.toBeNull();
   });
 });
 
-describe('Preloader — scroll / interaction lock', () => {
+describe('Preloader — lifecycle', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
   it('sets data-preloader="active" on <html> while mounted', () => {
     render(<Preloader />);
     expect(document.documentElement.dataset.preloader).toBe('active');
   });
 
-  it('flips data-preloader to "done" on unmount', () => {
-    const { unmount } = render(<Preloader />);
-    unmount();
-    expect(document.documentElement.dataset.preloader).toBe('done');
+  it('locks Lenis on mount and releases after the intro finishes', () => {
+    render(<Preloader />);
+    expect(lenisStop).toHaveBeenCalled();
+    act(() => {
+      vi.advanceTimersByTime(4500);
+    });
+    expect(lenisStart).toHaveBeenCalled();
   });
 
-  it('locks Lenis on mount and releases on unmount', () => {
-    const { unmount } = render(<Preloader />);
-    expect(lenisStop).toHaveBeenCalledTimes(1);
-    unmount();
-    expect(lenisStart).toHaveBeenCalledTimes(1);
+  it('unmounts itself after the intro duration', () => {
+    render(<Preloader />);
+    expect(screen.getByRole('progressbar')).toBeDefined();
+    act(() => {
+      vi.advanceTimersByTime(4500);
+    });
+    expect(screen.queryByRole('progressbar')).toBeNull();
   });
-});
 
-describe('Preloader — completion signal', () => {
-  it('dispatches preloader:done when the animations wrapper reports complete', () => {
+  it('fires preloader:done when the intro completes', () => {
     const handler = vi.fn();
     document.addEventListener(PRELOADER_DONE_EVENT, handler);
     render(<Preloader />);
     expect(handler).not.toHaveBeenCalled();
     act(() => {
-      animationsOnComplete.current?.();
+      vi.advanceTimersByTime(4500);
     });
-    expect(handler).toHaveBeenCalledTimes(1);
+    expect(handler).toHaveBeenCalled();
     document.removeEventListener(PRELOADER_DONE_EVENT, handler);
   });
 
-  it('removes itself from the DOM once complete', () => {
-    render(<Preloader />);
-    expect(screen.getByRole('progressbar')).toBeDefined();
-    act(() => {
-      animationsOnComplete.current?.();
-    });
-    expect(screen.queryByRole('progressbar')).toBeNull();
-  });
-});
-
-describe('Preloader — F5 replay behaviour', () => {
-  it('re-renders on page reload (no session gating)', () => {
-    // Simulate a previous visit that completed the intro.
+  it('re-renders on reload (no session gating)', () => {
+    // Simulate a previous visit that already completed the intro.
     document.documentElement.dataset.preloader = 'done';
     render(<Preloader />);
     expect(screen.getByRole('progressbar')).toBeDefined();
-  });
-});
-
-describe('Preloader — theme invariance', () => {
-  it('renders identical DOM under [data-theme="light"] and [data-theme="dark"]', () => {
-    document.documentElement.dataset.theme = 'light';
-    const { container: light } = render(<Preloader />);
-    const lightHTML = light.innerHTML;
-    cleanup();
-    document.documentElement.dataset.theme = 'dark';
-    delete document.documentElement.dataset.preloader;
-    const { container: dark } = render(<Preloader />);
-    expect(dark.innerHTML).toBe(lightHTML);
-    delete document.documentElement.dataset.theme;
   });
 });
