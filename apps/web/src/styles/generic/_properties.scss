@@ -1,0 +1,32 @@
+// ============================================================================
+// @property REGISTRATION — CSS Houdini typed custom properties
+// ----------------------------------------------------------------------------
+// Registering animated gradient vars with syntax + initial-value unlocks:
+//   1. Smooth interpolation of gradient angles/stops (unregistered custom
+//      props can't tween — browsers can only swap integer strings mid-tween).
+//   2. Type-checked fallbacks — malformed values don't crash the gradient.
+//
+// Wrapped in @layer reset so declarations sit at the lowest normal-priority
+// layer. @property is globally scoped regardless of where it's declared,
+// but keeping it inside the layer cascade keeps the emission order tidy.
+//
+// Baseline: Widely available across Chromium/Safari/Firefox since 2024.
+// Firefox shipped @property in Firefox 128 (July 2024); older FF silently
+// treats these as regular unregistered custom props — gradients still paint,
+// they just don't animate as smoothly. No @supports guard needed; browsers
+// without @property ignore the at-rule gracefully.
+// ============================================================================
+
+@layer reset {
+  @property --hero-gradient-angle {
+    syntax: '<angle>';
+    initial-value: 135deg;
+    inherits: false;
+  }
+
+  @property --hero-gradient-progress {
+    syntax: '<percentage>';
+    initial-value: 0%;
+    inherits: false;
+  }
+}

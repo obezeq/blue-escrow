@@ -30,6 +30,16 @@
   transition: background 0.6s var(--ease-out-expo);
 }
 
+// S9 — Upgrade the hero backdrop to an oklch-interpolated gradient where
+// supported. Blue transitions look noticeably cleaner in oklch space (no
+// mid-fade desaturation to grey/lavender). Legacy engines keep --hero-grad.
+// Baseline: Chromium 111+, Safari 16.4+, Firefox 128+ (mid-2024).
+@supports (background: linear-gradient(in oklch, red, blue)) {
+  .hero__bg {
+    background: var(--hero-grad-oklch);
+  }
+}
+
 .hero__orbit {
   position: absolute;
   top: 50%;

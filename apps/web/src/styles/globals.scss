@@ -15,9 +15,13 @@
 @use 'tools/mixins';
 @use 'tools/a11y';
 @use 'tools/container-query';
+@use 'tools/scroll';
 
 // Layer 3: Generic — Modern CSS reset (wrapped in @layer reset).
 @use 'generic/reset';
+// Generic (cont.): @property registration for animated custom props.
+// Emits @property at-rules scoped inside @layer reset.
+@use 'generic/properties';
 
 // Layer 4: Elements — Bare HTML element styles (wrapped in @layer elements).
 @use 'elements/base';
@@ -28,3 +32,5 @@
 
 // Layer 7: Utilities — Helper classes (wrapped in @layer utilities).
 @use 'utilities/helpers';
+// Utilities (cont.): View Transitions API pseudo-elements for theme toggle.
+@use 'utilities/view-transitions';

@@ -164,6 +164,28 @@ $bp-section: 900px;
   // (v6 base.css:42-43). Fluid clamp hits both bounds without a breakpoint.
   --container-padding: clamp(1.5rem, 4vw, 2.5rem);
   --header-height:     4.5rem;
+
+  // ---------------------------------------------------------------
+  // S12 — light-dark() showcase (opt-in, not a migration).
+  // ---------------------------------------------------------------
+  // Demo pattern for future token work: a single surface token that
+  // uses the CSS light-dark() function to pick a tone at the cascade
+  // level. Existing [data-theme] overrides keep working for every
+  // other token — this is intentionally a narrow opt-in demo.
+  //
+  // Fallback block (no light-dark support): point at --bg-page so
+  // the token always resolves to a usable value.
+  --surface-inline: var(--bg-page);
+}
+
+// Modern browsers with light-dark() (Chrome 123+, Firefox 120+, Safari 17.5+,
+// Baseline since mid-2024): set color-scheme so the UA picks the correct
+// branch of light-dark() automatically, then upgrade --surface-inline.
+@supports (color: light-dark(red, blue)) {
+  :root {
+    color-scheme: light dark;
+    --surface-inline: light-dark(#ffffff, #0b1117);
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -218,6 +240,29 @@ $bp-section: 900px;
     linear-gradient(180deg, #021039 0%, #03091c 70%);
   --blue-band:
     linear-gradient(135deg, var(--blue-primary) 0%, var(--blue-vivid) 100%);
+
+  // --- oklch variant (S9) ---
+  // Identical visual intent to --hero-grad but interpolated in oklch space
+  // (perceptually-uniform — blues stay saturated instead of desaturating
+  // mid-fade to dark). Activated via @supports in HeroSection.module.scss;
+  // browsers without `linear-gradient(in oklch, ...)` continue to paint
+  // --hero-grad without any visual regression.
+  //
+  // color-mix(in oklch, ...) feeds the radial glow mix-ins so the glow
+  // stops interpolate cleanly to transparent through oklch rather than
+  // through the sRGB gamut (which would wash the blue into grey).
+  --hero-grad-oklch:
+    radial-gradient(
+      ellipse 70% 60% at 50% 40%,
+      color-mix(in oklch, #0091ff 32%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 90% 60% at 80% 100%,
+      color-mix(in oklch, #0066ff 28%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(in oklch 180deg, #021039 0%, #03091c 70%);
 }
 
 // ----------------------------------------------------------------------------
@@ -273,4 +318,21 @@ $bp-section: 900px;
     linear-gradient(180deg, #e6effc 0%, #fbfcfe 70%);
   --blue-band:
     linear-gradient(135deg, var(--blue-primary) 0%, var(--blue-vivid) 100%);
+
+  // --- oklch variant (S9), light theme ---
+  // Mirrors --hero-grad stops in oklch space for a visibly cleaner blue-
+  // to-white transition (no mid-fade muddy lavender). Activated by the
+  // same @supports guard in HeroSection.module.scss as the dark variant.
+  --hero-grad-oklch:
+    radial-gradient(
+      ellipse 75% 70% at 50% 30%,
+      color-mix(in oklch, #0091ff 16%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 80% 60% at 85% 100%,
+      color-mix(in oklch, #0055e0 10%, transparent),
+      transparent 72%
+    ),
+    linear-gradient(in oklch 180deg, #e6effc 0%, #fbfcfe 70%);
 }
