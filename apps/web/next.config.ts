@@ -15,7 +15,10 @@ const nextConfig: NextConfig = {
     '@blue-escrow/contract-abis',
   ],
   sassOptions: {
-    silenceDeprecations: ['legacy-js-api', 'import'],
+    // Next's internal Sass pipeline still relies on the legacy JS API, so we
+    // silence only that deprecation. Our own code is fully @use/@forward (no
+    // @import usages in apps/web/src), so the 'import' silencer is unneeded.
+    silenceDeprecations: ['legacy-js-api'],
   },
   ...(allowedDevOrigins?.length && { allowedDevOrigins }),
 };
