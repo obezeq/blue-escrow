@@ -25,6 +25,27 @@ function ThemeInitScript() {
   return <script>{THEME_INIT_SCRIPT}</script>;
 }
 
+/**
+ * Speculation Rules — instructs supporting browsers (Chrome/Edge 121+) to
+ * prerender `/app` on moderate intent (hover/pointerdown on a matching link)
+ * and prefetch `/middlemen` + `/docs` conservatively. This shortens the
+ * navigation-to-paint budget for the primary CTA without harming initial
+ * load. Gated to production to avoid surprise prerenders during local dev.
+ *
+ * The JSON payload is a static literal — no user input, no XSS vector.
+ * Non-supporting browsers ignore the script type entirely.
+ *
+ * URLs verified against apps/web/src/components/layout/Footer/Footer.tsx.
+ */
+function SpeculationRules() {
+  if (process.env.NODE_ENV !== 'production') return null;
+  const rules = {
+    prerender: [{ urls: ['/app'], eagerness: 'moderate' }],
+    prefetch: [{ urls: ['/middlemen', '/docs'], eagerness: 'conservative' }],
+  };
+  return <script type="speculationrules">{JSON.stringify(rules)}</script>;
+}
+
 const geistSans = Geist({
   variable: '--font-sans',
   subsets: ['latin'],
@@ -70,6 +91,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <ThemeInitScript />
         <JsLoadedScript />
+        <SpeculationRules />
       </head>
       <body>
         <ThemeProvider>{children}</ThemeProvider>
