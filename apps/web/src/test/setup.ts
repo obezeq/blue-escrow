@@ -1,8 +1,12 @@
 // ---------------------------------------------------------------------------
 // Global test setup — WebGL, Canvas, and browser API mocks for Three.js
+// + vitest-axe accessibility matcher + scoped matchMedia helper.
 // ---------------------------------------------------------------------------
 
-import { vi } from 'vitest';
+import { expect, vi } from 'vitest';
+import * as axeMatchers from 'vitest-axe/matchers';
+
+expect.extend(axeMatchers);
 
 // --- Stub WebGL2 context ---
 const glStub = {
@@ -103,6 +107,34 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   })),
 });
+
+/**
+ * Per-test helper: make matchMedia return `matches: true` for queries whose
+ * text matches the predicate, false otherwise. Restore via the returned fn.
+ *
+ * @example
+ *   const restore = mockMatchMedia((q) => q.includes('reduce'));
+ *   // ...reduced-motion branch runs...
+ *   restore();
+ */
+export function mockMatchMedia(
+  predicate: (query: string) => boolean,
+): () => void {
+  const original = window.matchMedia;
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    matches: predicate(query),
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }));
+  return () => {
+    window.matchMedia = original;
+  };
+}
 
 // --- ResizeObserver stub ---
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
