@@ -48,14 +48,12 @@ export default function HomePage() {
         type="application/ld+json"
         data-ld="faq"
         // Payload is escaped by toLdJson() per https://nextjs.org/docs/app/guides/json-ld#security.
-        // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: toLdJson(faqJsonLd) }}
       />
       <script
         type="application/ld+json"
         data-ld="organization"
         // Payload is escaped by toLdJson() per https://nextjs.org/docs/app/guides/json-ld#security.
-        // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: toLdJson(organizationJsonLd) }}
       />
       <ClientShell />

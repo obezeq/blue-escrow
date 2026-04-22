@@ -5,7 +5,7 @@
 //
 // schema.org/FAQPage: https://schema.org/FAQPage
 import type { ReactElement, ReactNode } from 'react';
-import { Children, isValidElement } from 'react';
+import { isValidElement } from 'react';
 import { FAQ_ITEMS } from './questions';
 
 /**

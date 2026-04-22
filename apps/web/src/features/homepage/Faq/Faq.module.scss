@@ -74,6 +74,12 @@
   font-style: italic;
   color: var(--accent);
   font-weight: 400;
+  // S14 — Emphasis phrase grows ~8% when the wrapping container has room.
+  // `cqi` = 1% of the container's inline size, so the italic fragment feels
+  // slightly oversized on wide viewports without affecting narrow ones
+  // (clamp low-bound = 1em keeps mobile identical). Requires container-type
+  // on an ancestor — Faq provides it via `.faq__wrap` (container-type: inline-size).
+  font-size: clamp(1em, 1em + 0.6cqi, 1.08em);
 }
 
 @container (min-width: 640px) {

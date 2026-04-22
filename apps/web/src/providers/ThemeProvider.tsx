@@ -15,6 +15,29 @@ interface ThemeContextValue {
   toggle: () => void;
 }
 
+// S11 — Wrap theme-swap mutations in document.startViewTransition so the
+// browser captures before/after snapshots and animates a root crossfade.
+// The callback runs synchronously and MUST contain all DOM changes
+// (dataset + localStorage) for the browser to diff correctly. The returned
+// ViewTransition instance is intentionally ignored — we don't need to await
+// `finished` and Next.js's React 19 runtime prefers fire-and-forget here.
+// Animation tuning lives in utilities/_view-transitions.scss.
+//
+// TypeScript 5.4+ ships ambient types for the View Transitions API via lib.dom
+// (`Document.startViewTransition` is optional), so feature detection with
+// typeof is enough — no custom declaration or `any` cast required.
+function runThemeTransition(apply: () => void): void {
+  if (typeof document === 'undefined') {
+    apply();
+    return;
+  }
+  if (typeof document.startViewTransition === 'function') {
+    document.startViewTransition(apply);
+    return;
+  }
+  apply();
+}
+
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -34,25 +57,29 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   });
 
   const setTheme = useCallback((next: Theme) => {
-    setThemeState(next);
-    document.documentElement.dataset.theme = next;
-    try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, next);
-    } catch {
-      // localStorage unavailable (private mode, quota, server) — in-memory state still works.
-    }
-  }, []);
-
-  const toggle = useCallback(() => {
-    setThemeState((prev) => {
-      const next: Theme = prev === 'dark' ? 'light' : 'dark';
+    runThemeTransition(() => {
+      setThemeState(next);
       document.documentElement.dataset.theme = next;
       try {
         window.localStorage.setItem(THEME_STORAGE_KEY, next);
       } catch {
-        // ignore
+        // localStorage unavailable (private mode, quota, server) — in-memory state still works.
       }
-      return next;
+    });
+  }, []);
+
+  const toggle = useCallback(() => {
+    runThemeTransition(() => {
+      setThemeState((prev) => {
+        const next: Theme = prev === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = next;
+        try {
+          window.localStorage.setItem(THEME_STORAGE_KEY, next);
+        } catch {
+          // ignore
+        }
+        return next;
+      });
     });
   }, []);
 

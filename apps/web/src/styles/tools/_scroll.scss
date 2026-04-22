@@ -1,0 +1,44 @@
+// ============================================================================
+// SCROLL-DRIVEN ANIMATIONS — CSS-native `animation-timeline: view()`
+// ----------------------------------------------------------------------------
+// CSS scroll-driven animations land in Chrome/Edge 115+ and Safari 26 (2026).
+// Firefox is shipping the spec-compliant implementation — until then, the
+// @supports guard means non-supporting browsers get the already-in-place
+// GSAP ScrollTrigger reveals (authoritative for anything complex).
+//
+// Use this mixin ONLY for simple single-element fade/translate reveals
+// that don't coordinate with other elements. For pinned scroll choreography,
+// horizontal scroll, or multi-element timelines, stick with GSAP.
+//
+// Parameters:
+//   $keyframes-name : String name of an @keyframes already defined in the
+//                     component's scope.
+//   $range-start    : CSS animation-range start (default 'entry 0%').
+//   $range-end      : CSS animation-range end   (default 'entry 50%').
+//
+// animation-range timeline names:
+//   entry       — element enters viewport (ideal for reveal-in)
+//   exit        — element leaves viewport
+//   contain     — element fully in viewport
+//   cover       — any intersection with viewport
+//
+// Reduced-motion guard is REDUNDANT with the global kill-switch in
+// generic/_reset.scss, but explicit here so the mixin is self-contained
+// and safe in any future context outside the @layer reset cascade.
+// ============================================================================
+
+@mixin scroll-reveal(
+  $keyframes-name,
+  $range-start: 'entry 0%',
+  $range-end: 'entry 50%'
+) {
+  @supports (animation-timeline: view()) {
+    animation: #{$keyframes-name} linear both;
+    animation-timeline: view();
+    animation-range: #{$range-start} #{$range-end};
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}

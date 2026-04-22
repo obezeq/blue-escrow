@@ -89,6 +89,12 @@
   font-style: italic;
   font-weight: 400;
   color: var(--accent);
+  // S14 — Container-query-unit sizing: emphasis grows ~8% when the wrapping
+  // section has inline room. cqi reacts to `.hiw__wrap` (container-type:
+  // inline-size) instead of the viewport, so emphasis scales proportionally
+  // to the section width, not the window width — cleaner behaviour in
+  // sidebars, modals, or future embedded contexts.
+  font-size: clamp(1em, 1em + 0.6cqi, 1.08em);
 }
 
 // Desktop container widths: keep italic emphasis cohesive on one line.
