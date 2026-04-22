@@ -4,7 +4,7 @@
 // jsdom and they don't affect the static accessibility tree.
 
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { render, cleanup } from '@testing-library/react';
+import { render, cleanup, fireEvent } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 
 vi.mock('./HowItWorksAnimations', () => ({
@@ -77,5 +77,165 @@ describe('HowItWorks a11y (no theme dataset)', () => {
     expect(container.querySelector('[data-hiw="wire-base-C"]')).not.toBeNull();
     expect(container.querySelector('[data-hiw="wire-base-S"]')).not.toBeNull();
     expect(container.querySelector('[data-hiw="packet"]')).not.toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// v7 additions: mobile step-deck (5 hiw__phaseCard sections + hiw__phaseNav)
+// The mobile deck duplicates the step data into stacked cards. The sticky
+// phaseNav exposes 5 anchor pips linking to each card's h3 id. These tests
+// guard the a11y contract of that subtree in both themes.
+// ---------------------------------------------------------------------------
+
+describe.each(['dark', 'light'] as const)(
+  'HowItWorks a11y — mobile step-deck (%s theme)',
+  (theme) => {
+    beforeEach(() => {
+      document.documentElement.dataset.theme = theme;
+    });
+
+    it('mobile phase nav has aria-label "Phase navigation"', () => {
+      const { container } = render(<HowItWorks />);
+      const nav = container.querySelector('[class*="hiw__phaseNav"]');
+      expect(nav).not.toBeNull();
+      expect(nav?.getAttribute('aria-label')).toBe('Phase navigation');
+    });
+
+    it('every phase card has an h3 heading (level 3)', () => {
+      const { container } = render(<HowItWorks />);
+      // Note: `[class*="hiw__phaseCard"]` also matches children like
+      // `hiw__phaseCardHead/Title/Body/Diagram/Ledger` (6×5=30 hits); scope
+      // to the <section> wrapper via the data attribute instead.
+      const cards = container.querySelectorAll(
+        'section[data-hiw-phase-card]',
+      );
+      expect(cards.length).toBe(5);
+      cards.forEach((card) => {
+        const h3 = card.querySelector('h3');
+        expect(h3).not.toBeNull();
+        expect(h3?.tagName).toBe('H3');
+      });
+    });
+
+    it('every phase card id matches the format hiw-card-N-title and is referenced by the aria-labelledby on its section', () => {
+      const { container } = render(<HowItWorks />);
+      const cards = container.querySelectorAll(
+        'section[data-hiw-phase-card]',
+      );
+      expect(cards.length).toBe(5);
+      cards.forEach((card, i) => {
+        expect(card.getAttribute('aria-labelledby')).toBe(
+          `hiw-card-${i}-title`,
+        );
+        const titleEl = card.querySelector(`#hiw-card-${i}-title`);
+        expect(titleEl).not.toBeNull();
+        expect(titleEl?.tagName).toBe('H3');
+      });
+    });
+
+    it('every phase nav pip has an accessible name via aria-label "Go to {label}"', () => {
+      const { container } = render(<HowItWorks />);
+      const nav = container.querySelector('[class*="hiw__phaseNav"]');
+      const pips = nav?.querySelectorAll('a[href^="#hiw-card-"]') ?? [];
+      expect(pips.length).toBe(5);
+      const expectedLabels = ['Meet', 'Sign', 'Lock', 'Deliver', 'Release'];
+      pips.forEach((pip, i) => {
+        expect(pip.getAttribute('aria-label')).toBe(
+          `Go to ${expectedLabels[i]}`,
+        );
+        expect(pip.getAttribute('href')).toBe(`#hiw-card-${i}-title`);
+      });
+    });
+
+    it('mobile step-deck does not introduce axe violations on phase card #0 in isolation', async () => {
+      const { container } = render(<HowItWorks />);
+      const card0 = container.querySelector(
+        'section[data-hiw-phase-card="0"]',
+      );
+      expect(card0).not.toBeNull();
+      const results = await axe(card0 as Element, AXE_OPTIONS);
+      expect(results).toHaveNoViolations();
+    });
+
+    it('mobile step-deck does not introduce axe violations on phase card #4 in isolation (released state)', async () => {
+      const { container } = render(<HowItWorks />);
+      const card4 = container.querySelector(
+        'section[data-hiw-phase-card="4"]',
+      );
+      expect(card4).not.toBeNull();
+      const results = await axe(card4 as Element, AXE_OPTIONS);
+      expect(results).toHaveNoViolations();
+    });
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Desktop narration reveal hooks — single source of truth. The GSAP scroll
+// timeline targets exactly one [data-animate="narr-title"] and one
+// [data-animate="narr-body"]; duplicates would cause double-tween jank.
+// ---------------------------------------------------------------------------
+
+describe('HowItWorks a11y — desktop narration reveal hooks', () => {
+  it('exactly one element matches [data-animate="narr-title"]', () => {
+    const { container } = render(<HowItWorks />);
+    const nodes = container.querySelectorAll('[data-animate="narr-title"]');
+    expect(nodes.length).toBe(1);
+  });
+
+  it('exactly one element matches [data-animate="narr-body"]', () => {
+    const { container } = render(<HowItWorks />);
+    const nodes = container.querySelectorAll('[data-animate="narr-body"]');
+    expect(nodes.length).toBe(1);
+  });
+
+  it('narr-title is an h3 heading level 3', () => {
+    const { container } = render(<HowItWorks />);
+    const el = container.querySelector('[data-animate="narr-title"]');
+    expect(el).not.toBeNull();
+    expect(el?.tagName).toBe('H3');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Phase state regression — clicking the rail must update the narration text
+// and state chip without introducing axe violations. Runs in dark theme only
+// because the dual-theme axe sweep above already catches palette regressions;
+// here we care about the state-change transition. Interaction via fireEvent.
+// ---------------------------------------------------------------------------
+
+describe('HowItWorks a11y — phase state regression (desktop)', () => {
+  beforeEach(() => {
+    document.documentElement.dataset.theme = 'dark';
+  });
+
+  it('clicking rail "Lock" updates the desktop narration text without introducing axe violations', async () => {
+    const { container } = render(<HowItWorks />);
+    const lockButton = container.querySelector('[data-hiw-rail="2"]');
+    expect(lockButton).not.toBeNull();
+    fireEvent.click(lockButton as Element);
+
+    const narrTitle = container.querySelector('[data-animate="narr-title"]');
+    expect(narrTitle?.textContent).toContain('contract');
+    const narrBody = container.querySelector('[data-animate="narr-body"]');
+    expect(narrBody?.textContent).toMatch(/2,400 USDC/);
+
+    const results = await axe(container, AXE_OPTIONS);
+    expect(results).toHaveNoViolations();
+  });
+
+  it('clicking rail "Release" flips state chip to "Released" with no axe violations', async () => {
+    const { container } = render(<HowItWorks />);
+    const releaseButton = container.querySelector('[data-hiw-rail="4"]');
+    expect(releaseButton).not.toBeNull();
+    fireEvent.click(releaseButton as Element);
+
+    // The desktop ledger chip lives under the aside and has aria-live=polite.
+    const chip = container.querySelector(
+      'aside[aria-label^="Escrow"] [aria-live="polite"]',
+    );
+    expect(chip?.textContent).toMatch(/released/i);
+
+    const results = await axe(container, AXE_OPTIONS);
+    expect(results).toHaveNoViolations();
   });
 });
