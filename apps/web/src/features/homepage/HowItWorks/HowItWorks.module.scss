@@ -134,7 +134,10 @@
 .hiw__stage {
   position: relative;
   // svh (small viewport height) avoids iOS URL-bar jitter that 100vh triggers.
-  min-height: 100svh;
+  block-size: 100svh;
+  max-block-size: 100svh;
+  min-block-size: 640px;
+  padding-block: clamp(16px, 3vh, 40px);
   // Same fluid rule as .hiw__wrap — 20px min matches the old mobile
   // fallback, 40px max matches desktop.
   padding-inline: clamp(1.25rem, 4vw, 2.5rem);
@@ -193,7 +196,7 @@
   }
 
   // Mobile step-deck replaces the stage; skip the expensive overlays.
-  @media (max-width: 899px) {
+  @media (max-width: 899px), (max-height: 699px) {
     display: none;
   }
 }
@@ -203,7 +206,8 @@
   grid-template-columns: 1fr 1.1fr;
   // Fluid gap — shrinks from 32px desktop down to 16px at narrow widths,
   // freeing horizontal space for the ledger + diagram cards on mobile.
-  gap: clamp(1rem, 3vw, 2rem);
+  gap: clamp(0.75rem, 2.5vw, 2rem);
+  row-gap: clamp(0.75rem, 2vh, 1.5rem);
   align-items: stretch;
   max-width: 1440px;
   margin: 0 auto;
@@ -222,7 +226,7 @@
   background:
     linear-gradient(135deg, rgba(0, 145, 255, 0.08), transparent 60%),
     var(--bg-surface);
-  padding: 28px 32px;
+  padding: clamp(18px, 3vh, 28px) clamp(20px, 3vw, 32px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -322,8 +326,8 @@
 }
 
 .hiw__amount {
-  padding: 28px 0 24px;
-  font-size: clamp(56px, 7vw, 98px);
+  padding: clamp(14px, 2.5vh, 28px) 0 clamp(12px, 2vh, 24px);
+  font-size: clamp(40px, 7vw, 98px);
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.04em;
@@ -382,7 +386,9 @@
 
 .hiw__logs {
   list-style: none;
-  padding: 24px 0 0;
+  padding-block-start: clamp(14px, 2vh, 24px);
+  padding-inline: 0;
+  padding-block-end: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -395,7 +401,7 @@
   grid-template-columns: 64px 1fr auto;
   gap: 16px;
   align-items: center;
-  padding: 14px 0;
+  padding-block: clamp(8px, 1.4vh, 14px);
   border-bottom: 1px dashed var(--border);
   opacity: 0.3;
   transition: opacity 0.5s var(--ease-out-expo);
@@ -503,7 +509,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: 460px;
+  min-block-size: clamp(300px, 45svh, 460px);
 
   :root[data-theme='light'] & {
     background:
@@ -542,7 +548,7 @@
 .hiw__sceneBody {
   position: relative;
   flex: 1 1 auto;
-  min-height: 300px;
+  min-block-size: clamp(200px, 28svh, 300px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -718,13 +724,13 @@
 // --- Narration --------------------------------------------------------------
 
 .hiw__narration {
-  padding: 28px;
+  padding: clamp(16px, 3vh, 28px);
   border-top: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
   gap: 32px;
-  min-height: 140px;
+  min-block-size: clamp(110px, 14svh, 140px);
 }
 
 .hiw__narrationText {
@@ -786,7 +792,7 @@
   block-size: 2px;
   inline-size: 100%;
   max-width: 1440px;
-  margin: 24px auto 0;
+  margin: clamp(10px, 2vh, 24px) auto 0;
   background: var(--border);
   overflow: hidden;
 
@@ -806,7 +812,7 @@
   }
 
   // Desktop only — mobile uses .hiw__phaseNav instead.
-  @media (max-width: 899px) {
+  @media (max-width: 899px), (max-height: 699px) {
     display: none;
   }
 }
@@ -817,7 +823,7 @@
   border-top: 1px solid var(--border);
   background: var(--bg-surface);
   max-width: 1440px;
-  margin: 32px auto 0;
+  margin: clamp(12px, 2.5vh, 32px) auto 0;
   // Lift the rail above the heat pseudo-elements.
   position: relative;
 
@@ -966,7 +972,7 @@
 .hiw__deck {
   display: none;
 
-  @media (max-width: 899px) {
+  @media (max-width: 899px), (max-height: 699px) {
     display: block;
     position: relative;
     scroll-snap-type: y mandatory;
