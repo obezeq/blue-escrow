@@ -7,24 +7,21 @@
 // for emphasis, <dl>/<dt>/<dd> for the middleman can/cannot list.
 //
 // Animation contract (see TheProblemAnimations.tsx):
-//   --strike-scale  0 → 1  (scrubbed) drives the red trace line
-//   --drift-y       0 → Npx (velocity) drives "a stranger too" translate
+//   stroke-dashoffset  100 → 0  (scrubbed by GSAP on the inline <path>)
+//                             drives the pen-stroke "a stranger too" draw
+//   --drift-y          0 → Npx (velocity) drives phrase translate
 //
-// @property registration unlocks smooth interpolation of these custom
-// props across modern browsers (Firefox 128+ shipped @property in 2024;
-// older FF silently degrades to unregistered props — GSAP still repaints
-// each RAF, just without the native interpolation hint).
+// The strike uses an inline <svg><path/></svg> with pathLength="100", so
+// `stroke-dashoffset: 100` = fully hidden, `stroke-dashoffset: 0` = fully
+// drawn. GSAP animates the SVG attribute directly (rather than a CSS var)
+// because `calc(... - var(<number>))` on `stroke-dashoffset` doesn't
+// resolve reliably across browsers. Mirrors the HowItWorks wire-flow
+// primitive (see HowItWorksAnimations.tsx:296–318).
 // ============================================================================
 
 // ----- @property (CSS Houdini typed custom properties) ---------------------
-// Global scope regardless of location in source. Colocated here so the
-// declaration lives next to its sole consumers.
-@property --strike-scale {
-  syntax: '<number>';
-  initial-value: 0;
-  inherits: false;
-}
-
+// Only --drift-y now needs @property registration — stroke-dashoffset is
+// driven directly by GSAP on the path element, no CSS var indirection.
 @property --drift-y {
   syntax: '<length>';
   initial-value: 0px;
@@ -97,27 +94,35 @@
   }
 
   // Semantic <s> wrapper around "a stranger too". Browser default
-  // line-through is disabled (we draw our own via ::after so we can
-  // scale it from 0 with GPU-friendly transform scrubbed to scroll).
+  // line-through is disabled — we draw our own via an inline SVG child
+  // (.problem__strike) with stroke-dashoffset scrubbed to scroll.
   .problem__struck {
     position: relative;
     display: inline-block;
     color: var(--status-error);
     text-decoration: none;
+  }
 
-    &::after {
-      content: '';
-      position: absolute;
-      inset-inline: -0.05em;
-      inset-block-start: 54%;
-      block-size: 4px;
-      background: currentColor;
-      transform-origin: left;
-      transform: scaleX(var(--strike-scale));
-      // Micro-transition smooths scrub jitter at sub-frame granularity.
-      // GSAP drives the CSS var; this transition lets the browser paint
-      // between ticks without a visible stepped edge.
-      transition: transform 0.05s linear;
+  // Inline <svg> pen-stroke sibling of the red text. Positioned absolutely
+  // so it overlays the text; preserveAspectRatio="none" lets the path
+  // stretch to the parent's width without distorting the stroke. The
+  // `pathLength="100"` attribute normalizes the path length so GSAP can
+  // animate stroke-dashoffset from 100 (hidden) to 0 (drawn) in integers
+  // regardless of rendered width.
+  .problem__strike {
+    position: absolute;
+    inset-inline: -0.04em;
+    inset-block-start: 46%;
+    inline-size: calc(100% + 0.08em);
+    block-size: 0.22em;
+    overflow: visible;
+    pointer-events: none;
+
+    path {
+      // Initial hidden state; GSAP overrides via inline style during scrub.
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.12));
     }
   }
 
@@ -238,11 +243,9 @@
   // media query, but CSS here is the SAFE FALLBACK in case JS hasn't
   // executed yet (SSR/hydration race).
   @media (prefers-reduced-motion: reduce) {
-    .problem__struck {
-      --strike-scale: 1;
-    }
-    .problem__struck::after {
-      transition: none;
+    .problem__strike path {
+      // Force the pen mark fully drawn at paint time (before JS hydrates).
+      stroke-dashoffset: 0;
     }
     .problem__red {
       --drift-y: 0px;
@@ -253,8 +256,9 @@
   // In Windows High Contrast and similar, `currentColor` typically remaps
   // well; CanvasText is the explicit a11y-compliant fallback.
   @media (forced-colors: active) {
-    .problem__struck::after {
-      background: CanvasText;
+    .problem__strike path {
+      stroke: CanvasText;
+      filter: none;
     }
   }
 }

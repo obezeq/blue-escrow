@@ -6,7 +6,7 @@
 //
 // Curves tuned for "The Fall + velocity" choreography:
 //   - fall       drop with overshoot for chars of "a stranger too"
-//   - strike     LTR scaleX trace for the red strikethrough (--strike-scale)
+//   - strike     LTR stroke-dashoffset draw for the red pen mark (--strike-progress)
 //   - settle     micro-settle post-land for other lines
 //   - monoTick   snappy type-on for the eyebrow "THE PROBLEM"
 //
@@ -28,7 +28,11 @@ export type ProblemEaseName =
 const PROBLEM_EASE_CURVES: Record<ProblemEaseName, string> = {
   [PROBLEM_EASE_NAMES.fall]:
     'M0,0 C0.2,0 0.1,1.12 0.55,0.98 C0.72,0.94 0.88,1.02 1,1',
-  [PROBLEM_EASE_NAMES.strike]: 'M0,0 C0.19,1 0.22,1 1,1',
+  // Near-linear with a breath of smoothing — drawing effects feel wrong
+  // under strong ease curves because the pen mark would race ahead of the
+  // scroll. Each scroll pixel maps almost proportionally to stroke length
+  // so the user literally drags the pen tip with their scroll.
+  [PROBLEM_EASE_NAMES.strike]: 'M0,0 C0.25,0.25 0.75,0.75 1,1',
   [PROBLEM_EASE_NAMES.settle]: 'M0,0 C0.6,0 0.2,1 1,1',
   [PROBLEM_EASE_NAMES.monoTick]: 'M0,0 C0.2,1 0.3,1 1,1',
 };
