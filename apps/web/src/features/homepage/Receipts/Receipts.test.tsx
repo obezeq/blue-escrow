@@ -100,4 +100,73 @@ describe('Receipts (v6)', () => {
     const dashedRing = soulSvg?.querySelector('circle[stroke-dasharray="2 5"]');
     expect(dashedRing?.getAttribute('stroke')).toBe('currentColor');
   });
+
+  it('uses aria-labelledby pointing to the h3 id on each article', () => {
+    const { container } = render(<Receipts />);
+    const articles = Array.from(container.querySelectorAll('article'));
+    expect(articles.length).toBe(3);
+    articles.forEach((article) => {
+      const labelId = article.getAttribute('aria-labelledby');
+      expect(labelId).toMatch(/^receipt-(soul|client|seller)-title$/);
+      const h3 = article.querySelector('h3');
+      expect(h3?.id).toBe(labelId);
+    });
+  });
+
+  it('wraps every card with <header>, <figure>, and <footer>', () => {
+    const { container } = render(<Receipts />);
+    const articles = container.querySelectorAll('article');
+    articles.forEach((article) => {
+      expect(article.querySelector('header')).not.toBeNull();
+      expect(article.querySelector('figure')).not.toBeNull();
+      expect(article.querySelector('footer')).not.toBeNull();
+    });
+  });
+
+  it('exposes a non-empty <figcaption> for screen readers inside each <figure>', () => {
+    const { container } = render(<Receipts />);
+    const figcaptions = container.querySelectorAll('figure figcaption');
+    expect(figcaptions.length).toBe(3);
+    figcaptions.forEach((fc) => {
+      expect(fc.textContent?.trim().length ?? 0).toBeGreaterThan(10);
+      expect(fc.className).toContain('u-visually-hidden');
+    });
+  });
+
+  it('structures receipt meta as a <dl> with two <dd> rows (details + hash)', () => {
+    const { container } = render(<Receipts />);
+    const dls = container.querySelectorAll('article dl');
+    expect(dls.length).toBe(3);
+    dls.forEach((dl) => {
+      const dds = dl.querySelectorAll('dd');
+      expect(dds.length).toBe(2);
+    });
+  });
+
+  it('tags the SoulVisual outer dashed ring with data-animate="soul-ring"', () => {
+    const { container } = render(<Receipts />);
+    const ring = container.querySelector(
+      '.receipts__card--soul svg [data-animate="soul-ring"]',
+    );
+    expect(ring).not.toBeNull();
+    expect(ring?.getAttribute('stroke-dasharray')).toBe('2 5');
+  });
+
+  it('SellerVisual center circle uses var(--receipt-center-dot) so light mode is visible', () => {
+    const { container } = render(<Receipts />);
+    const center = container.querySelector(
+      '.receipts__card--seller svg circle[r="8"]',
+    );
+    expect(center).not.toBeNull();
+    expect(center?.getAttribute('fill')).toBe('var(--receipt-center-dot)');
+  });
+
+  it('ClientVisual checkmark uses var(--receipt-accent) token', () => {
+    const { container } = render(<Receipts />);
+    const check = container.querySelector(
+      '.receipts__card--client svg path[d^="M 68 108"]',
+    );
+    expect(check).not.toBeNull();
+    expect(check?.getAttribute('stroke')).toBe('var(--receipt-accent)');
+  });
 });
