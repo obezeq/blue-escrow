@@ -15,6 +15,12 @@ export interface ReceiptCard {
   visual: ReactNode;
 }
 
+// All white strokes/fills inherit `currentColor` from the parent
+// .receipts__card--soul (which sets `color: #fff` in both themes), so the
+// SVG stays in lockstep with the card colour even if the card is ever
+// re-themed. The radial gradient stops cannot inherit currentColor (SVG
+// limitation), so they stay literal #fff — fine because the soul card
+// is dark-base in both themes.
 const SoulVisual = (
   <svg viewBox="0 0 200 200" aria-hidden="true">
     <defs>
@@ -28,7 +34,8 @@ const SoulVisual = (
       cy="100"
       r="72"
       fill="none"
-      stroke="rgba(255,255,255,.28)"
+      stroke="currentColor"
+      strokeOpacity=".4"
       strokeWidth="1"
       strokeDasharray="2 5"
     />
@@ -37,11 +44,12 @@ const SoulVisual = (
       cy="100"
       r="56"
       fill="none"
-      stroke="rgba(255,255,255,.5)"
+      stroke="currentColor"
+      strokeOpacity=".5"
       strokeWidth="1"
     />
     <circle cx="100" cy="100" r="36" fill="url(#receipt-soul-gradient)" />
-    <g stroke="#fff" strokeWidth="1.2" fill="none" strokeLinecap="round">
+    <g stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round">
       <line x1="100" y1="28" x2="100" y2="42" />
       <line x1="100" y1="158" x2="100" y2="172" />
       <line x1="28" y1="100" x2="42" y2="100" />

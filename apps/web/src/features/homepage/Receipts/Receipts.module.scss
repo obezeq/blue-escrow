@@ -4,7 +4,10 @@
 // RECEIPTS — v6 .receipts (Blue Escrow v6.html:1643-1717, CSS 1061-1118).
 // Three tilting 3D cards (Middleman Soulbound / Client / Seller), each with
 // an inline SVG visual. The client and seller variants re-theme in light
-// mode; soul stays dark to read as a premium NFT card regardless.
+// mode. The soul card stays dark in BOTH themes to read as a premium NFT
+// (decision: "híbrido sofisticado") — in light mode we layer a glassy
+// overlay and brand-tinted shadow so the dark surface integrates with the
+// surrounding light page without looking accidental.
 // ============================================================================
 
 .receipts {
@@ -126,15 +129,26 @@
 }
 
 .receipts__card--soul {
-  background:
-    radial-gradient(
-      circle at 20% 0%,
-      rgba(120, 180, 255, 0.55),
-      transparent 60%
-    ),
-    radial-gradient(circle at 80% 100%, rgba(0, 20, 60, 1), transparent 60%),
-    linear-gradient(135deg, #0066ff 0%, #001b4d 100%);
+  // Tokenized — same gradient stack as before, now reusable as
+  // --surface-premium-dark (also future Compare/CTA premium cards).
+  background: var(--surface-premium-dark);
   color: #fff;
+
+  // Light mode: keep the dark base but add a glassy interior overlay,
+  // a defined border against the light wrapper, and a brand-blue
+  // elevation shadow so the card feels deliberate (not accidental dark).
+  // No backdrop-filter: the card is opaque, the "glass" comes from the
+  // interior white-translucent layer (better mobile perf, no blur jank).
+  :root[data-theme='light'] & {
+    background:
+      var(--surface-premium-overlay),
+      var(--surface-premium-dark);
+    border-color: var(--border);
+    box-shadow:
+      var(--shadow-elev),
+      0 1px 0 rgba(255, 255, 255, 0.12) inset,
+      0 0 0 1px rgba(0, 27, 77, 0.04);
+  }
 }
 
 .receipts__card--client {
