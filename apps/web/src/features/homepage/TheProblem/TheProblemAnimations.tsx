@@ -1,26 +1,34 @@
 'use client';
 
 import { useRef } from 'react';
-import { gsap, SplitText, useGSAP } from '@/animations/config/gsap-register';
+import {
+  gsap,
+  SplitText,
+  useGSAP,
+  ScrollTrigger,
+} from '@/animations/config/gsap-register';
+import { Observer } from 'gsap/Observer';
 import { MATCH_MEDIA } from '@/animations/config/defaults';
-import lineStyles from './TheProblem.module.scss';
-
-const STRUCK_CLASS = lineStyles['problem__line--struck'] ?? 'problem__line--struck';
+import { registerProblemEases, PROBLEM_EASE_NAMES } from './problem-eases';
 
 /**
- * Scroll-in reveal for the v6 problem statement.
- * - Eyebrow fades up first
- * - Each kinetic line reveals word-by-word via a clip-path wipe that
- *   uncovers words left-to-right. Words come from `SplitText` (type:
- *   'words') so they inherit the line's typography and layout — no
- *   manual span wrapping required.
- * - When the line containing `.problem__red` enters, add a modifier
- *   class so the strikethrough scales out (CSS-driven)
- * - The "The fix" answer grid reveals as a staggered group once it
- *   enters the viewport
+ * "The Fall + velocity" choreography for the homepage problem section.
  *
- * Reduced motion skips every animation; the strikethrough is forced on
- * via CSS (@media prefers-reduced-motion) so the visual contrast lands.
+ * Beats:
+ *  - Eyebrow "THE PROBLEM" types on char-by-char (mono-tick ease).
+ *  - Each kinetic line reveals word-by-word via clip-path wipe (settle ease).
+ *  - Line 2's `middleman` word pulses briefly as it enters viewport.
+ *  - Line 3's "a stranger too" chars fall from above with overshoot (fall
+ *    ease, from:'random' stagger). The strikethrough (`.problem__struck`
+ *    pseudo driven by `--strike-scale`) is scrubbed LTR over a short scroll
+ *    segment (strike ease).
+ *  - Scroll velocity drifts the red phrase down slightly via an Observer
+ *    driving `--drift-y` through a `gsap.quickTo`, decaying back to 0.
+ *  - The "The fix" answer reveals with rotateX perspective.
+ *
+ * The reduced-motion branch clears all inline tween state and forces
+ * `--strike-scale: 1` + `--drift-y: 0` inline; the SCSS @media fallback
+ * does the same at the CSS layer so pre-hydration paint is already legible.
  */
 export function TheProblemAnimations({
   children,
@@ -33,67 +41,169 @@ export function TheProblemAnimations({
     () => {
       if (!containerRef.current) return;
       const container = containerRef.current;
+
+      registerProblemEases();
+      try {
+        gsap.registerPlugin(Observer);
+      } catch {
+        // Already registered (HMR-safe).
+      }
+
       const mm = gsap.matchMedia();
-      // Captured so cleanup can revert SplitText DOM mutations on unmount.
-      // Each line gets its own split so we keep a flat array and revert
-      // them all in order.
       const splits: SplitText[] = [];
+      let velocityObserver: Observer | null = null;
+      let driftQuickTo: ReturnType<typeof gsap.quickTo> | null = null;
+      let driftDecay: gsap.core.Tween | null = null;
 
-      mm.add('(prefers-reduced-motion: no-preference)', () => {
-        const eyebrow = container.querySelector('[data-animate="eyebrow"]');
-        const lines = container.querySelectorAll<HTMLElement>(
-          '[data-animate="line"]',
+      mm.add(MATCH_MEDIA.noReducedMotion, () => {
+        // ----- 1) Eyebrow chars type-on (mono-tick) ----------------------
+        const eyebrow = container.querySelector<HTMLElement>(
+          '[data-animate="eyebrow"]',
         );
-        const fixParts = container.querySelectorAll('[data-animate="fix"]');
-
         if (eyebrow) {
-          gsap.from(eyebrow, {
-            y: 20,
+          const eyebrowSplit = SplitText.create(eyebrow, { type: 'chars' });
+          splits.push(eyebrowSplit);
+          gsap.from(eyebrowSplit.chars, {
             opacity: 0,
-            duration: 0.7,
-            ease: 'power3.out',
-            scrollTrigger: { trigger: eyebrow, start: 'top 85%', once: true },
+            x: -4,
+            duration: 0.45,
+            stagger: 0.018,
+            ease: PROBLEM_EASE_NAMES.monoTick,
+            scrollTrigger: {
+              trigger: eyebrow,
+              start: 'top 88%',
+              once: true,
+            },
           });
         }
 
-        lines.forEach((line, lineIndex) => {
-          // Split each line into words — clip-path animates on spans so
-          // SplitText words (which are inline-block wrappers) are the
-          // correct targets. We do NOT split into chars here: word-level
-          // is the right grain for a clip-wipe (chars look like TV static).
+        // ----- 2) Lines 1..4 word-level clip-wipe + settle --------------
+        const lines = container.querySelectorAll<HTMLElement>(
+          '[data-animate="line"]',
+        );
+        lines.forEach((line, idx) => {
           const split = SplitText.create(line, { type: 'words' });
           splits.push(split);
-
           gsap.from(split.words, {
             clipPath: 'inset(0 100% 0 0)',
-            duration: 0.8,
+            y: 10,
+            duration: 0.9,
             stagger: 0.04,
-            ease: 'power3.out',
-            // Keep the previous cascade across lines: each line starts
-            // 0.15s after the previous trigger. Since each line has its
-            // own ScrollTrigger (with `once: true`), the per-line delay
-            // sequences the reveal when the whole block enters together.
-            delay: lineIndex * 0.15,
+            ease: PROBLEM_EASE_NAMES.settle,
+            delay: idx * 0.12,
             scrollTrigger: {
               trigger: line,
               start: 'top 80%',
               once: true,
-              onEnter() {
-                // Keep the strikethrough trigger intact (CSS scales the
-                // red line out when this class lands).
-                line.classList.add(STRUCK_CLASS);
-              },
             },
           });
         });
 
+        // ----- 3) Line 2 "middleman" emphasis pulse ---------------------
+        const middleman = container.querySelector<HTMLElement>(
+          '[data-animate="middleman-emphasis"]',
+        );
+        if (middleman) {
+          gsap.fromTo(
+            middleman,
+            { scale: 1 },
+            {
+              scale: 1.06,
+              duration: 0.35,
+              yoyo: true,
+              repeat: 1,
+              ease: 'power2.inOut',
+              transformOrigin: 'center',
+              scrollTrigger: {
+                trigger: middleman,
+                start: 'top 72%',
+                once: true,
+              },
+            },
+          );
+        }
+
+        // ----- 4) "a stranger too" — CENTERPIECE ------------------------
+        const strangerEl = container.querySelector<HTMLElement>(
+          '[data-animate="stranger"]',
+        );
+        if (strangerEl) {
+          // Nested SplitText: words preserve wrapping, chars drive the fall.
+          const strangerSplit = SplitText.create(strangerEl, {
+            type: 'words, chars',
+          });
+          splits.push(strangerSplit);
+
+          // Chars drop from above with overshoot, random stagger.
+          gsap.from(strangerSplit.chars, {
+            yPercent: -120,
+            rotationX: -55,
+            opacity: 0,
+            duration: 0.85,
+            stagger: { each: 0.035, from: 'random' },
+            ease: PROBLEM_EASE_NAMES.fall,
+            transformOrigin: '50% 100% -20',
+            scrollTrigger: {
+              trigger: strangerEl,
+              start: 'top 75%',
+              once: true,
+            },
+          });
+
+          // Strikethrough scrubbed LTR via --strike-scale (GPU-smooth
+          // thanks to @property <number> registration in the SCSS module).
+          gsap.fromTo(
+            strangerEl,
+            { '--strike-scale': 0 },
+            {
+              '--strike-scale': 1,
+              ease: PROBLEM_EASE_NAMES.strike,
+              scrollTrigger: {
+                trigger: strangerEl,
+                start: 'top 70%',
+                end: 'top 45%',
+                scrub: 0.4,
+                invalidateOnRefresh: true,
+              },
+            },
+          );
+
+          // Velocity drift: observe scroll, nudge --drift-y, decay back.
+          driftQuickTo = gsap.quickTo(strangerEl, '--drift-y', {
+            duration: 0.35,
+            ease: 'power3.out',
+          });
+
+          velocityObserver = Observer.create({
+            target: window,
+            type: 'wheel,touch,scroll',
+            onChangeY: (self) => {
+              if (!driftQuickTo) return;
+              const delta = Math.abs(self.deltaY ?? 0);
+              const drift = gsap.utils.clamp(0, delta * 0.12, 24);
+              driftQuickTo(drift);
+              if (driftDecay) driftDecay.kill();
+              driftDecay = gsap.delayedCall(0.22, () => {
+                driftQuickTo?.(0);
+              });
+            },
+            preventDefault: false,
+          });
+        }
+
+        // ----- 5) "The fix" answer grid reveal --------------------------
+        const fixParts = container.querySelectorAll<HTMLElement>(
+          '[data-animate="fix"]',
+        );
         if (fixParts.length) {
           gsap.from(fixParts, {
             y: 24,
             opacity: 0,
-            duration: 0.8,
+            rotationX: -8,
+            transformOrigin: 'bottom',
+            duration: 0.9,
             stagger: 0.12,
-            ease: 'power3.out',
+            ease: PROBLEM_EASE_NAMES.settle,
             scrollTrigger: {
               trigger: fixParts[0],
               start: 'top 85%',
@@ -101,22 +211,38 @@ export function TheProblemAnimations({
             },
           });
         }
+
+        // Refresh trigger measurements once custom fonts settle.
+        if (typeof document !== 'undefined' && document.fonts?.ready) {
+          document.fonts.ready
+            .then(() => ScrollTrigger.refresh())
+            .catch(() => {});
+        }
       });
 
       mm.add(MATCH_MEDIA.reducedMotion, () => {
         gsap.set(container.querySelectorAll('[data-animate]'), {
           clearProps: 'all',
         });
-        container
-          .querySelectorAll('[data-animate="line"]')
-          .forEach((line) => line.classList.add(STRUCK_CLASS));
+        const strangerEl = container.querySelector<HTMLElement>(
+          '[data-animate="stranger"]',
+        );
+        if (strangerEl) {
+          gsap.set(strangerEl, {
+            '--strike-scale': 1,
+            '--drift-y': 0,
+          });
+        }
       });
 
       return () => {
-        // Undo SplitText's span wrapping so remounts (strict-mode, HMR,
-        // route re-entry) don't stack duplicate word spans on each line.
         splits.forEach((s) => s.revert());
         splits.length = 0;
+        velocityObserver?.kill();
+        velocityObserver = null;
+        driftDecay?.kill();
+        driftDecay = null;
+        driftQuickTo = null;
       };
     },
     { scope: containerRef },
