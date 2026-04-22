@@ -267,13 +267,19 @@ export function HowItWorksAnimations({
           const orbits = findChild(svgRoot, 'orbits');
 
           // --- Seed state ------------------------------------------------
-          // Actors hidden + scaled; orbits hidden; wires dark; halo off;
-          // packet at client position but invisible. If packet <g> still
-          // carries transform="translate(...)" from JSX, our gsap.set here
-          // overrides it cleanly because we use x/y (GSAP transform aliases).
+          // Actors are visible from the moment the pin engages. Phase 0 "Meet"
+          // no longer fades them in (scrub timelines show the seed state at
+          // progress 0, so opacity:0 left the pucks invisible for the first
+          // quarter of the pin). The Meet emphasis comes from the stagger +
+          // micro-scale pulse in phase 0.
+          //
+          // Orbits hidden; wires dark; halo off; packet at client position but
+          // invisible. If packet <g> still carries transform="translate(...)"
+          // from JSX, our gsap.set here overrides it cleanly because we use
+          // x/y (GSAP transform aliases).
           gsap.set(actorList, {
-            opacity: 0,
-            scale: 0.94,
+            opacity: 1,
+            scale: 1,
             transformOrigin: '50% 50%',
           });
           gsap.set(Object.values(wires), { opacity: 0 });
@@ -326,13 +332,17 @@ export function HowItWorksAnimations({
           // phase-0: Meet
           masterTl.addLabel(PHASE_LABELS[0]!);
           if (actorList.length) {
-            masterTl.to(
+            // Subtle scale pulse at phase 0 "Meet" — actors are already at
+            // opacity:1 from the seed (see note above) so this is purely a
+            // micro-bounce on entry. `gsap.from` animates FROM the stated
+            // values TO the current (seed) state, so the pucks pulse from
+            // scale:0.96 back to scale:1.
+            masterTl.from(
               actorList,
               {
-                opacity: 1,
-                scale: 1,
-                duration: 0.9,
-                stagger: 0.15,
+                scale: 0.96,
+                duration: 0.6,
+                stagger: 0.12,
                 ease: HIW_EASE_NAMES.enter,
               },
               PHASE_LABELS[0]!,
