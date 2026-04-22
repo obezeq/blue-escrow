@@ -1,5 +1,14 @@
 import path from 'node:path';
 import type { NextConfig } from 'next';
+import bundleAnalyzer from '@next/bundle-analyzer';
+
+// `@next/bundle-analyzer` becomes a no-op unless `ANALYZE=true`. We gate it on
+// the env var so the plugin is only loaded during explicit analysis runs
+// (`pnpm --filter @blue-escrow/web analyze`), keeping normal dev/build free of
+// webpack-bundle-analyzer overhead. Outputs land in `.next/analyze/*.html`.
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+});
 
 const allowedDevOrigins = process.env.NEXT_DEV_ALLOWED_ORIGINS
   ?.split(',')
@@ -83,4 +92,4 @@ const nextConfig: NextConfig = {
   ...(allowedDevOrigins?.length && { allowedDevOrigins }),
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);
