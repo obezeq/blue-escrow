@@ -38,6 +38,48 @@ const nextConfig: NextConfig = {
       '@react-three/postprocessing',
     ],
   },
+  async headers() {
+    // Baseline security headers applied to every response. CSP stays in
+    // `next.config.ts` (static per-env) instead of middleware so we don't pay
+    // the request-time cost for a policy that does not vary per user. The
+    // `'unsafe-inline'` allowance for script-src covers four intentional
+    // inline scripts defined in `src/app/layout.tsx`:
+    //   1. ThemeInitScript (theme-bootstrap, avoids FOUC)
+    //   2. JsLoadedScript (adds .js-loaded for progressive-enhancement CSS)
+    //   3. SpeculationRules (static JSON payload)
+    //   4. JSON-LD payloads injected by (marketing)/page.tsx
+    // Plus next/font's inline critical CSS. Follow-up (separate subissue)
+    // is to migrate to per-request nonces via middleware + strict-dynamic.
+    // 'unsafe-eval' is retained while React DevTools + Next's dev overlay
+    // rely on it; production builds could drop it if verified clean.
+    const cspDirectives = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.vercel-insights.com",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https:",
+      "font-src 'self' data:",
+      "connect-src 'self' https://*.arbitrum.io wss://*.arbitrum.io",
+      "frame-ancestors 'self'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ];
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          {
+            key: 'Permissions-Policy',
+            value:
+              'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+          },
+          { key: 'Content-Security-Policy', value: cspDirectives.join('; ') },
+        ],
+      },
+    ];
+  },
   ...(allowedDevOrigins?.length && { allowedDevOrigins }),
 };
 
