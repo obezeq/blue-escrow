@@ -120,9 +120,9 @@
   z-index: 3;
   display: flex;
   justify-content: center;
-  gap: 22px;
+  gap: var(--space-22);
   font-family: var(--ff-mono);
-  font-size: 11px;
+  font-size: var(--t-caption-sm);
   text-transform: uppercase;
   letter-spacing: 0.18em;
   color: var(--text-muted);
@@ -314,12 +314,12 @@
 
   @media (max-width: 960px) {
     grid-template-columns: 1fr 1fr;
-    gap: 24px;
+    gap: var(--space-24);
   }
 
   @media (max-width: 560px) {
     grid-template-columns: 1fr;
-    gap: 18px;
+    gap: var(--space-18);
   }
 }
 
@@ -332,7 +332,7 @@
   margin-bottom: 10px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-8);
 
   &::before {
     content: '';
