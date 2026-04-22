@@ -9,7 +9,8 @@ import { primeThemeAndSkipPreloader } from './_utils/prime-theme';
 //     overshoot fall (yPercent: -120 → 0, rotationX: -55 → 0), so mid-flight
 //     they carry a non-identity inline transform written by GSAP;
 //   • the strikethrough (::after on .problem__struck) is scrubbed LTR via
-//     `--strike-scale` from 0 → 1, anchored to scroll position 70% → 45%.
+//     `--strike-scale` from 0 → 1, anchored across top 85% → center 25%
+//     (~65% viewport range) for a deliberate, bidirectional trace.
 //
 // This spec is purely behavioural — no pixel snapshots. It verifies:
 //   1) default motion — chars are mid-flight shortly after scroll-in, then
@@ -71,14 +72,13 @@ test.describe('problem section animations', () => {
     ).toBe(true);
 
     // -------- Checkpoint B — strike reaches completion ---------------------
-    // `--strike-scale` is scrubbed over a short scroll segment (70% → 45%
-    // of viewport). Without scrolling past the end it stalls under 1. Wait
-    // for the fall to settle, then scroll 500px further so the strike's
-    // ScrollTrigger segment has fully traversed; 600ms buffer absorbs the
-    // 0.4s scrub lag + a safety margin for RAF jitter.
+    // `--strike-scale` is scrubbed across ~65% viewport (top 85% → center
+    // 25%). Scroll a full viewport past the stranger so the end trigger
+    // is cleared at any breakpoint, then wait for the 0.6s scrub lag to
+    // settle plus a safety margin for RAF jitter.
     await page.waitForTimeout(1800);
-    await page.evaluate(() => window.scrollBy(0, 500));
-    await page.waitForTimeout(600);
+    await page.evaluate(() => window.scrollBy(0, 900));
+    await page.waitForTimeout(900);
 
     const strikeScale = await page.evaluate(() => {
       const stranger = document.querySelector(
@@ -89,9 +89,36 @@ test.describe('problem section animations', () => {
         .getPropertyValue('--strike-scale')
         .trim();
     });
-    // Tolerance 0.9 — scrub: 0.4 introduces tween lag behind scroll, so
+    // Tolerance 0.9 — scrub: 0.6 introduces tween lag behind scroll, so
     // asserting exactly 1 is flaky even when the segment has fully passed.
     expect(Number.parseFloat(strikeScale)).toBeGreaterThanOrEqual(0.9);
+
+    // -------- Checkpoint C — bidirectional scrub reverses on scroll up ----
+    // The scrubbed `--strike-scale` MUST track scroll in both directions
+    // (that's the whole point of scrub over toggleActions). Scrolling the
+    // stranger back below the start trigger should drive --strike-scale
+    // back toward 0. We tolerate < 0.3 to absorb scrub: 0.6 lag.
+    await page.evaluate(() => window.scrollBy(0, -1500));
+    await page.waitForTimeout(900);
+
+    const strikeScaleReverse = await page.evaluate(() => {
+      const stranger = document.querySelector(
+        '[data-animate="stranger"]',
+      ) as HTMLElement | null;
+      if (!stranger) return '1';
+      return getComputedStyle(stranger)
+        .getPropertyValue('--strike-scale')
+        .trim();
+    });
+    expect(
+      Number.parseFloat(strikeScaleReverse),
+      `strike-scale must reverse when scrolled up past the start trigger; got ${strikeScaleReverse}`,
+    ).toBeLessThan(0.3);
+
+    // Re-scroll down before the final identity check so the stranger is
+    // back in view and its chars have had time to settle at identity.
+    await page.evaluate(() => window.scrollBy(0, 2200));
+    await page.waitForTimeout(1200);
 
     // -------- Final state — chars landed as identity -----------------------
     // Once the 0.85s fall + stagger tail completes, every char's inline
