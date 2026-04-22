@@ -1,4 +1,5 @@
 @use '../../../styles/settings/variables' as *;
+@use '../../../styles/settings/typography' as *;
 
 // ============================================================================
 // HOW IT WORKS — v6 (Blue Escrow v6.html:1374-1524, CSS 517-911).
@@ -10,6 +11,10 @@
 // names but accidentally didn't include this SCSS update, so develop was
 // rendering HIW unstyled. This file is the delivery of the intended Phase 2
 // styles — full pin+scrub choreography remains deferred to Phase 4 polish.
+//
+// Phase 4+: Pin-stage polish. --hiw-heat token plumbs a deep-navy well +
+// edge vignette across scrub; rail gets a progress bar + pips; mobile
+// collapses into a native scroll-snap step deck (.hiw__deck).
 // ============================================================================
 
 .hiw {
@@ -33,7 +38,7 @@
   // Mirror --container-padding (clamp(1.5rem, 4vw, 2.5rem)) — same tokens
   // used by .o-container, eliminating the 720px step.
   padding-inline: clamp(1.5rem, 4vw, 2.5rem);
-  // Size-query context for italic cohesion at desktop.
+  // Size-query context for italic cohesion + heading wrap safety.
   container-type: inline-size;
 }
 
@@ -71,7 +76,8 @@
 
 .hiw__heading {
   font-size: clamp(42px, 6.4vw, 92px);
-  line-height: 0.96;
+  // Tighter stack prevents the three-line heading from feeling airy at 768.
+  line-height: 1.02;
   letter-spacing: -0.04em;
   font-weight: 600;
   margin: 18px 0 0;
@@ -92,6 +98,15 @@
   }
 }
 
+// Narrow containers (~ tablet down): force the <em>smart contract.</em>
+// onto its own logical line via an inline-block block flow, so the heading
+// doesn't break awkwardly mid-phrase at 768px.
+@container (max-width: 640px) {
+  .hiw__emphasis {
+    display: inline-block;
+  }
+}
+
 .hiw__emphasis > div {
   padding-inline: 0.15em;
   margin-inline: -0.15em;
@@ -105,10 +120,76 @@
   text-wrap: pretty;
 }
 
+// --- Stage (desktop pin container) -----------------------------------------
+// The stage is the ScrollTrigger pin target. It holds the full-viewport
+// ledger + scene + rail composition. On mobile it's hidden in favor of
+// .hiw__deck which uses native scroll-snap (cheaper + more natural on touch).
+
 .hiw__stage {
+  position: relative;
+  // svh (small viewport height) avoids iOS URL-bar jitter that 100vh triggers.
+  min-height: 100svh;
   // Same fluid rule as .hiw__wrap — 20px min matches the old mobile
   // fallback, 40px max matches desktop.
   padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+
+  // --- Heat plumbing ---
+  // Agent C (animations) writes --hiw-heat (0 → 1) to this element as the
+  // section scrubs. 0 = neutral surface, 1 = deep-navy well + vignette.
+  // Default declaration lets the CSS stand alone without JS.
+  --hiw-heat: 0;
+  // Rail progress (0 → 1) is likewise written from scrub; inherited down
+  // into .hiw__railProgress > i.
+  --hiw-rail-progress: 0;
+
+  // Deep navy radial well — color-mix against --blue-ink for theme cohesion.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(
+      ellipse 80% 70% at 50% 55%,
+      color-mix(in srgb, var(--blue-ink) calc(var(--hiw-heat) * 55%), transparent),
+      transparent 70%
+    );
+    transition: background 0.4s var(--ease-out-expo);
+  }
+
+  // Edge vignette — subtle darkening at the frame.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(
+      ellipse 100% 100% at 50% 50%,
+      transparent 55%,
+      color-mix(in srgb, #000 calc(var(--hiw-heat) * 18%), transparent) 100%
+    );
+    transition: background 0.4s var(--ease-out-expo);
+  }
+
+  // Children sit above the heat overlays.
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  // Reduced motion: kill the heat pseudos entirely.
+  @media (prefers-reduced-motion: reduce) {
+    &::before,
+    &::after {
+      content: none;
+    }
+  }
+
+  // Mobile step-deck replaces the stage; skip the expensive overlays.
+  @media (max-width: 899px) {
+    display: none;
+  }
 }
 
 .hiw__grid {
@@ -204,6 +285,14 @@
       background 0.4s,
       box-shadow 0.4s;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &::before {
+      transition: none;
+    }
+  }
 }
 
 .hiw__state--locked {
@@ -241,6 +330,10 @@
 
 .hiw__amountNumber {
   transition: color 0.3s;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
 .hiw__amountUnit {
@@ -274,6 +367,10 @@
     width: 0%;
     background: linear-gradient(90deg, var(--blue-primary), var(--blue-vivid));
     transition: width 0.6s var(--ease-out-expo);
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
   }
 }
 
@@ -302,6 +399,10 @@
   // yet" feel while staying readable.
   :root[data-theme='light'] & {
     opacity: 0.5;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 }
 
@@ -334,6 +435,10 @@
     background: var(--accent);
     box-shadow: 0 0 10px var(--accent);
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
 .hiw__logTime {
@@ -358,6 +463,10 @@
 
   .hiw__log--current & {
     color: var(--accent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 }
 
@@ -418,6 +527,10 @@
 .hiw__sceneStep {
   color: var(--accent);
   font-weight: 500;
+  // Mono counter cohesion (STEP 01 — LABEL).
+  font-family: var(--ff-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 .hiw__sceneBody {
@@ -456,6 +569,10 @@
   text-align: center;
   width: 120px;
   opacity: 0.4;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
 .hiw__actor--active {
@@ -496,13 +613,6 @@
     color 0.5s,
     transform 0.6s var(--ease-out-expo);
 
-  // Light mode: --bg-page (#fff) makes the puck disappear into the elevated
-  // scene card. --bg-tint (#e6f1ff) gives a soft blue surface that reads as
-  // a container against the white scene background.
-  :root[data-theme='light'] & {
-    background: var(--bg-tint);
-  }
-
   .hiw__actor--active & {
     border-color: var(--accent);
     color: var(--text);
@@ -512,12 +622,8 @@
     transform: scale(1.06);
   }
 
-  // Reinforce the active ring in light mode — --accent-soft is only 8%
-  // alpha there, which washes out the focus glow over white.
-  :root[data-theme='light'] .hiw__actor--active & {
-    box-shadow:
-      0 0 0 4px color-mix(in srgb, var(--blue-primary) 18%, transparent),
-      0 12px 32px -10px color-mix(in srgb, var(--blue-primary) 40%, transparent);
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 }
 
@@ -555,8 +661,8 @@
     ),
     linear-gradient(135deg, var(--blue-primary), var(--blue-deep));
   box-shadow:
-    0 0 0 1px var(--core-glow-ring),
-    0 20px 60px -10px var(--core-glow-halo),
+    0 0 0 1px rgba(0, 145, 255, 0.3),
+    0 20px 60px -10px rgba(0, 145, 255, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   display: flex;
   flex-direction: column;
@@ -569,17 +675,6 @@
   svg {
     width: 28px;
     height: 28px;
-  }
-
-  // Light mode: the dark blue disc still reads as the smart contract anchor,
-  // but it needs a stronger ring + an extra elevation halo so the disc
-  // visually "lifts" above the white scene instead of sitting flat.
-  :root[data-theme='light'] & {
-    box-shadow:
-      0 0 0 1px var(--core-glow-ring-strong),
-      0 24px 56px -8px var(--core-glow-halo),
-      0 8px 24px -4px color-mix(in srgb, var(--blue-primary) 25%, transparent),
-      inset 0 1px 0 rgba(255, 255, 255, 0.25);
   }
 }
 
@@ -598,21 +693,18 @@
   }
 }
 
-// Custom properties inside @keyframes resolve per element on each frame, so
-// the pulse automatically picks up the right glow tokens for the active theme
-// without needing a separate light-mode keyframe.
 @keyframes hiwCorePulse {
   0%,
   100% {
     box-shadow:
-      0 0 0 1px var(--core-glow-ring),
-      0 20px 60px -10px var(--core-glow-halo),
+      0 0 0 1px rgba(0, 145, 255, 0.3),
+      0 20px 60px -10px rgba(0, 145, 255, 0.4),
       inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
   50% {
     box-shadow:
-      0 0 0 1px var(--core-glow-ring-strong),
-      0 20px 80px -4px var(--core-glow-halo-strong),
+      0 0 0 1px rgba(0, 145, 255, 0.6),
+      0 20px 80px -4px rgba(0, 145, 255, 0.7),
       inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 }
@@ -680,6 +772,39 @@
 
 // --- Rail -------------------------------------------------------------------
 
+// Rail progress bar — a 2px horizontal rule above the rail. The fill (<i>)
+// scales via --hiw-rail-progress (0 → 1), written by the animations agent
+// on the stage element. Inherited down from .hiw__stage.
+.hiw__railProgress {
+  position: relative;
+  block-size: 2px;
+  inline-size: 100%;
+  max-width: 1440px;
+  margin: 24px auto 0;
+  background: var(--border);
+  overflow: hidden;
+
+  > i {
+    display: block;
+    block-size: 100%;
+    inline-size: 100%;
+    transform: scaleX(var(--hiw-rail-progress, 0));
+    transform-origin: left center;
+    background: linear-gradient(90deg, var(--blue-primary), var(--blue-vivid));
+    transition: transform 0.4s var(--ease-out-expo);
+    will-change: transform;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+
+  // Desktop only — mobile uses .hiw__phaseNav instead.
+  @media (max-width: 899px) {
+    display: none;
+  }
+}
+
 .hiw__rail {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -687,6 +812,8 @@
   background: var(--bg-surface);
   max-width: 1440px;
   margin: 32px auto 0;
+  // Lift the rail above the heat pseudo-elements.
+  position: relative;
 
   // 5 → 3 → 2 cols so each button stays wide enough for comfortable
   // touch targets (3-col at 900px gives ~280px/btn, 2-col at 560px
@@ -721,6 +848,33 @@
   cursor: pointer;
   font-weight: inherit;
 
+  // Pip decoration — 6×6 circle sitting above the rail's top border,
+  // centered-left over the button's padding. Desktop-only.
+  &::before {
+    content: '';
+    position: absolute;
+    inline-size: 6px;
+    block-size: 6px;
+    border-radius: 50%;
+    // Nudge above the rail's top border (which is -1px above this button).
+    inset-block-start: -4px;
+    inset-inline-start: clamp(0.75rem, 2vw, 1.5rem);
+    background: var(--border-strong);
+    transition:
+      background 0.3s,
+      box-shadow 0.3s;
+    z-index: 1;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+
+    // Mobile: pips live in .hiw__phaseNav instead.
+    @media (max-width: 899px) {
+      content: none;
+    }
+  }
+
   &:last-child {
     border-inline-end: 0;
   }
@@ -731,6 +885,10 @@
   }
 
   &:focus-visible {
+    // --accent is --blue-vivid (#0091ff) in dark and --blue-primary (#0066ff)
+    // in light. Both clear 3:1 contrast on their respective surfaces for
+    // non-text UI components (WCAG 1.4.11), so the token works in both
+    // themes without an override.
     outline: 2px solid var(--accent);
     outline-offset: -2px;
   }
@@ -744,6 +902,14 @@
     width: 0;
     background: var(--accent);
     transition: width 0.5s var(--ease-out-expo);
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 
   // Strip the right-border on the rightmost button of each layout's row so
@@ -772,6 +938,12 @@
   &::after {
     width: 100%;
   }
+
+  // Active pip: accent with accent halo.
+  &::before {
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft), 0 0 10px var(--accent);
+  }
 }
 
 .hiw__railNum {
@@ -779,30 +951,214 @@
   margin-inline-end: 10px;
 }
 
-// --- HIW SVG diagram theme-aware classes -----------------------------------
-// Token-driven hooks consumed by HiwDiagram.tsx so the inline SVG reacts to
-// :root[data-theme] without per-attribute hex literals. Brand-blue strokes
-// (orbits, accents, wire-active gradient) stay hardcoded — they're invariant
-// across themes. Preserves all data-hiw="*" GSAP targets (no overlap with
-// stroke/fill — GSAP only tweens opacity/transform/fillOpacity here).
+// --- Mobile step deck (≤ 899px) --------------------------------------------
+// Native vertical scroll-snap replaces the pin-stage on mobile. Five
+// .hiw__phaseCard children snap one-per-viewport; a right-aligned sticky
+// .hiw__phaseNav column of pips stays visible as the user scrolls.
+// Agent D renders this deck only under the mobile breakpoint.
 
-.hiw__diagWire {
-  stroke: var(--hiw-wire-base);
+.hiw__deck {
+  display: none;
+
+  @media (max-width: 899px) {
+    display: block;
+    position: relative;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+
+    @media (prefers-reduced-motion: reduce) {
+      scroll-behavior: auto;
+    }
+  }
 }
 
-.hiw__diagActorPuck {
-  fill: var(--hiw-actor-bg);
-  stroke: var(--hiw-actor-border);
+.hiw__phaseCard {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  min-height: 100svh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: clamp(1rem, 3vw, 1.5rem);
+  padding: clamp(1.25rem, 5vw, 2rem);
+  border-block-end: 1px solid var(--border);
+  position: relative;
+
+  &:last-child {
+    border-block-end: 0;
+  }
+
+  h3 {
+    @include type-h3;
+    margin: 0;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+
+    em {
+      font-style: italic;
+      font-weight: 400;
+      color: var(--accent);
+    }
+  }
 }
 
-.hiw__diagActorRole {
-  fill: var(--accent);
+// Phase counter — mono, uppercase, accent-tinted. Agent D emits strings
+// like "STEP 01 — MEET". Mirrors .hiw__narrationStep styling.
+.hiw__phaseCounter {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+  text-transform: uppercase;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  &::before {
+    content: '';
+    width: 22px;
+    height: 1px;
+    background: currentColor;
+  }
 }
 
-.hiw__diagActorText {
-  fill: var(--text);
+// Mini-diagram slot (Agent C emits HiwPhaseDiagram inside this). Reuses
+// the scene's accent-soft glow without the full desktop card chrome.
+.hiw__phaseDiagram {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 50% 50%,
+      var(--accent-soft),
+      transparent 70%
+    ),
+    var(--bg-surface);
+  overflow: hidden;
+
+  :root[data-theme='light'] & {
+    background:
+      radial-gradient(
+        ellipse 80% 60% at 50% 50%,
+        rgba(0, 85, 224, 0.06),
+        transparent 70%
+      ),
+      var(--bg-elevated);
+    box-shadow: var(--shadow-card);
+  }
 }
 
-.hiw__diagActorMuted {
-  fill: var(--muted-2);
+// Compact ledger row — contract id + state chip + amount on one line.
+// Simpler than desktop's full .hiw__ledger (no logs, no progress bar).
+.hiw__phaseLedger {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--on-card);
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+
+  b {
+    font-family: var(--ff-sans);
+    font-size: 13px;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    text-transform: none;
+    font-weight: 500;
+  }
+}
+
+.hiw__phaseAmount {
+  font-family: var(--ff-sans);
+  font-size: 18px;
+  color: var(--text);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+
+  // "USDC" tail suffix — small accent.
+  small {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--accent);
+    margin-inline-start: 6px;
+    letter-spacing: 0.08em;
+  }
+}
+
+// Sticky vertical pip column at the right edge of the deck. Each pip
+// anchors a card; tapping one scrolls to that phase.
+.hiw__phaseNav {
+  position: sticky;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-inline-start: auto;
+  width: max-content;
+  padding: 10px 8px;
+  border-radius: var(--radius-full);
+  background: var(--on-card);
+  border: 1px solid var(--border);
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.hiw__phasePip {
+  display: block;
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  background: var(--border-strong);
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  transition:
+    background 0.3s,
+    box-shadow 0.3s,
+    transform 0.3s var(--ease-out-expo);
+  position: relative;
+
+  // Extend the hit area to a 44px touch target (WCAG 2.5.8) without
+  // bloating the visible dot.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -18px;
+  }
+
+  &:hover {
+    background: var(--accent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.hiw__phasePip--active {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft), 0 0 10px var(--accent);
+  transform: scale(1.15);
 }
