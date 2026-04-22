@@ -317,19 +317,19 @@ function renderAnimationsWithFixture(onPhaseChange = vi.fn()) {
 // ===========================================================================
 
 describe('HowItWorksAnimations — matchMedia branches', () => {
-  it('registers the desktop branch with (min-width: 900px) and prefers-reduced-motion: no-preference', () => {
+  it('registers the desktop branch with (min-width: 900px) and (min-height: 700px) and prefers-reduced-motion: no-preference', () => {
     renderAnimationsWithFixture();
     const entries = mmEntries.map((e) => e.query);
     expect(entries).toContain(
-      '(min-width: 900px) and (prefers-reduced-motion: no-preference)',
+      '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
     );
   });
 
-  it('registers the mobile branch with (max-width: 899px) and prefers-reduced-motion: no-preference', () => {
+  it('registers the mobile branch with ((max-width: 899px) or (max-height: 699px)) and prefers-reduced-motion: no-preference', () => {
     renderAnimationsWithFixture();
     const entries = mmEntries.map((e) => e.query);
     expect(entries).toContain(
-      '(max-width: 899px) and (prefers-reduced-motion: no-preference)',
+      '((max-width: 899px) or (max-height: 699px)) and (prefers-reduced-motion: no-preference)',
     );
   });
 
@@ -350,7 +350,7 @@ describe('HowItWorksAnimations — desktop pinned timeline shape', () => {
   it('creates a master timeline with ScrollTrigger id="hiw-stage"', () => {
     renderAnimationsWithFixture();
     runBranch(
-      '(min-width: 900px) and (prefers-reduced-motion: no-preference)',
+      '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
     );
     const stageCfg = scrollTriggerCreateCalls.find(
       (cfg) => cfg.id === 'hiw-stage',
@@ -361,7 +361,7 @@ describe('HowItWorksAnimations — desktop pinned timeline shape', () => {
   it('sets pin=true, pinType="transform", scrub=0.25, anticipatePin=1, invalidateOnRefresh=true, fastScrollEnd=true', () => {
     renderAnimationsWithFixture();
     runBranch(
-      '(min-width: 900px) and (prefers-reduced-motion: no-preference)',
+      '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
     );
     const cfg = scrollTriggerCreateCalls.find((c) => c.id === 'hiw-stage')!;
     expect(cfg.pin).toBe(true);
@@ -379,7 +379,7 @@ describe('HowItWorksAnimations — desktop pinned timeline shape', () => {
   it('uses an end function that returns a "+=X" string based on window.innerHeight * (PHASE_COUNT-1) * 0.9', () => {
     renderAnimationsWithFixture();
     runBranch(
-      '(min-width: 900px) and (prefers-reduced-motion: no-preference)',
+      '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
     );
     const cfg = scrollTriggerCreateCalls.find((c) => c.id === 'hiw-stage')!;
     expect(typeof cfg.end).toBe('function');
@@ -394,7 +394,7 @@ describe('HowItWorksAnimations — desktop pinned timeline shape', () => {
   it('snap config uses snapTo as a numeric labelProgresses array (not "labels" string and not a uniform step)', () => {
     renderAnimationsWithFixture();
     runBranch(
-      '(min-width: 900px) and (prefers-reduced-motion: no-preference)',
+      '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
     );
     const cfg = scrollTriggerCreateCalls.find((c) => c.id === 'hiw-stage')!;
     const snap = cfg.snap as {
@@ -411,7 +411,7 @@ describe('HowItWorksAnimations — desktop pinned timeline shape', () => {
   it('adds labels phase-0..phase-4 in order', () => {
     renderAnimationsWithFixture();
     runBranch(
-      '(min-width: 900px) and (prefers-reduced-motion: no-preference)',
+      '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
     );
     const addLabelCalls = timelineCalls
       .filter((c) => c.method === 'addLabel')
@@ -429,7 +429,7 @@ describe('HowItWorksAnimations — desktop pinned timeline shape', () => {
     const onPhaseChange = vi.fn();
     renderAnimationsWithFixture(onPhaseChange);
     runBranch(
-      '(min-width: 900px) and (prefers-reduced-motion: no-preference)',
+      '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
     );
     const cfg = scrollTriggerCreateCalls.find((c) => c.id === 'hiw-stage')!;
     // Mock timeline: duration=10, labels at 0,1,2,3,4 → progresses
@@ -445,7 +445,7 @@ describe('HowItWorksAnimations — desktop pinned timeline shape', () => {
     const onPhaseChange = vi.fn();
     renderAnimationsWithFixture(onPhaseChange);
     runBranch(
-      '(min-width: 900px) and (prefers-reduced-motion: no-preference)',
+      '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
     );
     const cfg = scrollTriggerCreateCalls.find((c) => c.id === 'hiw-stage')!;
     const onUpdate = cfg.onUpdate as (self: { progress: number }) => void;
@@ -461,7 +461,7 @@ describe('HowItWorksAnimations — desktop pinned timeline shape', () => {
   it('writes --hiw-heat CSS variable on the stage element via a gsap quickSetter each onUpdate', () => {
     renderAnimationsWithFixture();
     runBranch(
-      '(min-width: 900px) and (prefers-reduced-motion: no-preference)',
+      '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
     );
     const stageQuickSetter = quickSetterCalls.find(
       ([, prop]) => prop === '--hiw-heat',
@@ -472,7 +472,7 @@ describe('HowItWorksAnimations — desktop pinned timeline shape', () => {
   it('exposes window.__hiwStageTrigger (getters for start/end) only when NODE_ENV !== "production"', () => {
     renderAnimationsWithFixture();
     runBranch(
-      '(min-width: 900px) and (prefers-reduced-motion: no-preference)',
+      '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
     );
     // vitest sets NODE_ENV to "test" by default.
     const exposed = (
@@ -486,11 +486,104 @@ describe('HowItWorksAnimations — desktop pinned timeline shape', () => {
   });
 });
 
+describe('HowItWorksAnimations — pin anchor contract', () => {
+  it('pins with start:"top top", pinSpacing:true, and trigger=stage element', () => {
+    const { stage } = renderAnimationsWithFixture();
+    runBranch(
+      '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
+    );
+    const cfg = scrollTriggerCreateCalls.find((c) => c.id === 'hiw-stage');
+    expect(cfg).toBeDefined();
+    expect(cfg!.start).toBe('top top');
+    expect(cfg!.pin).toBe(true);
+    expect(cfg!.pinType).toBe('transform');
+    expect(cfg!.pinSpacing).toBe(true);
+    // The trigger MUST be the stage element — otherwise pin anchoring
+    // would attach to the wrong DOM node and the dead-frame bug
+    // documented in #94 can resurface.
+    expect(cfg!.trigger).toBe(stage);
+  });
+
+  it('end callback scales linearly with window.innerHeight and (PHASE_COUNT-1) * 0.9', () => {
+    renderAnimationsWithFixture();
+    runBranch(
+      '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
+    );
+    const cfg = scrollTriggerCreateCalls.find((c) => c.id === 'hiw-stage')!;
+    const originalInnerHeight = window.innerHeight;
+    try {
+      Object.defineProperty(window, 'innerHeight', {
+        value: 800,
+        configurable: true,
+      });
+      const result800 = (cfg.end as () => string)();
+      expect(result800).toBe(`+=${Math.round(800 * (PHASE_COUNT - 1) * 0.9)}`);
+
+      Object.defineProperty(window, 'innerHeight', {
+        value: 1080,
+        configurable: true,
+      });
+      const result1080 = (cfg.end as () => string)();
+      expect(result1080).toBe(
+        `+=${Math.round(1080 * (PHASE_COUNT - 1) * 0.9)}`,
+      );
+    } finally {
+      Object.defineProperty(window, 'innerHeight', {
+        value: originalInnerHeight,
+        configurable: true,
+      });
+    }
+  });
+
+  it('does not create hiw-stage ScrollTrigger when the desktop matchMedia branch does not match', () => {
+    // When viewport is < 700px tall, the matchMedia query
+    // "(min-width: 900px) and (min-height: 700px) and ..." does not
+    // match, so gsap.matchMedia() never invokes the desktop callback.
+    // Simulate this by rendering the component but NOT running the
+    // desktop branch (only runBranch() for the mobile query).
+    renderAnimationsWithFixture();
+    runBranch(
+      '((max-width: 899px) or (max-height: 699px)) and (prefers-reduced-motion: no-preference)',
+    );
+    const stageCfg = scrollTriggerCreateCalls.find(
+      (cfg) => cfg.id === 'hiw-stage',
+    );
+    expect(stageCfg).toBeUndefined();
+  });
+
+  it('exposes __hiwStageTrigger dev hooks with railInViewport / stageRect / railRect functions', () => {
+    renderAnimationsWithFixture();
+    runBranch(
+      '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
+    );
+    const exposed = (
+      window as unknown as {
+        __hiwStageTrigger?: {
+          start: number;
+          end: number;
+          stageRect: () => DOMRect;
+          railRect: () => DOMRect | null;
+          railInViewport: () => boolean;
+        };
+      }
+    ).__hiwStageTrigger;
+    expect(exposed).toBeDefined();
+    expect(typeof exposed!.railInViewport).toBe('function');
+    expect(typeof exposed!.stageRect).toBe('function');
+    expect(typeof exposed!.railRect).toBe('function');
+    // Sanity: calling them should not throw even without a rail nav
+    // in the fixture (railRect returns null when rail is absent).
+    expect(() => exposed!.stageRect()).not.toThrow();
+    expect(() => exposed!.railRect()).not.toThrow();
+    expect(() => exposed!.railInViewport()).not.toThrow();
+  });
+});
+
 describe('HowItWorksAnimations — rail seek (Lenis-native)', () => {
   it('consumes useLenisInstance() at the component top level', () => {
     renderAnimationsWithFixture();
     runBranch(
-      '(min-width: 900px) and (prefers-reduced-motion: no-preference)',
+      '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
     );
     const btn = document.querySelector<HTMLButtonElement>(
       '[data-hiw-rail="2"]',
@@ -503,7 +596,7 @@ describe('HowItWorksAnimations — rail seek (Lenis-native)', () => {
   it('attaches a click listener to every [data-hiw-rail] button inside the desktop branch', () => {
     renderAnimationsWithFixture();
     runBranch(
-      '(min-width: 900px) and (prefers-reduced-motion: no-preference)',
+      '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
     );
     for (let i = 0; i < 5; i++) {
       const btn = document.querySelector<HTMLButtonElement>(
@@ -517,7 +610,7 @@ describe('HowItWorksAnimations — rail seek (Lenis-native)', () => {
   it('seekToPhase computes labelProgress from master timeline and calls lenis.scrollTo(y, { duration, easing })', () => {
     renderAnimationsWithFixture();
     runBranch(
-      '(min-width: 900px) and (prefers-reduced-motion: no-preference)',
+      '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
     );
     const btn = document.querySelector<HTMLButtonElement>(
       '[data-hiw-rail="2"]',
@@ -537,7 +630,7 @@ describe('HowItWorksAnimations — rail seek (Lenis-native)', () => {
   it('cleans up all rail click listeners when the matchMedia branch tears down', () => {
     renderAnimationsWithFixture();
     const branchCleanup = runBranch(
-      '(min-width: 900px) and (prefers-reduced-motion: no-preference)',
+      '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
     );
     document
       .querySelector<HTMLButtonElement>('[data-hiw-rail="2"]')!
@@ -599,7 +692,7 @@ describe('HowItWorksAnimations — mobile branch', () => {
   it('creates per-phase-card scroll triggers with once:true start "top 80%" for [data-hiw-phase-card=N]', () => {
     renderAnimationsWithFixture();
     runBranch(
-      '(max-width: 899px) and (prefers-reduced-motion: no-preference)',
+      '((max-width: 899px) or (max-height: 699px)) and (prefers-reduced-motion: no-preference)',
     );
     const perCardFromCalls = gsapFromCalls.filter(
       ([, vars]) =>
@@ -614,7 +707,7 @@ describe('HowItWorksAnimations — mobile branch', () => {
   it('does NOT call pin on the mobile branch', () => {
     renderAnimationsWithFixture();
     runBranch(
-      '(max-width: 899px) and (prefers-reduced-motion: no-preference)',
+      '((max-width: 899px) or (max-height: 699px)) and (prefers-reduced-motion: no-preference)',
     );
     const pinned = scrollTriggerCreateCalls.filter(
       (cfg) => cfg.pin === true,
