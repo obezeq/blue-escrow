@@ -41,18 +41,25 @@ $bp-section: 900px;
 
 :root {
   // --- Brand blues (invariant) ---
-  --blue-primary: #0066ff;
-  --blue-vivid:   #0091ff;
-  --blue-hover:   #0077ff;
-  --blue-text:    #33aaff;
-  --blue-muted:   #66bbff;
-  --blue-deep:    #0044cc;
-  --blue-ink:     #001b4d;
+  --blue-primary:   #0066ff;
+  --blue-vivid:     #0091ff;
+  --blue-hover:     #0077ff;
+  --blue-text:      #33aaff;
+  --blue-muted:     #66bbff;
+  --blue-deep:      #0044cc;
+  --blue-deep-warm: #0055e0; // v6-literal warm variant used in Compare inverted band gradients
+  --blue-ink:       #001b4d;
 
   // --- Status colors (used in Compare dots, form validation, etc.) ---
-  --status-success: #22cc66;
-  --status-warning: #ffaa33;
-  --status-error:   #ff5566;
+  --status-success:      #22cc66;
+  --status-success-glow: #7fffa7; // v6-literal OK indicator dot (stays on dark band — theme invariant)
+  --status-warning:      #ffaa33;
+  --status-error:        #ff5566;
+  --status-error-soft:   #ff96a5; // v6-literal NO indicator dot (stays on dark band — theme invariant)
+
+  // --- Compare-specific chrome (Compare band is inverted-fixed: dark in both
+  // themes, so its accents live in the invariant block, NOT in light override) ---
+  --compare-accent: #c5dcff; // Light-blue label/italic on the inverted Compare band
 
   // --- Premium dark surface (invariant gradient stack used by "Soulbound NFT"
   // class cards). Theme overrides only the surrounding chrome (border/shadow),
@@ -75,30 +82,46 @@ $bp-section: 900px;
   --ff-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --ff-mono: var(--font-mono), ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
-  // --- Easings ---
+  // --- Easings (shared by CSS transitions and GSAP defaults so motion feels
+  // coherent across tween-driven and CSS-driven animations) ---
   --ease-out-expo:     cubic-bezier(0.19, 1, 0.22, 1);
   --ease-in-out-quart: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-fluid:        cubic-bezier(0.3, 0, 0, 1);     // Default UI gesture
+  --ease-out-quint:    cubic-bezier(0.22, 1, 0.36, 1); // Reveal/entrance
+  --ease-emphasized:   cubic-bezier(0.2, 0, 0, 1);     // Material 3 / MDS 2026 emphasis
+  --ease-spring:       cubic-bezier(0.34, 1.56, 0.64, 1); // Bounce (alias of --transition-spring curve)
+
+  // --- Motion durations (mirror GSAP defaults for consistency) ---
+  --dur-micro:     120ms; // Icon flip, tick marks
+  --dur-fast:      250ms; // Hover, focus ring, small state
+  --dur-default:   500ms; // Panel expansion, reveal stagger base
+  --dur-cinematic: 900ms; // Hero entrance, section transitions
 
   // --- Type scale (px) ---
-  --t-hero:    128px;
-  --t-display: 96px;
-  --t-h1:      64px;
-  --t-h2:      48px;
-  --t-h3:      40px;
-  --t-h4:      32px;
-  --t-h5:      24px;
-  --t-body-lg: 18px;
-  --t-body:    16px;
-  --t-body-sm: 14px;
-  --t-caption: 12px;
+  --t-hero:       128px;
+  --t-display:    96px;
+  --t-h1:         64px;
+  --t-h2:         48px;
+  --t-h3:         40px;
+  --t-h4:         32px;
+  --t-h5:         24px;
+  --t-body-lg:    18px;
+  --t-body:       16px;
+  --t-body-sm:    14px;
+  --t-caption:    12px;
+  --t-caption-sm: 11px; // One step smaller than --t-caption (Hero eyebrow, HIW labels, Ticker)
 
   // --- Spacing scale ---
   --space-4:   0.25rem;
   --space-8:   0.5rem;
   --space-12:  0.75rem;
   --space-16:  1rem;
+  --space-18:  1.125rem; // v6-literal escape hatch (Hero title margin)
+  --space-22:  1.375rem; // v6-literal escape hatch (Hero eyebrow gap, Compare cell H-padding)
   --space-24:  1.5rem;
+  --space-30:  1.875rem; // v6-literal escape hatch (Compare header cell V-padding)
   --space-32:  2rem;
+  --space-36:  2.25rem;  // v6-literal escape hatch (Faq question V-padding)
   --space-48:  3rem;
   --space-64:  4rem;
   --space-96:  6rem;
@@ -118,13 +141,19 @@ $bp-section: 900px;
   --transition-slow:   500ms ease;
   --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  // --- Z-index scale ---
+  // --- Z-index scale (semantic, leaves room for future popover/tooltip) ---
+  --z-below:             -1;
   --z-base:              0;
   --z-above:             1;
   --z-canvas:            1;
+  --z-sticky:            50;
   --z-header:            100;
+  --z-dropdown:          150;
   --z-overlay:           200;
+  --z-scrim:             250;
   --z-modal:             300;
+  --z-popover:           350;
+  --z-tooltip:           375;
   --z-toast:             400;
   --z-preloader:         500;  // SkipLink focus ring (WCAG skip-to-main)
   --z-preloader-overlay: 1100; // Homepage intro overlay (must beat SkipLink)

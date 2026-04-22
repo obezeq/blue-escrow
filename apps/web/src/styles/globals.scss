@@ -13,6 +13,8 @@
 
 // Layer 2: Tools — Responsive + visual mixins (no CSS output).
 @use 'tools/mixins';
+@use 'tools/a11y';
+@use 'tools/container-query';
 
 // Layer 3: Generic — Modern CSS reset (wrapped in @layer reset).
 @use 'generic/reset';

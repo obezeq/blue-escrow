@@ -1,0 +1,30 @@
+// ============================================================================
+// CONTAINER QUERY MIXINS — Standardise the 640px emphasis-phrase breakpoint
+// ============================================================================
+// 9 homepage sections (TheProblem, Compare, HowItWorks, FeeSection, CtaSection,
+// Faq, Receipts, TrustLayer, FeeSection) currently re-write
+// `@container (min-width: 640px)` by hand. Consolidate here.
+
+@mixin when-container-wide {
+  @container (min-width: 640px) {
+    @content;
+  }
+}
+
+@mixin when-container-narrow {
+  @container (max-width: 639.98px) {
+    @content;
+  }
+}
+
+// Declares the current element as a container for inline-size queries. Pair
+// with `when-container-wide` / `when-container-narrow` on descendants.
+//
+// $name: optional named container so a descendant can query a specific
+//        ancestor (e.g. @container layout (...)).
+@mixin container($name: null, $type: inline-size) {
+  container-type: $type;
+  @if $name {
+    container-name: $name;
+  }
+}
