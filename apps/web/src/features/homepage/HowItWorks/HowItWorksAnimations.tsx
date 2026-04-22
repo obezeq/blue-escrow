@@ -603,11 +603,22 @@ export function HowItWorksAnimations({
             attributeFilter: ['data-theme'],
           });
 
-          // --- Dev-only: expose { start, end } for e2e test harness ------
+          // --- Dev-only: expose trigger bounds + rail bbox for e2e -------
+          // The e2e harness reads these to assert the rail is in the
+          // viewport when the pin activates (rail-in-viewport check).
           if (process.env.NODE_ENV !== 'production') {
+            const rail = container.querySelector<HTMLElement>(
+              'nav[aria-label="How it works step rail"]',
+            );
             (
               window as unknown as {
-                __hiwStageTrigger?: { start: number; end: number };
+                __hiwStageTrigger?: {
+                  start: number;
+                  end: number;
+                  stageRect: () => DOMRect;
+                  railRect: () => DOMRect | null;
+                  railInViewport: () => boolean;
+                };
               }
             ).__hiwStageTrigger = {
               get start() {
@@ -615,6 +626,13 @@ export function HowItWorksAnimations({
               },
               get end() {
                 return st.end;
+              },
+              stageRect: () => stage.getBoundingClientRect(),
+              railRect: () => rail?.getBoundingClientRect() ?? null,
+              railInViewport: () => {
+                if (!rail) return false;
+                const r = rail.getBoundingClientRect();
+                return r.top >= 0 && r.bottom <= window.innerHeight;
               },
             };
           }
