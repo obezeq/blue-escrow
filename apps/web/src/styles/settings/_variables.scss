@@ -54,6 +54,23 @@ $bp-section: 900px;
   --status-warning: #ffaa33;
   --status-error:   #ff5566;
 
+  // --- Premium dark surface (invariant gradient stack used by "Soulbound NFT"
+  // class cards). Theme overrides only the surrounding chrome (border/shadow),
+  // keeping the deep-blue feel constant in light + dark.
+  --surface-premium-dark:
+    radial-gradient(circle at 20% 0%, rgba(120, 180, 255, 0.55), transparent 60%),
+    radial-gradient(circle at 80% 100%, rgba(0, 20, 60, 1), transparent 60%),
+    linear-gradient(135deg, var(--blue-primary) 0%, var(--blue-ink) 100%);
+
+  // Glassy overlay layered ABOVE --surface-premium-dark in light mode to add
+  // a subtle satin/foil shimmer without breaking the premium dark base.
+  --surface-premium-overlay: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.02) 40%,
+    transparent 70%
+  );
+
   // --- Font stacks — bridge next/font's --font-sans/--font-mono to v6 tokens ---
   --ff-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --ff-mono: var(--font-mono), ui-monospace, 'SFMono-Regular', Menlo, monospace;
@@ -143,6 +160,27 @@ $bp-section: 900px;
   --on-card:       rgba(255, 255, 255, 0.06);
   --on-border:     rgba(255, 255, 255, 0.12);
 
+  // --- Card layering (HIW ledger/scene, future feature cards) ---
+  // "Elevated" surface ~5% lighter than --bg-surface for cards that sit ON the
+  // section wrapper. Shadows stay subtle in dark (low contrast vs --bg-page).
+  --bg-elevated:   #15233a;
+  --shadow-card:   0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+  --shadow-elev:   0 20px 60px -10px rgba(0, 0, 0, 0.6);
+
+  // --- Core glow (HIW coreDisc base + keyframe pulse, future Hero pulses) ---
+  // color-mix() so the same alpha curve hits the right blue per theme.
+  --core-glow-ring:        color-mix(in srgb, var(--blue-vivid) 30%, transparent);
+  --core-glow-halo:        color-mix(in srgb, var(--blue-vivid) 40%, transparent);
+  --core-glow-ring-strong: color-mix(in srgb, var(--blue-vivid) 60%, transparent);
+  --core-glow-halo-strong: color-mix(in srgb, var(--blue-vivid) 70%, transparent);
+
+  // --- HIW SVG diagram (HiwDiagram.tsx) — chrome that needs theme inversion ---
+  // Brand-blue strokes (orbits, accents, wire-active gradient) stay invariant;
+  // these tokens only cover the "secondary chrome" (puck bg, dashed wire base).
+  --hiw-wire-base:    #213b78;
+  --hiw-actor-bg:     #071230;
+  --hiw-actor-border: #213b78;
+
   // v6.html-literal values (rgba, not color-mix): upper glow 70×60 at 50/40
   // a=0.32, lower glow 90×60 at 80/100 a=0.28, linear from #021039 to #03091c.
   --hero-grad:
@@ -174,6 +212,28 @@ $bp-section: 900px;
 
   --on-card:       rgba(0, 27, 77, 0.04);
   --on-border:     rgba(0, 27, 77, 0.10);
+
+  // --- Card layering (light) ---
+  // "Elevated" = pure white sits over --bg-surface (#f5f8fc), needing soft
+  // brand-tinted shadows to define lift without hard halos.
+  --bg-elevated:   #ffffff;
+  --shadow-card:   0 1px 0 rgba(255, 255, 255, 1) inset, 0 6px 16px -6px rgba(0, 27, 77, 0.12);
+  --shadow-elev:   0 20px 60px -10px rgba(0, 27, 77, 0.18);
+
+  // --- Core glow (light) ---
+  // Saturated blue glow that survives over white. Uses --blue-primary which
+  // is the active accent in this theme.
+  --core-glow-ring:        color-mix(in srgb, var(--blue-primary) 25%, transparent);
+  --core-glow-halo:        color-mix(in srgb, var(--blue-primary) 30%, transparent);
+  --core-glow-ring-strong: color-mix(in srgb, var(--blue-primary) 50%, transparent);
+  --core-glow-halo-strong: color-mix(in srgb, var(--blue-primary) 60%, transparent);
+
+  // --- HIW SVG diagram (light) — soft tones the diagram reads against #fff ---
+  // Hex-literal (not derived from --border-strong) so the diagram can be tuned
+  // without dragging global border colors with it.
+  --hiw-wire-base:    #c9d2de;
+  --hiw-actor-bg:     #e6f1ff;
+  --hiw-actor-border: #c9d2de;
 
   // v6.html-literal values (rgba, not color-mix): lower glow shifts to 85% X
   // with blue-deep (#0055e0), linear base #e6effc (less saturated than
