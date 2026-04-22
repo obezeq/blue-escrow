@@ -1,19 +1,49 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLenis } from 'lenis/react';
-import { markPreloaderDone } from '@/lib/preloader/completion';
+import {
+  isPreloaderDone,
+  markPreloaderDone,
+} from '@/lib/preloader/completion';
 import styles from './Preloader.module.scss';
 
 const BLUE_LETTERS = ['B', 'l', 'u', 'e'] as const;
 const ESCROW_LETTERS = ['E', 's', 'c', 'r', 'o', 'w'] as const;
 
-// Timing mirrors the CSS: introOut fires at 2.8s, lasts 1.1s; progress bar
-// fills over 2.5s after a 0.2s delay; total overlay life ~3.92s + a small
-// safety buffer for the clip-path to finish painting before React unmounts.
+// Baseline timing mirrors the CSS: introOut fires at 2.8s, lasts 1.1s;
+// progress bar fills over 2.5s after a 0.2s delay; total overlay life
+// ~3.92s + a small safety buffer for the clip-path to finish painting
+// before React unmounts.
 const COUNTER_START_MS = 200;
 const COUNTER_DURATION_MS = 2500;
-const HIDE_AFTER_MS = 2800 + 1100 + 120;
+const HIDE_AFTER_MS_DEFAULT = 2800 + 1100 + 120;
+// Compressed timing for 2g / slow-2g. LCP ships as soon as the letters land.
+const HIDE_AFTER_MS_SLOW_NET = 1600;
+// How long the overlay must be visible before the "Tap to skip" affordance
+// appears. Shorter than the letter-in stagger end (≈1.1s) so it feels
+// discoverable, but long enough to not steal attention from the wordmark.
+const SKIP_AFFORDANCE_DELAY_MS = 1500;
+
+type NetworkInformation = { effectiveType?: string };
+
+function getPreloaderBudget(): number {
+  if (typeof navigator === 'undefined') return HIDE_AFTER_MS_DEFAULT;
+  const conn = (navigator as Navigator & { connection?: NetworkInformation })
+    .connection;
+  const et = conn?.effectiveType;
+  if (et === '2g' || et === 'slow-2g') return HIDE_AFTER_MS_SLOW_NET;
+  return HIDE_AFTER_MS_DEFAULT;
+}
+
+function prefersReducedMotionAtMount(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Homepage intro overlay.
@@ -28,27 +58,40 @@ const HIDE_AFTER_MS = 2800 + 1100 + 120;
  * doesn't get shaved). A hairline progress bar fills over 2.5s; exit at
  * 2.8s slides up + clip-paths away over 1.1s.
  *
- * A11y: role='progressbar' with aria-valuenow driven by the same rAF loop
- * that renders the numeric counter (throttled to integer increments so
- * screen readers don't announce every frame). `preloader:done` fires on
- * unmount so HeroAnimations starts without a hard-coded delay.
+ * Timing: adaptive. On 2g / slow-2g (`navigator.connection.effectiveType`)
+ * the budget compresses from ~4.0s to 1.6s so LCP ships fast on degraded
+ * links. Users can also tap/click/Enter/Space on the overlay to skip at
+ * any time (the affordance label fades in after 1.5s).
+ *
+ * A11y: `role="progressbar"` with aria-valuenow driven by the same rAF
+ * loop that renders the numeric counter (throttled to integer increments
+ * so screen readers don't announce every frame). A secondary skip control
+ * — `role="button"` with tabindex/keyboard handlers — sits inside the
+ * overlay for discoverable keyboard dismissal. `preloader:done` fires
+ * exactly once (guarded by `isPreloaderDone()`) so downstream subscribers
+ * (HeroAnimations) see a single hand-off.
  */
 export function Preloader() {
-  const [hidden, setHidden] = useState(false);
+  // Initialize `hidden` lazily so reduced-motion skips the overlay on
+  // first paint without a post-mount `setState` (React 19's
+  // `react-hooks/set-state-in-effect` rule fires on the old pattern).
+  const [hidden, setHidden] = useState<boolean>(() =>
+    prefersReducedMotionAtMount(),
+  );
   const lenis = useLenis();
   const rootRef = useRef<HTMLDivElement>(null);
   const counterRef = useRef<HTMLSpanElement>(null);
+  const [showSkipHint, setShowSkipHint] = useState(false);
 
-  // Reduced-motion: skip the overlay entirely (no animation, no forced
-  // pause) — the page content is revealed immediately.
-  useEffect(() => {
-    if (
-      typeof window === 'undefined' ||
-      !window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    ) {
-      return;
+  // Coalesces the exit: marks the completion flag, fires the event once,
+  // and unmounts the overlay. Safe to call from timeout, click, or
+  // keyboard — `markPreloaderDone()` is a no-op when already done, and
+  // the local `hidden` flag prevents re-renders.
+  const finish = useCallback(() => {
+    if (!isPreloaderDone()) {
+      markPreloaderDone();
     }
-    setHidden(true);
+    setHidden((prev) => (prev ? prev : true));
   }, []);
 
   // Scroll lock + body-level CSS fallback via [data-preloader='active'].
@@ -112,25 +155,50 @@ export function Preloader() {
     };
   }, [hidden]);
 
-  // Unmount once the CSS introOut animation has finished; fire the
-  // completion signal so HeroAnimations / late subscribers can start.
+  // Unmount once the (possibly compressed) intro budget has elapsed;
+  // `finish()` is idempotent so a prior click/reduced-motion path does
+  // not cause a second `preloader:done` dispatch.
   useEffect(() => {
     if (hidden) return;
-    const timer = window.setTimeout(() => {
-      markPreloaderDone();
-      setHidden(true);
-    }, HIDE_AFTER_MS);
+    const budget = getPreloaderBudget();
+    const timer = window.setTimeout(finish, budget);
     return () => window.clearTimeout(timer);
+  }, [hidden, finish]);
+
+  // Reveal the "Tap to skip" hint after a short idle so it doesn't steal
+  // focus from the wordmark entrance.
+  useEffect(() => {
+    if (hidden) return;
+    const t = window.setTimeout(
+      () => setShowSkipHint(true),
+      SKIP_AFFORDANCE_DELAY_MS,
+    );
+    return () => window.clearTimeout(t);
   }, [hidden]);
 
-  // If reduced-motion kicked in and we hide without ever running the
-  // timeline, fire the event anyway so downstream hero animations don't
-  // wait forever.
+  // If reduced-motion kicked in at mount and we are already hidden, still
+  // emit the completion signal exactly once so HeroAnimations can proceed.
+  //
+  // This effect ONLY syncs the "preloader done" flag with the external
+  // document-level event bus — it deliberately does NOT call `finish()`
+  // (which would re-setHidden) to satisfy the
+  // `react-hooks/set-state-in-effect` rule. `markPreloaderDone()` is
+  // idempotent thanks to the `isPreloaderDone()` guard, so running it on
+  // every `hidden=true` render is safe and won't double-dispatch.
   useEffect(() => {
-    if (hidden) markPreloaderDone();
+    if (hidden && !isPreloaderDone()) {
+      markPreloaderDone();
+    }
   }, [hidden]);
 
   if (hidden) return null;
+
+  const onSkipKey = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      finish();
+    }
+  };
 
   return (
     <div
@@ -183,6 +251,38 @@ export function Preloader() {
           000%
         </span>
       </div>
+
+      {/* Keyboard- and click-accessible skip control. The DOM node exists
+          from mount so screen readers discover it, but it stays invisible
+          (and keyboard-focusable) until `showSkipHint` flips true ~1.5s
+          in. Inline styles (rather than a module class) keep the scope
+          minimal — no Preloader.module.scss edit needed. */}
+      <button
+        type="button"
+        aria-label="Skip preloader"
+        onClick={finish}
+        onKeyDown={onSkipKey}
+        style={{
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          padding: '8px 14px',
+          fontFamily: 'var(--ff-mono)',
+          fontSize: 11,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.85)',
+          background: 'rgba(255,255,255,0.06)',
+          border: '1px solid rgba(255,255,255,0.18)',
+          borderRadius: 999,
+          cursor: 'pointer',
+          opacity: showSkipHint ? 1 : 0,
+          pointerEvents: showSkipHint ? 'auto' : 'none',
+          transition: 'opacity 300ms ease-out',
+        }}
+      >
+        Tap to skip
+      </button>
     </div>
   );
 }

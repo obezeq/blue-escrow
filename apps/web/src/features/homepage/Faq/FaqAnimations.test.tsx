@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
+import type * as ReactModule from 'react';
 
 // Hoisted mocks so they are defined before the module factories run.
 const { scheduleRefreshMock, gsapSet, gsapFrom, mmAdd } = vi.hoisted(() => ({
@@ -10,7 +11,7 @@ const { scheduleRefreshMock, gsapSet, gsapFrom, mmAdd } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/animations/config/gsap-register', async () => {
-  const React = await vi.importActual<typeof import('react')>('react');
+  const React = await vi.importActual<typeof ReactModule>('react');
   return {
     gsap: {
       matchMedia: () => ({ add: mmAdd }),
