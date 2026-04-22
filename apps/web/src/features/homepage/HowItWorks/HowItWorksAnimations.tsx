@@ -49,7 +49,7 @@ import {
   useGSAP,
 } from '@/animations/config/gsap-register';
 import { MATCH_MEDIA } from '@/animations/config/defaults';
-import { SCRUB_DEFAULTS_SAFE } from '@/animations/config/motion-system';
+import { SCRUB_DEFAULTS_SAFE, scheduleRefresh } from '@/animations/config/motion-system';
 import { useLenisInstance } from '@/providers/LenisProvider';
 import {
   ACTOR_POSITIONS,
@@ -220,7 +220,7 @@ export function HowItWorksAnimations({
       // Desktop / tablet (>= 900px, no reduced-motion): pinned master timeline
       // ----------------------------------------------------------------
       mm.add(
-        '(min-width: 900px) and (prefers-reduced-motion: no-preference)',
+        '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
         () => {
           const stage = stageRefRef.current.current;
           if (!stage) return;
@@ -587,6 +587,22 @@ export function HowItWorksAnimations({
             },
           });
 
+          // --- Orientation + theme refresh listeners ---------------------
+          // svh units re-evaluate on orientation flip; padding/shadow deltas
+          // from theme toggles can nudge the pin anchor by ~1px. Schedule a
+          // ScrollTrigger.refresh so anchors stay aligned in both cases.
+          const orientationMql = window.matchMedia('(orientation: portrait)');
+          const onOrientation = () => scheduleRefresh(150);
+          orientationMql.addEventListener('change', onOrientation);
+
+          const themeObserver = new MutationObserver(() =>
+            scheduleRefresh(150),
+          );
+          themeObserver.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['data-theme'],
+          });
+
           // --- Dev-only: expose { start, end } for e2e test harness ------
           if (process.env.NODE_ENV !== 'production') {
             (
@@ -689,6 +705,8 @@ export function HowItWorksAnimations({
             cleanups.forEach((fn) => fn());
             wireFlows.forEach((tw) => tw.kill());
             narrObserver?.disconnect();
+            orientationMql.removeEventListener('change', onOrientation);
+            themeObserver.disconnect();
             st.kill();
             masterTl.kill();
             if (process.env.NODE_ENV !== 'production') {
@@ -706,7 +724,7 @@ export function HowItWorksAnimations({
       // Mobile (< 900px, no reduced-motion): per-card reveals, no pin
       // ----------------------------------------------------------------
       mm.add(
-        '(max-width: 899px) and (prefers-reduced-motion: no-preference)',
+        '((max-width: 899px) or (max-height: 699px)) and (prefers-reduced-motion: no-preference)',
         () => {
           const triggers: ScrollTrigger[] = [];
           const cleanups: Array<() => void> = [];
