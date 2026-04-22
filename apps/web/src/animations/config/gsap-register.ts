@@ -2,13 +2,14 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText } from 'gsap/SplitText';
 import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
+import { CustomEase } from 'gsap/CustomEase';
 import { useGSAP } from '@gsap/react';
 
-gsap.registerPlugin(ScrollTrigger, SplitText, ScrollToPlugin, useGSAP);
+gsap.registerPlugin(ScrollTrigger, SplitText, ScrollToPlugin, CustomEase, useGSAP);
 
 gsap.defaults({
   ease: 'power3.out',
   duration: 0.8,
 });
 
-export { gsap, ScrollTrigger, SplitText, ScrollToPlugin, useGSAP };
+export { gsap, ScrollTrigger, SplitText, ScrollToPlugin, CustomEase, useGSAP };
