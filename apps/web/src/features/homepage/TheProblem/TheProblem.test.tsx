@@ -50,12 +50,17 @@ describe('TheProblem (v7)', () => {
     ).toBeDefined();
   });
 
-  it('wraps "a stranger too" in <s data-animate="stranger"> with an inner aria-labelled <span>', () => {
+  it('wraps "a stranger too" in <s data-animate="stranger"> with an inner problem__red span', () => {
     const { container } = render(<TheProblem />);
     const struck = container.querySelector('s');
     expect(struck).not.toBeNull();
     expect(struck?.getAttribute('data-animate')).toBe('stranger');
-    expect(screen.getByLabelText('a stranger too, crossed out')).toBeDefined();
+    const red = struck?.querySelector('span');
+    expect(red?.textContent).toBe('a stranger too');
+    // Axe disallows aria-label on non-interactive elements without a role
+    // (WCAG 4.1.2 aria-prohibited-attr). Native <s> semantics are enough.
+    expect(struck?.getAttribute('aria-label')).toBeNull();
+    expect(red?.getAttribute('aria-label')).toBeNull();
   });
 
   it('renders <em> for the italic "just leaving." phrase', () => {

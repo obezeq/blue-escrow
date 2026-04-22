@@ -35,12 +35,7 @@ export function TheProblem() {
             <p className={styles.problem__line} data-animate="line">
               The middleman is{' '}
               <s className={styles.problem__struck} data-animate="stranger">
-                <span
-                  className={styles.problem__red}
-                  aria-label="a stranger too, crossed out"
-                >
-                  a stranger too
-                </span>
+                <span className={styles.problem__red}>a stranger too</span>
               </s>
               .
             </p>

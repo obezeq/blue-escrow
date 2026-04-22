@@ -55,6 +55,21 @@ export function TheProblemAnimations({
       let driftQuickTo: ReturnType<typeof gsap.quickTo> | null = null;
       let driftDecay: gsap.core.Tween | null = null;
 
+      // SplitText's `aria: 'auto'` default adds `aria-label` to the split
+      // target — axe flags that on <p> (role=paragraph prohibits aria-label)
+      // and on <s>/<span> (no role). We strip the injected aria attributes
+      // so the natural DOM text (visible chars/words) remains the
+      // accessible name for screen readers.
+      const stripSplitAria = (
+        target: Element,
+        pieces: Element[] | HTMLElement[] | readonly Element[] = [],
+      ) => {
+        target.removeAttribute('aria-label');
+        for (const piece of pieces) {
+          (piece as Element).removeAttribute('aria-hidden');
+        }
+      };
+
       mm.add(MATCH_MEDIA.noReducedMotion, () => {
         // ----- 1) Eyebrow chars type-on (mono-tick) ----------------------
         const eyebrow = container.querySelector<HTMLElement>(
@@ -63,6 +78,7 @@ export function TheProblemAnimations({
         if (eyebrow) {
           const eyebrowSplit = SplitText.create(eyebrow, { type: 'chars' });
           splits.push(eyebrowSplit);
+          stripSplitAria(eyebrow, eyebrowSplit.chars);
           gsap.from(eyebrowSplit.chars, {
             opacity: 0,
             x: -4,
@@ -84,6 +100,7 @@ export function TheProblemAnimations({
         lines.forEach((line, idx) => {
           const split = SplitText.create(line, { type: 'words' });
           splits.push(split);
+          stripSplitAria(line, split.words);
           gsap.from(split.words, {
             clipPath: 'inset(0 100% 0 0)',
             y: 10,
@@ -133,6 +150,10 @@ export function TheProblemAnimations({
             type: 'words, chars',
           });
           splits.push(strangerSplit);
+          stripSplitAria(strangerEl, [
+            ...strangerSplit.words,
+            ...strangerSplit.chars,
+          ]);
 
           // Chars drop from above with overshoot, random stagger.
           gsap.from(strangerSplit.chars, {
