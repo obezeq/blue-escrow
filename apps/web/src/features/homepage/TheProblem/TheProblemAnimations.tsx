@@ -173,6 +173,10 @@ export function TheProblemAnimations({
 
           // Strikethrough scrubbed LTR via --strike-scale (GPU-smooth
           // thanks to @property <number> registration in the SCSS module).
+          // Long range (~65% viewport) so the cross traces deliberately —
+          // the user scrolls the stranger from near-bottom (top 85%) to
+          // near-top (center 25%), and the trace follows inertia (scrub:
+          // 0.6) in both directions. Feels satisfying instead of rushed.
           gsap.fromTo(
             strangerEl,
             { '--strike-scale': 0 },
@@ -181,9 +185,9 @@ export function TheProblemAnimations({
               ease: PROBLEM_EASE_NAMES.strike,
               scrollTrigger: {
                 trigger: strangerEl,
-                start: 'top 70%',
-                end: 'top 45%',
-                scrub: 0.4,
+                start: 'top 85%',
+                end: 'center 25%',
+                scrub: 0.6,
                 invalidateOnRefresh: true,
               },
             },
