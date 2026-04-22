@@ -4,11 +4,11 @@
 // ============================================================================
 // RECEIPTS — v6 .receipts (Blue Escrow v6.html:1643-1717, CSS 1061-1118).
 // Three tilting 3D cards (Middleman Soulbound / Client / Seller), each with
-// an inline SVG visual. The client and seller variants re-theme in light
-// mode. The soul card stays dark in BOTH themes to read as a premium NFT
-// (decision: "híbrido sofisticado") — in light mode we layer a glassy
-// overlay and brand-tinted shadow so the dark surface integrates with the
-// surrounding light page without looking accidental.
+// an inline SVG visual. All three variants re-theme in light mode. The soul
+// card keeps a distinctive "premium NFT" identity via stronger brand-blue
+// radial overlays (--surface-soul-overlay) and a tuned holographic edge,
+// while flipping to a light pastel surface with dark SVG strokes (via
+// `color: var(--text)` + `currentColor` inheritance) in light mode.
 // ============================================================================
 
 .receipts {
@@ -132,22 +132,25 @@
   background: var(--surface-premium-dark);
   color: #fff;
 
-  // Light mode: keep the dark base but add a glassy interior overlay,
-  // a defined border against the light wrapper, and a brand-blue
-  // elevation shadow so the card feels deliberate (not accidental dark).
-  // No backdrop-filter: the card is opaque, the "glass" comes from the
-  // interior white-translucent layer (better mobile perf, no blur jank).
+  // Light mode: flip to a light pastel surface with Soulbound-specific
+  // brand-blue radial overlays (--surface-soul-overlay, stronger than
+  // client/seller so the "premium NFT" identity stays legible). SVG
+  // strokes flip automatically via `color: var(--text)` + currentColor
+  // inheritance; the SVG radial core flips via --receipt-soul-core
+  // (inline style on the <stop> elements). Holographic-edge alpha is
+  // dropped to 0.35 — calibrated for contrast over the light pastel.
   :root[data-theme='light'] & {
-    @include holographic-edge(0.4);
+    @include holographic-edge(0.35);
 
     background:
-      var(--surface-premium-overlay),
-      var(--surface-premium-dark);
+      var(--surface-soul-overlay),
+      linear-gradient(180deg, #fff, var(--bg-tint));
+    color: var(--text);
     border-color: var(--border);
     box-shadow:
       var(--shadow-elev),
-      0 1px 0 rgba(255, 255, 255, 0.12) inset,
-      0 0 0 1px rgba(0, 27, 77, 0.04);
+      0 1px 0 rgba(255, 255, 255, 1) inset,
+      0 0 0 1px color-mix(in oklab, var(--blue-primary) 8%, transparent);
   }
 }
 
