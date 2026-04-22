@@ -180,3 +180,24 @@
     outline-offset: 4px;
   }
 }
+
+// ============================================================================
+// SSR-SAFE INITIAL HIDDEN STATE — dead-frame elimination (#91).
+// See HeroSection.module.scss for the full rationale. Same gate, applied
+// to the header nav so its GSAP fade-in never reveals a pre-animated
+// visible header underneath the preloader exit.
+// ============================================================================
+:root.js-loaded:not([data-preloader='done']) {
+  .header {
+    opacity: 0;
+    will-change: opacity;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root.js-loaded:not([data-preloader='done']) {
+    .header {
+      opacity: 1;
+    }
+  }
+}

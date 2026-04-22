@@ -431,3 +431,61 @@
     font-size: clamp(44px, 13vw, 80px);
   }
 }
+
+// ============================================================================
+// SSR-SAFE INITIAL HIDDEN STATE — dead-frame elimination (#91).
+//
+// GSAP animates these elements in when the preloader fires `exit-start`.
+// Until then we must NOT render them in their final visible state: the
+// preloader's 1.1s clip-path exit would otherwise reveal a static hero
+// underneath. We also can't rely on a JS `gsap.set()` alone — that fires
+// after render and "snaps" the elements from visible → hidden, producing
+// a perceptible flicker.
+//
+// Strategy: hide via CSS gated by BOTH conditions
+//   1. `html.js-loaded` is present  (added synchronously in RootLayout,
+//      never present without JS → no-JS users see content unmolested).
+//   2. `html[data-preloader]` is NOT yet `'done'` (preloader is still
+//      active/exiting; once done, GSAP owns the state and the CSS rule
+//      deactivates, allowing any stray element to fall back to its
+//      default visible styling).
+//
+// The transform/opacity values MUST match the initial state in
+// HeroAnimations.tsx's `fromTo()` tweens so there is no snap at the
+// CSS→JS handoff.
+// ============================================================================
+:root.js-loaded:not([data-preloader='done']) {
+  .hero__word {
+    transform: translateY(115%);
+    will-change: transform;
+  }
+
+  [data-animate='eyebrow'],
+  [data-animate='sub'],
+  [data-animate='ctas'],
+  [data-animate='bottom'],
+  [data-animate='ticker'] {
+    opacity: 0;
+    transform: translateY(16px);
+    will-change: transform, opacity;
+  }
+}
+
+// prefers-reduced-motion: the preloader unmounts immediately and HeroAnimations
+// clears the hidden state via gsap.set clearProps — but defend against a
+// flash if JS is still catching up, by neutralising the gate under reduce.
+@media (prefers-reduced-motion: reduce) {
+  :root.js-loaded:not([data-preloader='done']) {
+    .hero__word {
+      transform: none;
+    }
+    [data-animate='eyebrow'],
+    [data-animate='sub'],
+    [data-animate='ctas'],
+    [data-animate='bottom'],
+    [data-animate='ticker'] {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
