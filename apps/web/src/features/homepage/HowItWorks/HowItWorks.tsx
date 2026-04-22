@@ -120,7 +120,7 @@ export function HowItWorks() {
                 <HiwDiagram />
               </div>
 
-              <div className={styles.hiw__narration} aria-live="polite">
+              <div className={styles.hiw__narration}>
                 <div className={styles.hiw__narrationText}>
                   <div className={styles.hiw__narrationStep}>
                     {step.narr.step}
