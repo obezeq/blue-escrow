@@ -280,7 +280,7 @@ describe('TheProblemAnimations', () => {
           }
         | undefined;
       return (
-        vars?.['--strike-scale'] === 1 && vars?.scrollTrigger?.scrub === 0.4
+        vars?.['--strike-scale'] === 1 && vars?.scrollTrigger?.scrub === 0.6
       );
     });
     expect(strikeCall).toBeDefined();
