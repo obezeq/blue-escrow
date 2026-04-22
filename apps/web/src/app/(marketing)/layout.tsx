@@ -16,9 +16,7 @@ export default function MarketingLayout({
       <ScrollProgressIndicator />
       <Header />
       <ClientEnhancements />
-      <main id="main-content" style={{ paddingTop: 'var(--header-height)' }}>
-        {children}
-      </main>
+      <main id="main-content">{children}</main>
       <Footer />
     </LenisProvider>
   );
