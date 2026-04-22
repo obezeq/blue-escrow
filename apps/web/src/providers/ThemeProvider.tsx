@@ -4,7 +4,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useState,
   type ReactNode,
 } from 'react';
@@ -19,20 +18,20 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // SSR renders with DEFAULT_THEME so server/client markup matches.
-  // The pre-hydration script has already written the real theme onto
-  // document.documentElement.dataset.theme; the effect below re-syncs state
-  // so downstream consumers see the correct value right after hydration.
-  const [theme, setThemeState] = useState<Theme>(DEFAULT_THEME);
-
-  useEffect(() => {
-    const current = document.documentElement.dataset.theme;
-    if (isTheme(current) && current !== theme) {
-      setThemeState(current);
+  // Initial state must match between SSR and the first client render to avoid
+  // hydration mismatches — so on the server we always use DEFAULT_THEME. On
+  // the client, the pre-hydration script in theme-bootstrap.ts has already
+  // written the resolved theme onto document.documentElement.dataset.theme
+  // BEFORE React hydrates. We lazily read that value here so React state is
+  // in sync from the very first render, avoiding a setState-in-effect cascade
+  // (react-hooks/set-state-in-effect) and any visible theme flicker.
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof document === 'undefined') {
+      return DEFAULT_THEME;
     }
-    // Intentionally only syncs once on mount — subsequent changes flow through setTheme.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const current = document.documentElement.dataset.theme;
+    return isTheme(current) ? current : DEFAULT_THEME;
+  });
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);
