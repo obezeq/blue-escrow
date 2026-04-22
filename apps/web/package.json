@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "clean": "rm -rf .next .turbo node_modules"
@@ -40,6 +40,8 @@
     "jsdom": "^29.0.1",
     "typescript": "^5.8.0",
     "vitest": "^3.2.4",
-    "vitest-axe": "1.0.0-pre.5"
+    "vitest-axe": "1.0.0-pre.5",
+    "eslint": "^9",
+    "eslint-config-next": "^16.2.1"
   }
 }

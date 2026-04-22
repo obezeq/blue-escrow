@@ -1,10 +1,12 @@
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from 'node:path';
+import type { NextConfig } from 'next';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const allowedDevOrigins = process.env.NEXT_DEV_ALLOWED_ORIGINS
+  ?.split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
   output: 'standalone',
   outputFileTracingRoot: path.join(__dirname, '../../'),
   transpilePackages: [
@@ -15,6 +17,7 @@ const nextConfig = {
   sassOptions: {
     silenceDeprecations: ['legacy-js-api', 'import'],
   },
+  ...(allowedDevOrigins?.length && { allowedDevOrigins }),
 };
 
 export default nextConfig;

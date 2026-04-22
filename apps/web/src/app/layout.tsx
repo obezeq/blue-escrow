@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { getSiteUrl } from '@blue-escrow/config';
 import { ThemeProvider } from '@/providers/ThemeProvider';
 import { THEME_INIT_SCRIPT } from '@/providers/theme-bootstrap';
 import '@/styles/globals.scss';
@@ -37,6 +38,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: getSiteUrl(),
   title: 'Blue Escrow',
   description:
     'A decentralized escrow protocol where funds are protected by the blockchain, not promises.',
