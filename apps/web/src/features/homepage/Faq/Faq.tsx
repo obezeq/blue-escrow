@@ -7,15 +7,20 @@ import styles from './Faq.module.scss';
 
 export function Faq() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  // Monotonic counter forwarded to FaqAnimations as a dependency-key.
+  // It increments on every toggle (open OR close), so the animation hook's
+  // debounced `scheduleRefresh()` fires once after rapid multi-toggle.
+  const [toggleCount, setToggleCount] = useState(0);
   const baseId = useId();
 
   const toggle = useCallback((index: number) => {
     setOpenIndex((prev) => (prev === index ? null : index));
+    setToggleCount((c) => c + 1);
   }, []);
 
   return (
     <section className={`o-section ${styles.faq}`} id="faq" aria-label="Frequently asked questions">
-      <FaqAnimations>
+      <FaqAnimations refreshKey={toggleCount}>
         <div className={styles.faq__wrap}>
           <div className={styles.faq__head}>
             <div>
