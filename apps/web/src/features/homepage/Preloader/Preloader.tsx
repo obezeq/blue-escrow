@@ -5,6 +5,7 @@ import { useLenis } from 'lenis/react';
 import {
   isPreloaderDone,
   markPreloaderDone,
+  markPreloaderExitStart,
 } from '@/lib/preloader/completion';
 import styles from './Preloader.module.scss';
 
@@ -20,6 +21,13 @@ const COUNTER_DURATION_MS = 2500;
 const HIDE_AFTER_MS_DEFAULT = 2800 + 1100 + 120;
 // Compressed timing for 2g / slow-2g. LCP ships as soon as the letters land.
 const HIDE_AFTER_MS_SLOW_NET = 1600;
+// CSS `introOut` keyframe fires at `animation-delay: 2.8s`; we sync the
+// exit-start signal to that same instant so HeroAnimations can overlap
+// its entry timeline with the overlay's retreat (no dead frame).
+const EXIT_START_MS_DEFAULT = 2800;
+// Slow-net path: preloader hides at 1.6s; fire exit-start a small beat
+// earlier so the hero still gets overlap on degraded links.
+const EXIT_START_MS_SLOW_NET = 1200;
 // How long the overlay must be visible before the "Tap to skip" affordance
 // appears. Shorter than the letter-in stagger end (≈1.1s) so it feels
 // discoverable, but long enough to not steal attention from the wordmark.
@@ -34,6 +42,15 @@ function getPreloaderBudget(): number {
   const et = conn?.effectiveType;
   if (et === '2g' || et === 'slow-2g') return HIDE_AFTER_MS_SLOW_NET;
   return HIDE_AFTER_MS_DEFAULT;
+}
+
+function getExitStartOffset(): number {
+  if (typeof navigator === 'undefined') return EXIT_START_MS_DEFAULT;
+  const conn = (navigator as Navigator & { connection?: NetworkInformation })
+    .connection;
+  const et = conn?.effectiveType;
+  if (et === '2g' || et === 'slow-2g') return EXIT_START_MS_SLOW_NET;
+  return EXIT_START_MS_DEFAULT;
 }
 
 function prefersReducedMotionAtMount(): boolean {
@@ -70,6 +87,10 @@ function prefersReducedMotionAtMount(): boolean {
  * overlay for discoverable keyboard dismissal. `preloader:done` fires
  * exactly once (guarded by `isPreloaderDone()`) so downstream subscribers
  * (HeroAnimations) see a single hand-off.
+ *
+ * Fires `preloader:exit-start` at ~2.8s (1.2s on slow-2g) to let downstream
+ * entry animations overlap with the overlay retreat; fires `preloader:done`
+ * at ~3.92s (1.6s on slow-2g) after `clip-path` settles.
  */
 export function Preloader() {
   // Initialize `hidden` lazily so reduced-motion skips the overlay on
@@ -88,6 +109,10 @@ export function Preloader() {
   // keyboard — `markPreloaderDone()` is a no-op when already done, and
   // the local `hidden` flag prevents re-renders.
   const finish = useCallback(() => {
+    // Exit-start goes first so handoff subscribers fire before completion.
+    // Both functions are idempotent; the scheduled timer above + this call
+    // + a second skip tap all coalesce safely.
+    markPreloaderExitStart();
     if (!isPreloaderDone()) {
       markPreloaderDone();
     }
@@ -165,6 +190,18 @@ export function Preloader() {
     return () => window.clearTimeout(timer);
   }, [hidden, finish]);
 
+  // Fire `preloader:exit-start` in sync with the CSS `introOut` kickoff so
+  // HeroAnimations can begin its entry timeline WHILE the overlay is still
+  // retreating (overlap eliminates the "dead frame" of a fully-landed hero
+  // visible under a receding intro). `markPreloaderExitStart` is idempotent
+  // and a no-op if skip/reduced-motion already called it via `finish()`.
+  useEffect(() => {
+    if (hidden) return;
+    const offset = getExitStartOffset();
+    const timer = window.setTimeout(markPreloaderExitStart, offset);
+    return () => window.clearTimeout(timer);
+  }, [hidden]);
+
   // Reveal the "Tap to skip" hint after a short idle so it doesn't steal
   // focus from the wordmark entrance.
   useEffect(() => {
@@ -187,6 +224,7 @@ export function Preloader() {
   // every `hidden=true` render is safe and won't double-dispatch.
   useEffect(() => {
     if (hidden && !isPreloaderDone()) {
+      markPreloaderExitStart();
       markPreloaderDone();
     }
   }, [hidden]);
