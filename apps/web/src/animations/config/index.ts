@@ -2,7 +2,6 @@ export {
   gsap,
   ScrollTrigger,
   SplitText,
-  ScrollToPlugin,
   useGSAP,
 } from './gsap-register';
 
