@@ -38,26 +38,39 @@ export function Receipts() {
           </div>
 
           <div className={styles.receipts__grid}>
-            {RECEIPTS_CARDS.map((card) => (
-              <article
-                key={card.variant}
-                className={`${styles.receipts__card} ${VARIANT_CLASS[card.variant]}`}
-                data-animate="card"
-              >
-                <div className={styles.receipts__header}>
-                  <strong>{card.headerLabel}</strong>
-                  <span>{card.headerMeta}</span>
-                </div>
-                <div className={styles.receipts__visual}>{card.visual}</div>
-                <div>
-                  <h3 className={styles.receipts__title}>{card.title}</h3>
-                  <div className={styles.receipts__meta}>
-                    <span>{card.metaLine}</span>
-                    <span className={styles.receipts__hash}>{card.hash}</span>
-                  </div>
-                </div>
-              </article>
-            ))}
+            {RECEIPTS_CARDS.map((card) => {
+              const titleId = `receipt-${card.variant}-title`;
+              return (
+                <article
+                  key={card.variant}
+                  className={`${styles.receipts__card} ${VARIANT_CLASS[card.variant]}`}
+                  data-animate="card"
+                  aria-labelledby={titleId}
+                >
+                  <header className={styles.receipts__header}>
+                    <strong>{card.headerLabel}</strong>
+                    <span>{card.headerMeta}</span>
+                  </header>
+                  <figure className={styles.receipts__visual}>
+                    {card.visual}
+                    <figcaption className="u-visually-hidden">
+                      {card.figCaption}
+                    </figcaption>
+                  </figure>
+                  <footer className={styles.receipts__footer}>
+                    <h3 id={titleId} className={styles.receipts__title}>
+                      {card.title}
+                    </h3>
+                    <dl className={styles.receipts__meta}>
+                      <dt className="u-visually-hidden">Details</dt>
+                      <dd>{card.metaLine}</dd>
+                      <dt className="u-visually-hidden">Transaction hash</dt>
+                      <dd className={styles.receipts__hash}>{card.hash}</dd>
+                    </dl>
+                  </footer>
+                </article>
+              );
+            })}
           </div>
         </div>
       </ReceiptsAnimations>
