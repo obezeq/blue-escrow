@@ -10,8 +10,18 @@ import { MATCH_MEDIA } from '@/animations/config/defaults';
  * - Each .proof__item fades up column-by-column
  * - Each stat counter animates from its `start` text to the `data-count`
  *   numeric value on viewport entry, formatted to data-decimals
- * - The marquee track scrolls -33.333% on a 40s linear infinite loop
+ * - The marquee track scrolls -33.333% on a 20s linear infinite loop
  *   (-33.333% because the track contains three repeated phrase spans)
+ * - Hover on the marquee slows the tween to 20% speed so visitors can
+ *   read the phrase; mouseleave restores normal speed.
+ *
+ * Scroll velocity is NOT wired through Lenis here. The `LenisProvider`
+ * only exposes a `useLenis()` hook and a scroll-progress ref; plumbing
+ * per-frame `lenis.velocity` into this feature would require a shared
+ * subscription or a new Lenis event hook on the provider. That would
+ * couple TrustLayer to scroll infrastructure for a secondary visual
+ * effect. Hover-pause covers the main UX need; see the plan summary
+ * for the decision record.
  */
 export function TrustLayerAnimations({
   children,
@@ -19,6 +29,12 @@ export function TrustLayerAnimations({
   children: React.ReactNode;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  // Marquee tween kept in a ref so the mouseenter/mouseleave handlers can
+  // mutate its `timeScale` without re-creating the tween. useGSAP's
+  // auto-cleanup kills the tween on unmount; the listener removal is
+  // returned from the matchMedia callback so gsap.matchMedia also cleans
+  // them up when the query stops matching (e.g. user flips reduced-motion).
+  const tweenRef = useRef<gsap.core.Tween | null>(null);
 
   useGSAP(
     () => {
@@ -34,6 +50,11 @@ export function TrustLayerAnimations({
         const marqueeTrack = container.querySelector(
           '[data-animate="marquee-track"]',
         );
+        // The hover target is the marquee wrapper (the visible strip),
+        // not the inner track. Hovering the container keeps the hitbox
+        // generous so small pointer movements don't toggle the speed.
+        const marqueeEl =
+          marqueeTrack?.parentElement ?? (marqueeTrack as HTMLElement | null);
 
         if (eyebrow) {
           gsap.from(eyebrow, {
@@ -103,12 +124,35 @@ export function TrustLayerAnimations({
         });
 
         if (marqueeTrack) {
-          gsap.to(marqueeTrack, {
+          tweenRef.current = gsap.to(marqueeTrack, {
             xPercent: -33.333,
-            duration: 40,
+            duration: 20,
             ease: 'none',
             repeat: -1,
           });
+
+          // Hover-pause: slow the tween to 20% speed while the pointer is
+          // over the strip so the text is readable. `timeScale` keeps the
+          // loop running — better than `.pause()` which would snap the
+          // visual continuity when the pointer leaves.
+          const slow = () => tweenRef.current?.timeScale(0.2);
+          const normal = () => tweenRef.current?.timeScale(1);
+
+          if (marqueeEl) {
+            marqueeEl.addEventListener('mouseenter', slow);
+            marqueeEl.addEventListener('mouseleave', normal);
+          }
+
+          return () => {
+            // gsap.matchMedia cleanup — remove listeners when the query
+            // stops matching. The tween itself is killed by useGSAP's
+            // auto-revert when the component unmounts.
+            if (marqueeEl) {
+              marqueeEl.removeEventListener('mouseenter', slow);
+              marqueeEl.removeEventListener('mouseleave', normal);
+            }
+            tweenRef.current = null;
+          };
         }
       });
 
