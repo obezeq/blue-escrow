@@ -231,6 +231,20 @@ export function HowItWorksAnimations({
           );
           if (!svgRoot) return;
 
+          // Read --header-height once so the pin start can offset by the
+          // fixed nav's height. Without this, `start: 'top top'` anchors the
+          // stage flush with the viewport top and the 73px (4.5rem) header
+          // overlaps the top of the diagram the whole time the pin is held.
+          const headerRem = parseFloat(
+            getComputedStyle(document.documentElement).getPropertyValue(
+              '--header-height',
+            ),
+          ) || 4.5;
+          const rem =
+            parseFloat(getComputedStyle(document.documentElement).fontSize) ||
+            16;
+          const headerPx = headerRem * rem;
+
           const actors = {
             client: findChild(svgRoot, 'actor-client'),
             mid: findChild(svgRoot, 'actor-mid'),
@@ -548,7 +562,7 @@ export function HowItWorksAnimations({
           const st = ScrollTrigger.create({
             id: 'hiw-stage',
             trigger: stage,
-            start: 'top top',
+            start: () => `top ${headerPx}px`,
             end: () =>
               '+=' +
               Math.round(window.innerHeight * (PHASE_COUNT - 1) * 0.9),
