@@ -63,6 +63,24 @@ describe('TheProblem (v7)', () => {
     expect(red?.getAttribute('aria-label')).toBeNull();
   });
 
+  it('renders an inline <svg><path/></svg> pen-stroke inside the <s>', () => {
+    // The strikethrough is drawn via stroke-dashoffset on an inline SVG
+    // child of the <s>. The <svg> must be aria-hidden (decorative) and the
+    // <path> must carry pathLength="100" so --strike-progress 0..100
+    // maps directly to stroke-dashoffset math.
+    const { container } = render(<TheProblem />);
+    const svg = container.querySelector('s svg');
+    expect(svg).not.toBeNull();
+    expect(svg?.getAttribute('aria-hidden')).toBe('true');
+    expect(svg?.getAttribute('focusable')).toBe('false');
+    const path = svg?.querySelector('path');
+    expect(path).not.toBeNull();
+    expect(path?.getAttribute('stroke-linecap')).toBe('round');
+    expect(path?.getAttribute('pathLength')).toBe('100');
+    expect(path?.getAttribute('fill')).toBe('none');
+    expect(path?.getAttribute('stroke')).toBe('currentColor');
+  });
+
   it('renders <em> for the italic "just leaving." phrase', () => {
     const { container } = render(<TheProblem />);
     const italic = container.querySelector('em');

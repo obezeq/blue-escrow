@@ -262,25 +262,31 @@ describe('TheProblemAnimations', () => {
     expect(nestedCalls.length).toBe(1);
   });
 
-  it('fires the strikethrough scrub tween', () => {
+  it('fires the strikethrough scrub tween on the SVG path', () => {
+    // The implementation queries `.problem__strike path, svg path` inside
+    // [data-animate="stranger"] so the JSX must include an inline SVG.
     render(
       <TheProblemAnimations>
         <s data-animate="stranger">
           <span>a stranger too</span>
+          <svg>
+            <path />
+          </svg>
         </s>
       </TheProblemAnimations>,
     );
     invokeNoReducedMotion();
 
+    // GSAP scrubs stroke-dashoffset from 100 → 0 directly on the path.
     const strikeCall = gsapFromTo.mock.calls.find(([, , toVars]) => {
       const vars = toVars as
         | {
-            '--strike-scale'?: unknown;
+            strokeDashoffset?: unknown;
             scrollTrigger?: { scrub?: unknown };
           }
         | undefined;
       return (
-        vars?.['--strike-scale'] === 1 && vars?.scrollTrigger?.scrub === 0.6
+        vars?.strokeDashoffset === 0 && vars?.scrollTrigger?.scrub === 0.6
       );
     });
     expect(strikeCall).toBeDefined();
@@ -355,19 +361,22 @@ describe('TheProblemAnimations', () => {
     expect(clearCall).toBeDefined();
   });
 
-  it('forces --strike-scale: 1 in reduced-motion', () => {
+  it('forces the SVG path stroke-dashoffset to 0 in reduced-motion', () => {
     render(
       <TheProblemAnimations>
         <s data-animate="stranger">
           <span>a stranger too</span>
+          <svg>
+            <path />
+          </svg>
         </s>
       </TheProblemAnimations>,
     );
     invokeReducedMotion();
 
     const strikeSetCall = gsapSet.mock.calls.find(([, vars]) => {
-      const v = vars as { '--strike-scale'?: unknown } | undefined;
-      return v?.['--strike-scale'] === 1;
+      const v = vars as { strokeDashoffset?: unknown } | undefined;
+      return v?.strokeDashoffset === 0;
     });
     expect(strikeSetCall).toBeDefined();
   });
