@@ -59,10 +59,31 @@ test.describe('Hero visual parity (v6)', () => {
 
         await page.waitForSelector('#hero h1', { state: 'visible' });
         await page.evaluate(() => document.fonts.ready);
-        // Let GSAP finish: HeroAnimations handoff runs immediately because
-        // the preloader-done flag is already set, so the timeline settles
-        // in well under 1s.
-        await page.waitForTimeout(1200);
+        // Deterministic waits replace a fixed 1200ms sleep:
+        //   1) `data-preloader === 'done'` flips when the Preloader fires
+        //      `markPreloaderDone()`, which is what HeroAnimations listens
+        //      for — so we wait for the real hand-off signal.
+        //   2) `#hero h1` opacity reaching 1 means GSAP finished the
+        //      fade-in tween; polling computed style keeps the wait
+        //      bounded to actual work.
+        //   3) Double-RAF flush: lets paint commit the final frame so
+        //      the snapshot captures the fully-settled hero (without
+        //      this, pixel-level diffs appear against the old baseline).
+        await page.waitForFunction(
+          () => document.documentElement.dataset.preloader === 'done',
+        );
+        await page.waitForFunction(() => {
+          const el = document.querySelector('#hero h1');
+          if (!el) return false;
+          const cs = getComputedStyle(el);
+          return cs.opacity === '1';
+        });
+        await page.evaluate(
+          () =>
+            new Promise<void>((r) =>
+              requestAnimationFrame(() => requestAnimationFrame(() => r())),
+            ),
+        );
         await page.evaluate(() => window.scrollTo(0, 0));
 
         const box = await page.locator('#hero').boundingBox();
