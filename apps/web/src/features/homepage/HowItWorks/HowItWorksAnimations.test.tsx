@@ -364,7 +364,7 @@ describe('HowItWorksAnimations — desktop pinned timeline shape', () => {
     expect(stageCfg).toBeDefined();
   });
 
-  it('sets pin=true, pinType="transform", scrub=0.6, anticipatePin=1, invalidateOnRefresh=true', () => {
+  it('sets pin=true, pinType="transform", scrub=0.25, anticipatePin=1, invalidateOnRefresh=true, fastScrollEnd=true', () => {
     renderAnimationsWithFixture();
     runBranch(
       '(min-width: 900px) and (prefers-reduced-motion: no-preference)',
@@ -372,9 +372,14 @@ describe('HowItWorksAnimations — desktop pinned timeline shape', () => {
     const cfg = scrollTriggerCreateCalls.find((c) => c.id === 'hiw-stage')!;
     expect(cfg.pin).toBe(true);
     expect(cfg.pinType).toBe('transform');
-    expect(cfg.scrub).toBe(0.6);
+    // Scrub lowered to 0.25 so the pinned master timeline feels on-beat
+    // with the scroll instead of trailing behind by a perceptible lag.
+    expect(cfg.scrub).toBe(0.25);
+    // SCRUB_DEFAULTS_SAFE spread: anticipatePin + invalidateOnRefresh +
+    // fastScrollEnd should all land on the config.
     expect(cfg.anticipatePin).toBe(1);
     expect(cfg.invalidateOnRefresh).toBe(true);
+    expect(cfg.fastScrollEnd).toBe(true);
   });
 
   it('uses an end function that returns a "+=X" string based on window.innerHeight * (PHASE_COUNT-1) * 0.9', () => {

@@ -49,6 +49,7 @@ import {
   useGSAP,
 } from '@/animations/config/gsap-register';
 import { MATCH_MEDIA } from '@/animations/config/defaults';
+import { SCRUB_DEFAULTS_SAFE } from '@/animations/config/motion-system';
 import { useLenisInstance } from '@/providers/LenisProvider';
 import {
   ACTOR_POSITIONS,
@@ -533,6 +534,17 @@ export function HowItWorksAnimations({
           });
 
           // --- Attach ScrollTrigger with snap to labelProgresses ---------
+          // `scrub: 0.25` — lower than the old 0.6 — because the five-phase
+          // master timeline is short and a long scrub lag made "Lock" and
+          // "Release" feel mushy (animation trailing the scroll by a
+          // noticeable beat). 0.25 keeps the smoothing that hides Lenis
+          // inertia but lets the packet flight & halo spike land on-beat
+          // with the wheel/trackpad.
+          //
+          // `SCRUB_DEFAULTS_SAFE` now bundles `invalidateOnRefresh` +
+          // `fastScrollEnd` + `anticipatePin`; keeping the explicit
+          // `pin: true` + `pinType: 'transform'` + `pinSpacing: true`
+          // above since those aren't part of the scrub safety policy.
           const st = ScrollTrigger.create({
             id: 'hiw-stage',
             trigger: stage,
@@ -543,9 +555,8 @@ export function HowItWorksAnimations({
             pin: true,
             pinType: 'transform',
             pinSpacing: true,
-            anticipatePin: 1,
-            invalidateOnRefresh: true,
-            scrub: 0.6,
+            scrub: 0.25,
+            ...SCRUB_DEFAULTS_SAFE,
             animation: masterTl,
             snap: {
               snapTo: labelProgresses,
