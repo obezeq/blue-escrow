@@ -5,10 +5,11 @@
 // RECEIPTS — v6 .receipts (Blue Escrow v6.html:1643-1717, CSS 1061-1118).
 // Three tilting 3D cards (Middleman Soulbound / Client / Seller), each with
 // an inline SVG visual. All three variants re-theme in light mode. The soul
-// card keeps a distinctive "premium NFT" identity via stronger brand-blue
-// radial overlays (--surface-soul-overlay) and a tuned holographic edge,
-// while flipping to a light pastel surface with dark SVG strokes (via
-// `color: var(--text)` + `currentColor` inheritance) in light mode.
+// card keeps a distinctive identity via stronger brand-blue radial overlays
+// (--surface-soul-overlay) and a tuned holographic edge; SVG strokes inherit
+// currentColor so they flip white→dark via the card's `color` property, and
+// the radial core consumes --receipt-soul-core via the SoulVisual <stop>
+// inline style so the inner glow flips white→brand-blue per theme.
 // ============================================================================
 
 .receipts {
@@ -134,11 +135,11 @@
 
   // Light mode: flip to a light pastel surface with Soulbound-specific
   // brand-blue radial overlays (--surface-soul-overlay, stronger than
-  // client/seller so the "premium NFT" identity stays legible). SVG
-  // strokes flip automatically via `color: var(--text)` + currentColor
-  // inheritance; the SVG radial core flips via --receipt-soul-core
-  // (inline style on the <stop> elements). Holographic-edge alpha is
-  // dropped to 0.35 — calibrated for contrast over the light pastel.
+  // client/seller so the "premium soulbound" identity survives the flip).
+  // `color: var(--text)` propagates to SVG strokes via currentColor;
+  // the core glow flips via --receipt-soul-core. Box-shadow uses the
+  // theme-aware elevation + a full-strength inset highlight + a brand-blue
+  // tinted outline ring so the card anchors against the light page.
   :root[data-theme='light'] & {
     @include holographic-edge(0.35);
 
