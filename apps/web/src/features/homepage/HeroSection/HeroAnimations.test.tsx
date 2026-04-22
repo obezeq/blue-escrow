@@ -3,11 +3,28 @@ import { render, screen, cleanup, act } from '@testing-library/react';
 import type * as ReactModule from 'react';
 import { PRELOADER_DONE_EVENT } from '@/lib/preloader/completion';
 
-const { gsapSet, gsapTo, gsapFrom, mmAdd } = vi.hoisted(() => ({
+const {
+  gsapSet,
+  gsapTo,
+  gsapFrom,
+  mmAdd,
+  splitCreateCalls,
+  splitReverts,
+  customEaseGet,
+  customEaseCreate,
+} = vi.hoisted(() => ({
   gsapSet: vi.fn(),
   gsapTo: vi.fn(),
   gsapFrom: vi.fn(),
   mmAdd: vi.fn(),
+  splitCreateCalls: [] as Array<{ chars: unknown[]; words: unknown[]; revert: () => void }>,
+  splitReverts: vi.fn(),
+  // Start with no `letterPop` registered so the first mount triggers
+  // `CustomEase.create`. After the first mount the value is sticky for the
+  // rest of the module lifetime — mirrors the production contract.
+  registered: new Set<string>(),
+  customEaseGet: vi.fn(),
+  customEaseCreate: vi.fn(),
 }));
 
 vi.mock('@/animations/config/gsap-register', async () => {
@@ -18,6 +35,21 @@ vi.mock('@/animations/config/gsap-register', async () => {
       from: gsapFrom,
       to: gsapTo,
       set: gsapSet,
+    },
+    SplitText: {
+      create: vi.fn(() => {
+        const self = {
+          chars: [] as unknown[],
+          words: [] as unknown[],
+          revert: () => splitReverts(),
+        };
+        splitCreateCalls.push(self);
+        return self;
+      }),
+    },
+    CustomEase: {
+      get: customEaseGet,
+      create: customEaseCreate,
     },
     // Run the callback inside a real useEffect so refs are populated.
     useGSAP: (cb: () => void | (() => void)) => {
@@ -38,6 +70,10 @@ afterEach(() => {
   gsapTo.mockClear();
   gsapFrom.mockClear();
   mmAdd.mockClear();
+  splitCreateCalls.length = 0;
+  splitReverts.mockClear();
+  customEaseGet.mockReset();
+  customEaseCreate.mockReset();
   delete document.documentElement.dataset.preloader;
 });
 
@@ -127,4 +163,73 @@ describe('HeroAnimations', () => {
     expect(scrollTriggerCfg.fastScrollEnd).toBe(true);
   });
 
+  it('creates a SplitText on the title when preloader:done fires and no-reduced-motion matches', () => {
+    render(
+      <header className="hero">
+        <HeroAnimations>
+          <h1 className="hero__title">Hero Title</h1>
+        </HeroAnimations>
+      </header>,
+    );
+
+    // CustomEase not yet registered -> `get()` returns undefined, `create()`
+    // should be called exactly once per mount.
+    customEaseGet.mockReturnValue(undefined);
+
+    act(() => {
+      document.dispatchEvent(new CustomEvent(PRELOADER_DONE_EVENT));
+    });
+
+    expect(customEaseCreate).toHaveBeenCalledWith(
+      'letterPop',
+      'M0,0 C0.2,0 0.3,1 1,1',
+    );
+
+    const noRmEntry = mmAdd.mock.calls.find(
+      ([query]) => query === '(prefers-reduced-motion: no-preference)',
+    );
+    act(() => {
+      (noRmEntry![1] as () => void)();
+    });
+
+    expect(splitCreateCalls.length).toBe(1);
+  });
+
+  it('reverts the SplitText on unmount so remounts do not stack char spans', () => {
+    customEaseGet.mockReturnValue(undefined);
+    const { unmount } = render(
+      <header className="hero">
+        <HeroAnimations>
+          <h1 className="hero__title">Hero Title</h1>
+        </HeroAnimations>
+      </header>,
+    );
+
+    act(() => {
+      document.dispatchEvent(new CustomEvent(PRELOADER_DONE_EVENT));
+    });
+
+    const noRmEntry = mmAdd.mock.calls.find(
+      ([query]) => query === '(prefers-reduced-motion: no-preference)',
+    );
+    act(() => {
+      (noRmEntry![1] as () => void)();
+    });
+
+    expect(splitReverts).not.toHaveBeenCalled();
+    unmount();
+    expect(splitReverts).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not re-create letterPop when CustomEase.get already returns an ease', () => {
+    // Second-mount scenario: `CustomEase.get('letterPop')` returns a truthy
+    // ease object, so `create()` MUST NOT fire again.
+    customEaseGet.mockReturnValue({});
+    render(
+      <HeroAnimations>
+        <h1 className="hero__title">Hero</h1>
+      </HeroAnimations>,
+    );
+    expect(customEaseCreate).not.toHaveBeenCalled();
+  });
 });
