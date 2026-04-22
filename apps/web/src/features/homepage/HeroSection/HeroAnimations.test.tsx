@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, act } from '@testing-library/react';
+import type * as ReactModule from 'react';
 import { PRELOADER_DONE_EVENT } from '@/lib/preloader/completion';
 
 const { gsapSet, gsapTo, gsapFrom, mmAdd } = vi.hoisted(() => ({
@@ -10,7 +11,7 @@ const { gsapSet, gsapTo, gsapFrom, mmAdd } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/animations/config/gsap-register', async () => {
-  const React = await vi.importActual<typeof import('react')>('react');
+  const React = await vi.importActual<typeof ReactModule>('react');
   return {
     gsap: {
       matchMedia: () => ({ add: mmAdd }),

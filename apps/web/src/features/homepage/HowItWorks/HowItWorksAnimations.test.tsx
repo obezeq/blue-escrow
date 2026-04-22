@@ -14,6 +14,11 @@ import type { RefObject } from 'react';
 
 import { MATCH_MEDIA } from '@/animations/config/defaults';
 import { PHASE_COUNT } from './steps';
+// Type-only import so the mock factory can reference the module's shape
+// without resurrecting a runtime import (which would fight with vi.mock).
+// The @typescript-eslint/consistent-type-imports rule also forbids inline
+// `typeof import('...')` annotations in favor of hoisted type imports.
+import type * as HiwEasesModule from './hiw-eases';
 
 // ---------------------------------------------------------------------------
 // Mock capture buckets — reset between tests in beforeEach
@@ -33,15 +38,6 @@ let lastCreatedTrigger: {
   kill: ReturnType<typeof vi.fn>;
 } | null = null;
 let timelineCalls: TimelineCall[] = [];
-let lastTimelineInstance: {
-  labels: Record<string, number>;
-  duration: ReturnType<typeof vi.fn>;
-  progress: ReturnType<typeof vi.fn>;
-  kill: ReturnType<typeof vi.fn>;
-  addLabel: ReturnType<typeof vi.fn>;
-  to: ReturnType<typeof vi.fn>;
-  set: ReturnType<typeof vi.fn>;
-} | null = null;
 let quickSetterCalls: Array<[unknown, string]> = [];
 let gsapSetCalls: Array<[unknown, Record<string, unknown>]> = [];
 let gsapFromCalls: Array<[unknown, Record<string, unknown>]> = [];
@@ -82,7 +78,6 @@ vi.mock('@/animations/config/gsap-register', () => {
         return tl;
       }),
     };
-    lastTimelineInstance = tl;
     return tl;
   };
 
@@ -157,7 +152,7 @@ vi.mock('@/providers/LenisProvider', () => ({
 }));
 
 vi.mock('./hiw-eases', async (importOriginal) => {
-  const mod = (await importOriginal()) as typeof import('./hiw-eases');
+  const mod = (await importOriginal()) as typeof HiwEasesModule;
   return {
     ...mod,
     registerHiwEases: vi.fn(),
@@ -279,7 +274,6 @@ beforeEach(() => {
   scrollTriggerCreateCalls = [];
   lastCreatedTrigger = null;
   timelineCalls = [];
-  lastTimelineInstance = null;
   quickSetterCalls = [];
   gsapSetCalls = [];
   gsapFromCalls = [];

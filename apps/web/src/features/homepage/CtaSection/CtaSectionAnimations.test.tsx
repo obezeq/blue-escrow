@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
+import type * as ReactModule from 'react';
 
 // Hoisted so the module factory sees them. Each `SplitText.create` call
 // returns an object that tracks its own `revert()` invocations — this
@@ -11,7 +12,7 @@ const { splitCreateCalls, splitReverts, matchMediaAddSpy } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/animations/config/gsap-register', async () => {
-  const React = await vi.importActual<typeof import('react')>('react');
+  const React = await vi.importActual<typeof ReactModule>('react');
   return {
     gsap: {
       matchMedia: () => ({ add: matchMediaAddSpy }),
