@@ -143,7 +143,8 @@
   :root[data-theme='light'] & {
     background:
       linear-gradient(135deg, rgba(0, 85, 224, 0.05), transparent 60%),
-      #fff;
+      var(--bg-elevated);
+    box-shadow: var(--shadow-card);
   }
 }
 
@@ -295,11 +296,22 @@
   border-bottom: 1px dashed var(--border);
   opacity: 0.3;
   transition: opacity 0.5s var(--ease-out-expo);
+
+  // Light mode: --text-muted (#5a6474) at 0.3 dips below WCAG AA on the
+  // elevated card. Bumping non-current logs to 0.5 keeps the "future / not
+  // yet" feel while staying readable.
+  :root[data-theme='light'] & {
+    opacity: 0.5;
+  }
 }
 
 .hiw__log--done,
 .hiw__log--current {
   opacity: 1;
+
+  :root[data-theme='light'] & {
+    opacity: 1;
+  }
 }
 
 .hiw__logDot {
@@ -385,7 +397,8 @@
         rgba(0, 85, 224, 0.06),
         transparent 70%
       ),
-      #fff;
+      var(--bg-elevated);
+    box-shadow: var(--shadow-card);
   }
 }
 
@@ -483,6 +496,13 @@
     color 0.5s,
     transform 0.6s var(--ease-out-expo);
 
+  // Light mode: --bg-page (#fff) makes the puck disappear into the elevated
+  // scene card. --bg-tint (#e6f1ff) gives a soft blue surface that reads as
+  // a container against the white scene background.
+  :root[data-theme='light'] & {
+    background: var(--bg-tint);
+  }
+
   .hiw__actor--active & {
     border-color: var(--accent);
     color: var(--text);
@@ -490,6 +510,14 @@
       0 0 0 4px var(--accent-soft),
       0 10px 32px -12px var(--accent);
     transform: scale(1.06);
+  }
+
+  // Reinforce the active ring in light mode — --accent-soft is only 8%
+  // alpha there, which washes out the focus glow over white.
+  :root[data-theme='light'] .hiw__actor--active & {
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--blue-primary) 18%, transparent),
+      0 12px 32px -10px color-mix(in srgb, var(--blue-primary) 40%, transparent);
   }
 }
 
@@ -527,8 +555,8 @@
     ),
     linear-gradient(135deg, var(--blue-primary), var(--blue-deep));
   box-shadow:
-    0 0 0 1px rgba(0, 145, 255, 0.3),
-    0 20px 60px -10px rgba(0, 145, 255, 0.4),
+    0 0 0 1px var(--core-glow-ring),
+    0 20px 60px -10px var(--core-glow-halo),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   display: flex;
   flex-direction: column;
@@ -541,6 +569,17 @@
   svg {
     width: 28px;
     height: 28px;
+  }
+
+  // Light mode: the dark blue disc still reads as the smart contract anchor,
+  // but it needs a stronger ring + an extra elevation halo so the disc
+  // visually "lifts" above the white scene instead of sitting flat.
+  :root[data-theme='light'] & {
+    box-shadow:
+      0 0 0 1px var(--core-glow-ring-strong),
+      0 24px 56px -8px var(--core-glow-halo),
+      0 8px 24px -4px color-mix(in srgb, var(--blue-primary) 25%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
   }
 }
 
@@ -559,18 +598,21 @@
   }
 }
 
+// Custom properties inside @keyframes resolve per element on each frame, so
+// the pulse automatically picks up the right glow tokens for the active theme
+// without needing a separate light-mode keyframe.
 @keyframes hiwCorePulse {
   0%,
   100% {
     box-shadow:
-      0 0 0 1px rgba(0, 145, 255, 0.3),
-      0 20px 60px -10px rgba(0, 145, 255, 0.4),
+      0 0 0 1px var(--core-glow-ring),
+      0 20px 60px -10px var(--core-glow-halo),
       inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
   50% {
     box-shadow:
-      0 0 0 1px rgba(0, 145, 255, 0.6),
-      0 20px 80px -4px rgba(0, 145, 255, 0.7),
+      0 0 0 1px var(--core-glow-ring-strong),
+      0 20px 80px -4px var(--core-glow-halo-strong),
       inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 }
@@ -735,4 +777,32 @@
 .hiw__railNum {
   color: var(--accent);
   margin-inline-end: 10px;
+}
+
+// --- HIW SVG diagram theme-aware classes -----------------------------------
+// Token-driven hooks consumed by HiwDiagram.tsx so the inline SVG reacts to
+// :root[data-theme] without per-attribute hex literals. Brand-blue strokes
+// (orbits, accents, wire-active gradient) stay hardcoded — they're invariant
+// across themes. Preserves all data-hiw="*" GSAP targets (no overlap with
+// stroke/fill — GSAP only tweens opacity/transform/fillOpacity here).
+
+.hiw__diagWire {
+  stroke: var(--hiw-wire-base);
+}
+
+.hiw__diagActorPuck {
+  fill: var(--hiw-actor-bg);
+  stroke: var(--hiw-actor-border);
+}
+
+.hiw__diagActorRole {
+  fill: var(--accent);
+}
+
+.hiw__diagActorText {
+  fill: var(--text);
+}
+
+.hiw__diagActorMuted {
+  fill: var(--muted-2);
 }
