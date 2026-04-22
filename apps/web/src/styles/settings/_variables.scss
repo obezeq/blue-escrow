@@ -252,12 +252,16 @@ $bp-section: 900px;
     transparent 55%
   );
 
+  // Soul card stays dark-premium in dark mode, so no overlay layer needed.
+  --surface-soul-overlay: none;
+
   // --- Receipt SVG chrome tokens — adapt the 3 card visuals per theme
   // (SoulVisual strokes already inherit currentColor; these cover the
   // Client checkmark, Seller hexagons, and Seller center dot) ---
   --receipt-accent:      var(--blue-vivid);  // Active brand blue (checkmark, inner polygon stroke)
   --receipt-accent-soft: var(--blue-text);   // Lighter brand blue (outer polygon stroke)
   --receipt-center-dot:  #fff;               // Seller center — white reads fine over dark-base in dark
+  --receipt-soul-core:   #fff;               // SoulVisual radial gradient peak — white on dark base
 
   // --- HIW SVG diagram (HiwDiagram.tsx) — chrome that needs theme inversion ---
   // Brand-blue strokes (orbits, accents, wire-active gradient) stay invariant;
@@ -348,12 +352,28 @@ $bp-section: 900px;
     transparent 55%
   );
 
+  // Soulbound-specific layered radial glows — stronger brand-blue identity
+  // than Client/Seller so the light variant keeps its "premium NFT" feel
+  // on the light page.
+  --surface-soul-overlay:
+    radial-gradient(
+      circle at 50% 0%,
+      color-mix(in oklab, var(--blue-primary) 14%, transparent),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 0% 100%,
+      color-mix(in oklab, var(--blue-vivid) 10%, transparent),
+      transparent 62%
+    );
+
   // --- Receipt SVG chrome (light) — saturated brand blue stays readable over
   // the pastel card gradients; center dot flips from white to blue so the
   // Seller center is visible instead of vanishing over the white gradient end ---
   --receipt-accent:      var(--blue-primary);
   --receipt-accent-soft: var(--blue-vivid);
   --receipt-center-dot:  var(--blue-primary);  // FIX G2 — sub-issue #87
+  --receipt-soul-core:   var(--blue-primary);  // SoulVisual radial gradient peak — flips to brand-blue on light
 
   // --- HIW SVG diagram (light) — soft tones the diagram reads against #fff ---
   // Hex-literal (not derived from --border-strong) so the diagram can be tuned
