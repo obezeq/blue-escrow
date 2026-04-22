@@ -178,6 +178,20 @@ $bp-section: 900px;
   --surface-inline: var(--bg-page);
 }
 
+// ----------------------------------------------------------------------------
+// Animated CSS custom properties — @property registration for GSAP tweens
+// ----------------------------------------------------------------------------
+
+// --halo-angle drives the conic-gradient rotation on `.receipts__card--soul`
+// (see @mixin holographic-edge). Registered so GSAP can animate it as an
+// <angle> rather than a CSS string; `initial-value: 0deg` gives graceful
+// degradation on browsers that ignore @property.
+@property --halo-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
 // Modern browsers with light-dark() (Chrome 123+, Firefox 120+, Safari 17.5+,
 // Baseline since mid-2024): set color-scheme so the UA picks the correct
 // branch of light-dark() automatically, then upgrade --surface-inline.
@@ -224,6 +238,26 @@ $bp-section: 900px;
   --core-glow-halo:        color-mix(in srgb, var(--blue-vivid) 40%, transparent);
   --core-glow-ring-strong: color-mix(in srgb, var(--blue-vivid) 60%, transparent);
   --core-glow-halo-strong: color-mix(in srgb, var(--blue-vivid) 70%, transparent);
+
+  // --- Receipts card variant overlays (client/seller foil, used in light
+  // mode paired with --shadow-elev to match the soul card's elevation) ---
+  --surface-client-overlay: linear-gradient(
+    180deg,
+    rgba(51, 170, 255, 0.06),
+    transparent 60%
+  );
+  --surface-seller-overlay: linear-gradient(
+    135deg,
+    rgba(0, 145, 255, 0.08),
+    transparent 55%
+  );
+
+  // --- Receipt SVG chrome tokens — adapt the 3 card visuals per theme
+  // (SoulVisual strokes already inherit currentColor; these cover the
+  // Client checkmark, Seller hexagons, and Seller center dot) ---
+  --receipt-accent:      var(--blue-vivid);  // Active brand blue (checkmark, inner polygon stroke)
+  --receipt-accent-soft: var(--blue-text);   // Lighter brand blue (outer polygon stroke)
+  --receipt-center-dot:  #fff;               // Seller center — white reads fine over dark-base in dark
 
   // --- HIW SVG diagram (HiwDiagram.tsx) — chrome that needs theme inversion ---
   // Brand-blue strokes (orbits, accents, wire-active gradient) stay invariant;
@@ -301,6 +335,25 @@ $bp-section: 900px;
   --core-glow-halo:        color-mix(in srgb, var(--blue-primary) 30%, transparent);
   --core-glow-ring-strong: color-mix(in srgb, var(--blue-primary) 50%, transparent);
   --core-glow-halo-strong: color-mix(in srgb, var(--blue-primary) 60%, transparent);
+
+  // --- Receipts card variant overlays (light) ---
+  --surface-client-overlay: linear-gradient(
+    180deg,
+    rgba(0, 145, 255, 0.05),
+    transparent 70%
+  );
+  --surface-seller-overlay: linear-gradient(
+    135deg,
+    rgba(0, 102, 255, 0.06),
+    transparent 55%
+  );
+
+  // --- Receipt SVG chrome (light) — saturated brand blue stays readable over
+  // the pastel card gradients; center dot flips from white to blue so the
+  // Seller center is visible instead of vanishing over the white gradient end ---
+  --receipt-accent:      var(--blue-primary);
+  --receipt-accent-soft: var(--blue-vivid);
+  --receipt-center-dot:  var(--blue-primary);  // FIX G2 — sub-issue #87
 
   // --- HIW SVG diagram (light) — soft tones the diagram reads against #fff ---
   // Hex-literal (not derived from --border-strong) so the diagram can be tuned
