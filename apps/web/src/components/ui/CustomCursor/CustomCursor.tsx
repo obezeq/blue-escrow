@@ -30,19 +30,30 @@ import styles from './CustomCursor.module.scss';
 //     `.restart()` the existing ones.
 //   * `useGSAP`'s revert cleans up tweens but NOT DOM listeners, so the
 //     `document.addEventListener` calls return an explicit cleanup fn.
+//
+// data-cursor="text" support:
+//   * Targets marked `data-cursor="text"` with a `data-cursor-label` string
+//     reveal a pill-shaped text preview below the dot on hover. Content is
+//     read from the attribute at pointerover time; the span is animated
+//     via autoAlpha + scale (no layout writes).
 // ---------------------------------------------------------------------------
 
-const INTERACTIVE_SELECTOR = 'a, button, [role="button"], [data-cursor-hover]';
+const INTERACTIVE_SELECTOR = 'a, button, [role="button"], [data-cursor-hover], [data-cursor]';
+const TEXT_CURSOR_ATTR = 'data-cursor';
+const TEXT_CURSOR_VALUE = 'text';
+const TEXT_CURSOR_LABEL_ATTR = 'data-cursor-label';
 
 export function CustomCursor() {
   const dotRef = useRef<HTMLDivElement>(null);
   const circleRef = useRef<HTMLDivElement>(null);
+  const labelRef = useRef<HTMLSpanElement>(null);
 
   useGSAP(
     () => {
       const dot = dotRef.current;
       const circle = circleRef.current;
-      if (!dot || !circle) return;
+      const label = labelRef.current;
+      if (!dot || !circle || !label) return;
 
       // Gate: only activate on fine-pointer devices without reduced motion.
       const finePointer = window.matchMedia('(pointer: fine)');
@@ -85,6 +96,23 @@ export function CustomCursor() {
         paused: true,
       });
 
+      // Text-preview tweens for elements with `data-cursor="text"`.
+      // autoAlpha + scale only — no width/height writes.
+      const labelIn = gsap.to(label, {
+        autoAlpha: 1,
+        scale: 1,
+        duration: 0.2,
+        ease: 'power3.out',
+        paused: true,
+      });
+      const labelOut = gsap.to(label, {
+        autoAlpha: 0,
+        scale: 0.8,
+        duration: 0.2,
+        ease: 'power3.out',
+        paused: true,
+      });
+
       const activate = () => {
         document.documentElement.style.cursor = 'none';
         gsap.set([dot, circle], { opacity: 1 });
@@ -104,26 +132,43 @@ export function CustomCursor() {
 
       const handlePointerOver = (e: PointerEvent) => {
         if (!confirmed) return;
-        const target = (e.target as HTMLElement | null)?.closest?.(
-          INTERACTIVE_SELECTOR,
-        );
+        const rawTarget = e.target as HTMLElement | null;
+        const target = rawTarget?.closest?.(INTERACTIVE_SELECTOR) as
+          | HTMLElement
+          | null;
         if (!target) return;
+
         hoverOut.pause();
         hoverIn.restart();
         circleRestore.pause();
         circleFade.restart();
+
+        // data-cursor="text" → show label preview centered under the dot.
+        if (target.getAttribute(TEXT_CURSOR_ATTR) === TEXT_CURSOR_VALUE) {
+          const text = target.getAttribute(TEXT_CURSOR_LABEL_ATTR) ?? '';
+          label.textContent = text;
+          labelOut.pause();
+          labelIn.restart();
+        }
       };
 
       const handlePointerOut = (e: PointerEvent) => {
         if (!confirmed) return;
-        const target = (e.target as HTMLElement | null)?.closest?.(
-          INTERACTIVE_SELECTOR,
-        );
+        const rawTarget = e.target as HTMLElement | null;
+        const target = rawTarget?.closest?.(INTERACTIVE_SELECTOR) as
+          | HTMLElement
+          | null;
         if (!target) return;
+
         hoverIn.pause();
         hoverOut.restart();
         circleFade.pause();
         circleRestore.restart();
+
+        if (target.getAttribute(TEXT_CURSOR_ATTR) === TEXT_CURSOR_VALUE) {
+          labelIn.pause();
+          labelOut.restart();
+        }
       };
 
       document.addEventListener('pointermove', handlePointerMove);
@@ -144,7 +189,9 @@ export function CustomCursor() {
 
   return (
     <div className={styles.cursor} aria-hidden="true">
-      <div ref={dotRef} className={styles.cursor__dot} />
+      <div ref={dotRef} className={styles.cursor__dot}>
+        <span ref={labelRef} className={styles.cursor__label} />
+      </div>
       <div ref={circleRef} className={styles.cursor__circle} />
     </div>
   );

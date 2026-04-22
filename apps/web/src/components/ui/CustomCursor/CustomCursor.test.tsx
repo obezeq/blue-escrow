@@ -19,7 +19,7 @@ const {
 }));
 
 vi.mock('@/animations/config/gsap-register', async () => {
-  const React = await vi.importActual<typeof import('react')>('react');
+  const React = await vi.importActual<typeof ReactModule>('react');
 
   const makeTween = () => {
     const tween = {
@@ -154,6 +154,64 @@ describe('CustomCursor', () => {
       expect(inlineStyle).not.toMatch(/height\s*:/);
 
       document.body.removeChild(button);
+    } finally {
+      restore();
+    }
+  });
+
+  it('creates paused label tweens alongside hover tweens (autoAlpha+scale only)', () => {
+    const restore = enableCursorQueries();
+    try {
+      render(<CustomCursor />);
+
+      // Label tweens animate autoAlpha + scale. They are created paused and
+      // targeted at the <span> inside the dot. We assert on the property set
+      // of every `gsap.to` call — at least two must expose `autoAlpha`
+      // (labelIn + labelOut).
+      const autoAlphaTweens = gsapToCalls.filter(
+        ([, vars]) => 'autoAlpha' in vars,
+      );
+      expect(autoAlphaTweens.length).toBeGreaterThanOrEqual(2);
+      for (const [, vars] of autoAlphaTweens) {
+        expect(vars).toHaveProperty('scale');
+        expect(vars).toHaveProperty('paused', true);
+        // Still no layout-thrashing props on the label path.
+        expect(vars).not.toHaveProperty('width');
+        expect(vars).not.toHaveProperty('height');
+      }
+    } finally {
+      restore();
+    }
+  });
+
+  it('reads data-cursor-label on pointerover of a data-cursor="text" target', () => {
+    const restore = enableCursorQueries();
+    try {
+      const link = document.createElement('a');
+      link.href = '#';
+      link.setAttribute('data-cursor', 'text');
+      link.setAttribute('data-cursor-label', 'View case');
+      link.textContent = 'Link';
+      document.body.appendChild(link);
+
+      const { container } = render(<CustomCursor />);
+      const label = container.querySelector<HTMLSpanElement>(
+        '[class*="cursor__label"]',
+      );
+      expect(label).not.toBeNull();
+
+      document.dispatchEvent(
+        new PointerEvent('pointermove', {
+          clientX: 10,
+          clientY: 10,
+          pointerType: 'mouse',
+        }),
+      );
+      link.dispatchEvent(new PointerEvent('pointerover', { bubbles: true }));
+
+      expect(label!.textContent).toBe('View case');
+
+      document.body.removeChild(link);
     } finally {
       restore();
     }
