@@ -106,8 +106,14 @@
 // where the word ends up at a line edge. Matching negative margin keeps
 // visual spacing identical. Net zero layout impact, italic ink preserved.
 .closing__emphasis > div {
-  padding-inline: 0.06em;
-  margin-inline: -0.06em;
+  // 0.15em (not 0.06em) — italic glyphs like "t" in "trust" have ink
+  // that overshoots the advance-width box by up to ~0.1em on the right.
+  // background-clip: text only paints inside the box; overshoot would
+  // render as transparent ink (looks like a hairline clip). 0.15em +
+  // matching negative margin reserves enough ink buffer at the 178px
+  // clamp max while staying imperceptible at the 56px floor.
+  padding-inline: 0.15em;
+  margin-inline: -0.15em;
 }
 
 // At container widths ≥ 640px, keep the italic phrase "like you trust"
