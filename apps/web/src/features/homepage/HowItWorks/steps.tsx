@@ -12,6 +12,9 @@ export type LedgerState = 'draft' | 'signed' | 'locked' | 'delivered' | 'release
 export type ActorId = 'client' | 'mid' | 'seller';
 export type WireId = 'C' | 'M' | 'S';
 
+export const PHASE_COUNT = 5;
+export type PhaseIndex = 0 | 1 | 2 | 3 | 4;
+
 export interface HiwChoreo {
   /** Which active-overlay wires are lit this phase (C = client↔core, M = mid↔core, S = seller↔core) */
   wiresActive: WireId[];
@@ -48,13 +51,13 @@ export const HIW_STEPS: HiwStep[] = [
     index: 0,
     rail: { num: '01', label: 'Meet' },
     narr: {
-      step: 'Step 01 · Meet',
+      step: 'STEP 01 — MEET',
       title: (
         <Fragment>
           Three wallets <em>show up.</em>
         </Fragment>
       ),
-      body: 'Client, middleman, seller — all connect. No accounts, no KYC queues. The wallet is the identity.',
+      body: 'Client, middleman, seller — three wallets connect. No accounts. No KYC queues. The wallet is the identity.',
     },
     ledger: {
       state: 'draft',
@@ -74,13 +77,13 @@ export const HIW_STEPS: HiwStep[] = [
     index: 1,
     rail: { num: '02', label: 'Sign' },
     narr: {
-      step: 'Step 02 · Sign',
+      step: 'STEP 02 — SIGN',
       title: (
         <Fragment>
           Terms signed <em>three times.</em>
         </Fragment>
       ),
-      body: 'Each wallet signs the deal on-chain. Terms locked: amount, fee split, arbitration rules. Nothing can change now.',
+      body: 'Each wallet signs on-chain. Amount, fee split, arbitration — all locked. Nothing can change now.',
     },
     ledger: {
       state: 'signed',
@@ -100,13 +103,13 @@ export const HIW_STEPS: HiwStep[] = [
     index: 2,
     rail: { num: '03', label: 'Lock' },
     narr: {
-      step: 'Step 03 · Lock',
+      step: 'STEP 03 — LOCK',
       title: (
         <Fragment>
           The contract <em>holds the money.</em>
         </Fragment>
       ),
-      body: '2,400 USDC flows from client into the contract. Not to the middleman, not to the seller — into code.',
+      body: '2,400 USDC flows from the client into the contract. Not to the middleman. Not to the seller. Into code.',
     },
     ledger: {
       state: 'locked',
@@ -127,13 +130,13 @@ export const HIW_STEPS: HiwStep[] = [
     index: 3,
     rail: { num: '04', label: 'Deliver' },
     narr: {
-      step: 'Step 04 · Deliver',
+      step: 'STEP 04 — DELIVER',
       title: (
         <Fragment>
           Work lands. <em>Both parties confirm.</em>
         </Fragment>
       ),
-      body: 'Seller delivers. Client accepts. Middleman stays silent unless called — the happy path skips them entirely.',
+      body: 'Seller delivers. Client accepts. The middleman stays silent — the happy path never touches them.',
     },
     ledger: {
       state: 'locked',
@@ -153,13 +156,13 @@ export const HIW_STEPS: HiwStep[] = [
     index: 4,
     rail: { num: '05', label: 'Release' },
     narr: {
-      step: 'Step 05 · Release',
+      step: 'STEP 05 — RELEASE',
       title: (
         <Fragment>
-          Funds released. <em>Three receipts minted.</em>
+          Funds released. <em>Three receipts, one block.</em>
         </Fragment>
       ),
-      body: 'Contract pays the seller, deducts the protocol fee and the middleman fee, mints a soulbound NFT to the middleman and receipts to the client and seller.',
+      body: 'Funds to the seller. Fee to the protocol. Fee to the middleman. One soulbound NFT, two signed receipts — minted in the same block.',
     },
     ledger: {
       state: 'released',

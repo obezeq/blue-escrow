@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { HowItWorksAnimations } from './HowItWorksAnimations';
 import { HiwDiagram } from './HiwDiagram';
+import { HiwPhaseDiagram } from './HiwPhaseDiagram';
 import { HIW_STEPS, LEDGER_LOGS } from './steps';
 import styles from './HowItWorks.module.scss';
 
@@ -124,10 +125,18 @@ export function HowItWorks() {
                   <div className={styles.hiw__narrationStep}>
                     {step.narr.step}
                   </div>
-                  <h3 className={styles.hiw__narrationTitle}>
+                  <h3
+                    className={styles.hiw__narrationTitle}
+                    data-animate="narr-title"
+                  >
                     {step.narr.title}
                   </h3>
-                  <p className={styles.hiw__narrationBody}>{step.narr.body}</p>
+                  <p
+                    className={styles.hiw__narrationBody}
+                    data-animate="narr-body"
+                  >
+                    {step.narr.body}
+                  </p>
                 </div>
               </div>
             </div>
@@ -149,6 +158,90 @@ export function HowItWorks() {
                 <span className={styles.hiw__railNum}>{s.rail.num}</span>
                 {s.rail.label}
               </button>
+            ))}
+          </nav>
+        </div>
+
+        <div
+          className={styles.hiw__deck}
+          aria-label="How it works — step deck"
+        >
+          {HIW_STEPS.map((s) => {
+            const stateCls = STATE_CLASS[s.ledger.state] ?? '';
+            return (
+              <section
+                key={s.index}
+                className={styles.hiw__phaseCard}
+                data-hiw-phase-card={s.index}
+                aria-labelledby={`hiw-card-${s.index}-title`}
+              >
+                <header className={styles.hiw__phaseCardHead}>
+                  <div
+                    className={styles.hiw__phaseCounter}
+                    data-animate
+                  >
+                    {s.narr.step}
+                  </div>
+                  <h3
+                    id={`hiw-card-${s.index}-title`}
+                    className={styles.hiw__phaseCardTitle}
+                    data-animate
+                  >
+                    {s.narr.title}
+                  </h3>
+                  <p
+                    className={styles.hiw__phaseCardBody}
+                    data-animate
+                  >
+                    {s.narr.body}
+                  </p>
+                </header>
+
+                <div
+                  className={styles.hiw__phaseCardDiagram}
+                  data-animate
+                >
+                  <HiwPhaseDiagram phase={s.index} />
+                </div>
+
+                <dl
+                  className={styles.hiw__phaseCardLedger}
+                  data-animate
+                >
+                  <div>
+                    <dt>Contract</dt>
+                    <dd>Escrow #4821</dd>
+                  </div>
+                  <div>
+                    <dt>State</dt>
+                    <dd className={`${styles.hiw__state} ${stateCls}`}>
+                      {s.ledger.stateLabel}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Amount</dt>
+                    <dd>
+                      {s.ledger.amount.toLocaleString()}{' '}
+                      <small>USDC</small>
+                    </dd>
+                  </div>
+                </dl>
+              </section>
+            );
+          })}
+          <nav
+            className={styles.hiw__phaseNav}
+            aria-label="Phase navigation"
+          >
+            {HIW_STEPS.map((s) => (
+              <a
+                key={s.index}
+                href={`#hiw-card-${s.index}-title`}
+                className={styles.hiw__phasePip}
+                aria-label={`Go to ${s.rail.label}`}
+              >
+                <span aria-hidden="true">●</span>
+              </a>
             ))}
           </nav>
         </div>
