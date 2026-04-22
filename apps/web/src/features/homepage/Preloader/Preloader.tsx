@@ -2,10 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLenis } from 'lenis/react';
-import {
-  isPreloaderDone,
-  markPreloaderDone,
-} from '@/lib/preloader/completion';
+import { markPreloaderDone } from '@/lib/preloader/completion';
 import { PreloaderAnimations } from './PreloaderAnimations';
 import styles from './Preloader.module.scss';
 
@@ -17,35 +14,21 @@ import styles from './Preloader.module.scss';
  * value consumed by the SCSS module is scoped local to .intro.
  *
  * Lifecycle:
- *   - Skipped on subsequent same-session visits (sessionStorage flag).
+ *   - Plays on every page load (F5 replays it — this is the intended
+ *     convention for Awwwards-grade intros).
  *   - Sets [data-preloader="active"] on <html> for the CSS scroll lock.
  *   - Locks Lenis and (as a fallback) the body via that attribute.
  *   - Delegates timing to PreloaderAnimations; fires `preloader:done` on
  *     completion so HeroAnimations can kick off without a hard-coded delay.
  */
 export function Preloader() {
-  // Skip immediately if the user has already watched the intro this session.
-  const skipOnMountRef = useRef<boolean>(
-    typeof document === 'undefined' ? false : isPreloaderDone(),
-  );
-  const [mounted, setMounted] = useState<boolean>(!skipOnMountRef.current);
+  const [mounted, setMounted] = useState<boolean>(true);
   const rootRef = useRef<HTMLDivElement>(null);
   const markRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLSpanElement>(null);
   const counterRef = useRef<HTMLSpanElement>(null);
   const shimmerRef = useRef<HTMLSpanElement>(null);
   const lenis = useLenis();
-
-  // Re-fire preloader:done once on mount if the session flag already
-  // indicates we ran through the intro — lets late-subscribing animations
-  // (HeroAnimations) start without waiting for an event that will never come.
-  useEffect(() => {
-    if (skipOnMountRef.current) {
-      markPreloaderDone();
-    }
-    // Intentional: skipOnMountRef is captured once at component instantiation.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Scroll lock via data attribute — survives any hydration / Lenis race.
   useEffect(() => {

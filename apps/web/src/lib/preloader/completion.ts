@@ -1,28 +1,24 @@
 // Single source of truth for the intro preloader completion signal.
 // HeroAnimations subscribes here instead of hard-coding a delay that must
 // stay in sync with the Preloader's GSAP timeline.
+//
+// The flag lives on <html> via `data-preloader="done"` — this handles the
+// race where the HeroAnimations effect fires AFTER the Preloader has
+// already completed (rare, but possible if dynamic import + hydration
+// schedule things out of order). Subscribers that mount mid-flight check
+// the attribute first and fire immediately instead of waiting for an
+// event that already fired.
 
 export const PRELOADER_DONE_EVENT = 'preloader:done' as const;
-export const PRELOADER_SESSION_KEY = 'preloader:done' as const;
 
 export function isPreloaderDone(): boolean {
   if (typeof document === 'undefined') return false;
-  if (document.documentElement.dataset.preloader === 'done') return true;
-  try {
-    return sessionStorage.getItem(PRELOADER_SESSION_KEY) === '1';
-  } catch {
-    return false;
-  }
+  return document.documentElement.dataset.preloader === 'done';
 }
 
 export function markPreloaderDone(): void {
   if (typeof document === 'undefined') return;
   document.documentElement.dataset.preloader = 'done';
-  try {
-    sessionStorage.setItem(PRELOADER_SESSION_KEY, '1');
-  } catch {
-    // Private mode or storage quota — the data attribute still signals completion.
-  }
   document.dispatchEvent(new CustomEvent(PRELOADER_DONE_EVENT));
 }
 

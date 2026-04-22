@@ -1,9 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, act } from '@testing-library/react';
-import {
-  PRELOADER_DONE_EVENT,
-  PRELOADER_SESSION_KEY,
-} from '@/lib/preloader/completion';
+import { PRELOADER_DONE_EVENT } from '@/lib/preloader/completion';
 
 const { gsapSet, gsapTo, gsapFrom, mmAdd } = vi.hoisted(() => ({
   gsapSet: vi.fn(),
@@ -41,11 +38,6 @@ afterEach(() => {
   gsapFrom.mockClear();
   mmAdd.mockClear();
   delete document.documentElement.dataset.preloader;
-  try {
-    sessionStorage.removeItem(PRELOADER_SESSION_KEY);
-  } catch {
-    /* noop */
-  }
 });
 
 describe('HeroAnimations', () => {
@@ -90,13 +82,4 @@ describe('HeroAnimations', () => {
     expect(mmAdd).toHaveBeenCalled();
   });
 
-  it('starts immediately if the session storage flag is set at mount', () => {
-    sessionStorage.setItem(PRELOADER_SESSION_KEY, '1');
-    render(
-      <HeroAnimations>
-        <h1>Hero</h1>
-      </HeroAnimations>,
-    );
-    expect(mmAdd).toHaveBeenCalled();
-  });
 });

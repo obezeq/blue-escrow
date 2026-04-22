@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, act } from '@testing-library/react';
 
 const { lenisStop, lenisStart, animationsOnComplete } = vi.hoisted(() => ({
@@ -24,10 +24,7 @@ vi.mock('./PreloaderAnimations', () => ({
 }));
 
 import { Preloader } from './Preloader';
-import {
-  PRELOADER_DONE_EVENT,
-  PRELOADER_SESSION_KEY,
-} from '@/lib/preloader/completion';
+import { PRELOADER_DONE_EVENT } from '@/lib/preloader/completion';
 
 afterEach(() => {
   cleanup();
@@ -35,11 +32,6 @@ afterEach(() => {
   lenisStart.mockClear();
   animationsOnComplete.current = null;
   delete document.documentElement.dataset.preloader;
-  try {
-    sessionStorage.removeItem(PRELOADER_SESSION_KEY);
-  } catch {
-    /* noop */
-  }
 });
 
 describe('Preloader — accessibility', () => {
@@ -140,22 +132,12 @@ describe('Preloader — completion signal', () => {
   });
 });
 
-describe('Preloader — session memory', () => {
-  beforeEach(() => {
-    sessionStorage.setItem(PRELOADER_SESSION_KEY, '1');
-  });
-
-  it('skips rendering if the session flag is already set', () => {
+describe('Preloader — F5 replay behaviour', () => {
+  it('re-renders on page reload (no session gating)', () => {
+    // Simulate a previous visit that completed the intro.
+    document.documentElement.dataset.preloader = 'done';
     render(<Preloader />);
-    expect(screen.queryByRole('progressbar')).toBeNull();
-  });
-
-  it('still fires preloader:done on mount so HeroAnimations starts', () => {
-    const handler = vi.fn();
-    document.addEventListener(PRELOADER_DONE_EVENT, handler);
-    render(<Preloader />);
-    expect(handler).toHaveBeenCalledTimes(1);
-    document.removeEventListener(PRELOADER_DONE_EVENT, handler);
+    expect(screen.getByRole('progressbar')).toBeDefined();
   });
 });
 

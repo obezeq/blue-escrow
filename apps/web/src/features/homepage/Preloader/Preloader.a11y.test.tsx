@@ -2,7 +2,6 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 import { mockMatchMedia } from '@/test/setup';
-import { PRELOADER_SESSION_KEY } from '@/lib/preloader/completion';
 
 vi.mock('lenis/react', () => ({
   useLenis: () => ({ stop: vi.fn(), start: vi.fn() }),
@@ -18,11 +17,6 @@ import { Preloader } from './Preloader';
 afterEach(() => {
   cleanup();
   delete document.documentElement.dataset.preloader;
-  try {
-    sessionStorage.removeItem(PRELOADER_SESSION_KEY);
-  } catch {
-    /* noop */
-  }
 });
 
 describe('Preloader — axe accessibility', () => {
