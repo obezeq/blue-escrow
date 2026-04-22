@@ -36,6 +36,22 @@ export function TheProblem() {
               The middleman is{' '}
               <s className={styles.problem__struck} data-animate="stranger">
                 <span className={styles.problem__red}>a stranger too</span>
+                <svg
+                  className={styles.problem__strike}
+                  aria-hidden="true"
+                  viewBox="0 0 100 6"
+                  preserveAspectRatio="none"
+                  focusable="false"
+                >
+                  <path
+                    d="M1 3 Q 30 1.6 50 3.1 T 99 3"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    fill="none"
+                    pathLength="100"
+                  />
+                </svg>
               </s>
               .
             </p>
