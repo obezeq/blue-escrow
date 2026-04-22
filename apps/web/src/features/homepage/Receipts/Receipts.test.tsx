@@ -55,4 +55,49 @@ describe('Receipts (v6)', () => {
       'On-chain receipts minted per deal',
     );
   });
+
+  it('renders the SoulVisual SVG with its 3 concentric circles in the soul card', () => {
+    const { container } = render(<Receipts />);
+    const soulSvg = container.querySelector(
+      '.receipts__card--soul svg[aria-hidden="true"]',
+    );
+    expect(soulSvg).not.toBeNull();
+    expect(soulSvg?.querySelector('circle[r="72"]')).not.toBeNull();
+    expect(soulSvg?.querySelector('circle[r="56"]')).not.toBeNull();
+    expect(soulSvg?.querySelector('circle[r="36"]')).not.toBeNull();
+  });
+
+  it('renders the ClientVisual checkmark path inside the client card', () => {
+    const { container } = render(<Receipts />);
+    const clientSvg = container.querySelector(
+      '.receipts__card--client svg[aria-hidden="true"]',
+    );
+    expect(clientSvg).not.toBeNull();
+    expect(clientSvg?.querySelector('path[d^="M 68 108"]')).not.toBeNull();
+  });
+
+  it('renders the SellerVisual hexagon polygon inside the seller card', () => {
+    const { container } = render(<Receipts />);
+    const sellerSvg = container.querySelector(
+      '.receipts__card--seller svg[aria-hidden="true"]',
+    );
+    expect(sellerSvg).not.toBeNull();
+    expect(sellerSvg?.querySelectorAll('polygon').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('preserves all 3 variant class hooks for SCSS theme overrides', () => {
+    const { container } = render(<Receipts />);
+    expect(container.querySelector('.receipts__card--soul')).not.toBeNull();
+    expect(container.querySelector('.receipts__card--client')).not.toBeNull();
+    expect(container.querySelector('.receipts__card--seller')).not.toBeNull();
+  });
+
+  it('keeps the SoulVisual SVG strokes wired through currentColor', () => {
+    // The migration to currentColor lets the soul card colour propagate down
+    // automatically. If anyone reverts to literal hex / rgba, this guards it.
+    const { container } = render(<Receipts />);
+    const soulSvg = container.querySelector('.receipts__card--soul svg');
+    const dashedRing = soulSvg?.querySelector('circle[stroke-dasharray="2 5"]');
+    expect(dashedRing?.getAttribute('stroke')).toBe('currentColor');
+  });
 });

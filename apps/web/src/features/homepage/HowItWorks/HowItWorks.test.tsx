@@ -37,35 +37,45 @@ describe('HowItWorks (v6)', () => {
   });
 
   it('starts on step 01 with the Meet narration', () => {
-    render(<HowItWorks />);
+    const { container } = render(<HowItWorks />);
+    // Narration label format may be "Step 01 · Meet" or "STEP 01 — MEET";
+    // match either via case-insensitive regex with both separators.
     expect(
-      screen.getAllByText(/Step 01 · Meet/).length,
+      screen.getAllByText(/step\s*01\s*[·—]\s*meet/i).length,
     ).toBeGreaterThanOrEqual(1);
-    const narrationTitle = screen.getByRole('heading', { level: 3 });
-    expect(narrationTitle.textContent).toContain('Three wallets');
+    // Multiple h3s exist now (desktop narration + mobile deck cards). Scope
+    // the query to the live narration block.
+    const narrationTitle = container.querySelector('.hiw__narrationTitle');
+    expect(narrationTitle?.textContent).toContain('Three wallets');
   });
 
   it('switches the active step when a rail button is clicked', () => {
-    render(<HowItWorks />);
+    const { container } = render(<HowItWorks />);
     fireEvent.click(screen.getByText('Lock').closest('button')!);
     expect(
-      screen.getAllByText(/Step 03 · Lock/).length,
+      screen.getAllByText(/step\s*03\s*[·—]\s*lock/i).length,
     ).toBeGreaterThanOrEqual(1);
-    const narrationTitle = screen.getByRole('heading', { level: 3 });
-    expect(narrationTitle.textContent).toContain('The contract');
+    const narrationTitle = container.querySelector('.hiw__narrationTitle');
+    expect(narrationTitle?.textContent).toContain('The contract');
   });
 
   it('updates the ledger amount when phase advances to Lock', () => {
-    render(<HowItWorks />);
+    const { container } = render(<HowItWorks />);
     fireEvent.click(screen.getByText('Lock').closest('button')!);
-    expect(screen.getByText('2,400')).toBeDefined();
+    // "2,400" appears both as the big ledger number and as the log entry
+    // "2,400 USDC locked" — scope to the data-tagged ledger amount.
+    const amount = container.querySelector('[data-hiw-ledger="amount"]');
+    expect(amount?.textContent).toBe('2,400');
   });
 
   it('updates the state chip label per phase', () => {
-    render(<HowItWorks />);
-    expect(screen.getByText('Draft')).toBeDefined();
+    const { container } = render(<HowItWorks />);
+    // "Draft" / "Released" can appear in the state chip AND in the aside
+    // aria-label ("Escrow #4821 · Draft"). Scope to the chip via .hiw__state.
+    const chip = () => container.querySelector('.hiw__state');
+    expect(chip()?.textContent).toMatch(/draft/i);
     fireEvent.click(screen.getByText('Release').closest('button')!);
-    expect(screen.getByText('Released')).toBeDefined();
+    expect(chip()?.textContent).toMatch(/released/i);
   });
 
   it('marks the active rail button with aria-pressed=true', () => {
@@ -123,5 +133,33 @@ describe('HowItWorks (v6)', () => {
     rails.forEach((btn, i) => {
       expect(btn.getAttribute('data-hiw-rail')).toBe(String(i));
     });
+  });
+
+  it('preserves the wire-base data-hiw selectors after the SVG class migration', () => {
+    // After moving stroke="#213B78" to className={hiw__diagWire}, the
+    // GSAP-targeted selectors must still be queryable by attribute.
+    const { container } = render(<HowItWorks />);
+    expect(container.querySelector('[data-hiw="wire-base-C"]')).not.toBeNull();
+    expect(container.querySelector('[data-hiw="wire-base-M"]')).not.toBeNull();
+    expect(container.querySelector('[data-hiw="wire-base-S"]')).not.toBeNull();
+  });
+
+  it('preserves actor SVG roots (data-hiw="actor-*") and the packet for GSAP', () => {
+    const { container } = render(<HowItWorks />);
+    expect(container.querySelector('[data-hiw="actor-client"]')).not.toBeNull();
+    expect(container.querySelector('[data-hiw="actor-mid"]')).not.toBeNull();
+    expect(container.querySelector('[data-hiw="actor-seller"]')).not.toBeNull();
+    expect(container.querySelector('[data-hiw="packet"]')).not.toBeNull();
+  });
+
+  it('keeps the diagram theme-aware classes attached to the SVG actor pucks', () => {
+    // Regression: after the className migration these classes must show up
+    // on the actor circles (vitest.config has classNameStrategy: non-scoped
+    // so we can match the literal CSS Module name).
+    const { container } = render(<HowItWorks />);
+    const pucks = container.querySelectorAll('.hiw__diagActorPuck');
+    expect(pucks.length).toBe(3);
+    const roleLabels = container.querySelectorAll('.hiw__diagActorRole');
+    expect(roleLabels.length).toBe(3);
   });
 });
