@@ -170,3 +170,28 @@ describe('Receipts (v6)', () => {
     expect(check?.getAttribute('stroke')).toBe('var(--receipt-accent)');
   });
 });
+
+describe('Receipts v6 — Soulbound theme-flip regression', () => {
+  it('SoulVisual radial stops consume var(--receipt-soul-core) via inline style', () => {
+    const { container } = render(<Receipts />);
+    const stops = container.querySelectorAll('#receipt-soul-gradient stop');
+    expect(stops.length).toBe(2);
+    stops.forEach((stop) => {
+      const style = stop.getAttribute('style') ?? '';
+      expect(style).toMatch(/stop-color:\s*var\(--receipt-soul-core\)/);
+    });
+  });
+
+  it('SoulVisual rings + crosshairs still use stroke="currentColor"', () => {
+    const { container } = render(<Receipts />);
+    const soulGradient = container.querySelector('#receipt-soul-gradient');
+    expect(soulGradient).toBeTruthy();
+    const soulSvg = soulGradient!.closest('svg');
+    expect(soulSvg).toBeTruthy();
+    const strokedChildren = soulSvg!.querySelectorAll('[stroke]');
+    expect(strokedChildren.length).toBeGreaterThanOrEqual(6);
+    strokedChildren.forEach((el) => {
+      expect(el.getAttribute('stroke')).toBe('currentColor');
+    });
+  });
+});
