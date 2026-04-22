@@ -135,9 +135,14 @@
 .hiw__stage {
   position: relative;
   // svh (small viewport height) avoids iOS URL-bar jitter that 100vh triggers.
-  block-size: 100svh;
-  max-block-size: 100svh;
-  min-block-size: 640px;
+  // Subtract the fixed site header (72px / 4.5rem, see --header-height in
+  // settings/_variables.scss) so the pinned stage fits between the header
+  // and the bottom of the viewport. ScrollTrigger's `start` offset (set in
+  // HowItWorksAnimations.tsx) anchors pin activation at y = --header-height
+  // so the ledger header (Contract / Escrow #4821) isn't occluded.
+  block-size: calc(100svh - var(--header-height));
+  max-block-size: calc(100svh - var(--header-height));
+  min-block-size: calc(640px - var(--header-height));
   padding-block: clamp(16px, 3vh, 40px);
   // Same fluid rule as .hiw__wrap — 20px min matches the old mobile
   // fallback, 40px max matches desktop.
@@ -197,7 +202,7 @@
   }
 
   // Mobile step-deck replaces the stage; skip the expensive overlays.
-  @media (max-width: 899px), (max-height: 699px) {
+  @media (max-width: 899px), (max-height: 771px) {
     display: none;
   }
 }
@@ -819,7 +824,7 @@
   }
 
   // Desktop only — mobile uses .hiw__phaseNav instead.
-  @media (max-width: 899px), (max-height: 699px) {
+  @media (max-width: 899px), (max-height: 771px) {
     display: none;
   }
 }
@@ -979,7 +984,7 @@
 .hiw__deck {
   display: none;
 
-  @media (max-width: 899px), (max-height: 699px) {
+  @media (max-width: 899px), (max-height: 771px) {
     display: block;
     position: relative;
     scroll-snap-type: y mandatory;
