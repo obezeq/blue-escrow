@@ -22,7 +22,12 @@ export const metadata: Metadata = {
   title: 'Blue Escrow — Decentralized Escrow on Arbitrum',
   description:
     "Your money in a smart contract. Not in someone's pocket. On-chain reputation. 0.33% flat fee.",
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
+    type: 'website',
+    siteName: 'Blue Escrow',
     title: 'Blue Escrow — Decentralized Escrow on Arbitrum',
     description:
       "Your money in a smart contract. Not in someone's pocket. On-chain reputation. 0.33% flat fee.",
@@ -33,6 +38,8 @@ export const metadata: Metadata = {
     title: 'Blue Escrow — Decentralized Escrow on Arbitrum',
     description:
       "Your money in a smart contract. Not in someone's pocket. On-chain reputation. 0.33% flat fee.",
+    images: ['/og-image.png'],
+    creator: '@blueescrow',
   },
 };
 
