@@ -16,6 +16,12 @@ export function CtaSectionAnimations({
       if (!containerRef.current) return;
       const container = containerRef.current;
       const mm = gsap.matchMedia();
+      // Captured so the cleanup path can `revert()` the SplitText DOM
+      // wrapping on unmount. Without this, React remount / HMR / route
+      // re-entry would stack duplicate <div>-per-word spans on the
+      // heading. `onSplit` replaces the value when SplitText re-splits
+      // under `autoSplit: true`.
+      let split: SplitText | null = null;
 
       mm.add('(prefers-reduced-motion: no-preference)', () => {
         const eyebrow = container.querySelector('[data-animate="eyebrow"]');
@@ -37,10 +43,13 @@ export function CtaSectionAnimations({
         }
 
         if (heading) {
-          SplitText.create(heading, {
+          split = SplitText.create(heading, {
             type: 'words',
             autoSplit: true,
             onSplit(self) {
+              // `autoSplit: true` recreates splits on container resize; keep
+              // the outer capture up-to-date so cleanup reverts the latest.
+              split = self;
               return gsap.from(self.words, {
                 yPercent: 110,
                 opacity: 0,
@@ -78,6 +87,17 @@ export function CtaSectionAnimations({
           clearProps: 'all',
         });
       });
+
+      // Explicit revert on unmount — useGSAP's context auto-kills tweens
+      // but does NOT undo DOM mutations from SplitText. Reverting
+      // restores the original text node so a re-mount (React strict-mode,
+      // HMR, route re-entry) doesn't stack another layer of word spans.
+      return () => {
+        if (split) {
+          split.revert();
+          split = null;
+        }
+      };
     },
     { scope: containerRef },
   );
