@@ -1,4 +1,5 @@
 @use '../../../styles/settings/variables' as *;
+@use '../../../styles/tools/mixins' as *;
 
 // ============================================================================
 // RECEIPTS — v6 .receipts (Blue Escrow v6.html:1643-1717, CSS 1061-1118).
@@ -90,7 +91,7 @@
 }
 
 .receipts__subtitle {
-  font-size: 17px;
+  font-size: clamp(16px, 1.6vw, 18px);
   color: var(--text-muted);
   max-width: 46ch;
   margin: 0;
@@ -110,25 +111,22 @@
 }
 
 .receipts__card {
+  @include card-floating;
+
   aspect-ratio: 3/4;
-  border-radius: 24px;
   padding: 28px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--on-border);
-  transition: transform 0.6s var(--ease-out-expo);
   transform-style: preserve-3d;
   will-change: transform;
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
 }
 
 .receipts__card--soul {
+  @include holographic-edge(0.25);
+
   // Tokenized — same gradient stack as before, now reusable as
   // --surface-premium-dark (also future Compare/CTA premium cards).
   background: var(--surface-premium-dark);
@@ -140,6 +138,8 @@
   // No backdrop-filter: the card is opaque, the "glass" comes from the
   // interior white-translucent layer (better mobile perf, no blur jank).
   :root[data-theme='light'] & {
+    @include holographic-edge(0.4);
+
     background:
       var(--surface-premium-overlay),
       var(--surface-premium-dark);
@@ -163,6 +163,7 @@
 
   :root[data-theme='light'] & {
     background:
+      var(--surface-client-overlay),
       radial-gradient(
         circle at 80% 0%,
         rgba(0, 145, 255, 0.15),
@@ -170,6 +171,9 @@
       ),
       linear-gradient(180deg, #fff, var(--bg-tint));
     border-color: var(--border);
+    box-shadow:
+      var(--shadow-elev),
+      0 1px 0 rgba(255, 255, 255, 0.9) inset;
   }
 }
 
@@ -185,6 +189,7 @@
 
   :root[data-theme='light'] & {
     background:
+      var(--surface-seller-overlay),
       radial-gradient(
         circle at 0% 100%,
         rgba(0, 85, 224, 0.18),
@@ -193,6 +198,9 @@
       linear-gradient(135deg, var(--bg-tint), #fff);
     color: var(--text);
     border-color: var(--border);
+    box-shadow:
+      var(--shadow-elev),
+      0 1px 0 rgba(255, 255, 255, 0.9) inset;
   }
 }
 
@@ -204,25 +212,33 @@
   font-size: var(--t-caption-sm);
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  opacity: 0.78;
+  color: color-mix(in oklab, currentColor 78%, transparent);
 
   strong {
-    opacity: 1;
     font-weight: 500;
+    color: currentColor;
   }
 }
 
 .receipts__visual {
+  margin: 0;
+  padding: 20px 0;
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px 0;
 
   svg {
     width: 75%;
     max-width: 240px;
   }
+}
+
+.receipts__footer {
+  display: contents;
+  // Semantic <footer> wrapper; "display: contents" keeps the flex layout
+  // of the <article> unchanged. If visual grouping is ever needed, swap
+  // to a block layout.
 }
 
 .receipts__title {
@@ -235,15 +251,28 @@
 }
 
 .receipts__meta {
+  margin: 0;
+  padding: 0;
   font-family: var(--ff-mono);
   font-size: var(--t-caption-sm);
-  opacity: 0.82;
+  color: color-mix(in oklab, currentColor 82%, transparent);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+
+  dt {
+    // dt rows are visually-hidden (label); reset browser defaults.
+    margin: 0;
+    padding: 0;
+  }
+
+  dd {
+    margin: 0;
+    padding: 0;
+  }
 }
 
 .receipts__hash {
-  font-size: 10px;
-  opacity: 0.6;
+  font-size: var(--t-caption-sm); // 11px — was 10px, WCAG margin
+  color: color-mix(in oklab, currentColor 64%, transparent);
 }
