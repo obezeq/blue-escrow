@@ -30,21 +30,36 @@ test.describe('HowItWorks pin anchor + phase journey', () => {
         );
         await page.waitForSelector('#hiw nav[aria-label="How it works step rail"]');
 
-        // 1. Scroll to stage top (where `start: 'top top'` fires the pin).
-        const targetY = await page.evaluate(() => {
+        // 1. Scroll to pin activation point. Pin now activates when the
+        //    stage top reaches `--header-height` px below the viewport top
+        //    (#96 — the fixed site header covered the ledger at top:top).
+        const { stageDocY, headerPx } = await page.evaluate(() => {
           const el = document.querySelector<HTMLElement>(
             '#hiw [class*="hiw__stage"]',
           );
           if (!el) throw new Error('hiw__stage not found');
-          return el.getBoundingClientRect().top + window.scrollY;
+          const headerRem =
+            parseFloat(
+              getComputedStyle(document.documentElement).getPropertyValue(
+                '--header-height',
+              ),
+            ) || 4.5;
+          const rem =
+            parseFloat(getComputedStyle(document.documentElement).fontSize) ||
+            16;
+          return {
+            stageDocY: el.getBoundingClientRect().top + window.scrollY,
+            headerPx: headerRem * rem,
+          };
         });
+        const targetY = stageDocY - headerPx;
         await page.evaluate(
           (y) => window.scrollTo({ top: y, behavior: 'instant' as ScrollBehavior }),
           targetY,
         );
         await page.waitForTimeout(400); // let scrub / snap settle
 
-        // 2. __hiwStageTrigger.start matches stage top (within 1px tolerance).
+        // 2. __hiwStageTrigger.start equals stageDocY - headerPx (within 1px).
         const triggerStart = await page.evaluate(() => {
           const hook = (window as unknown as {
             __hiwStageTrigger?: { start: number };
@@ -71,6 +86,37 @@ test.describe('HowItWorks pin anchor + phase journey', () => {
         expect(railBox).not.toBeNull();
         expect(railBox!.y).toBeGreaterThanOrEqual(0);
         expect(railBox!.y + railBox!.height).toBeLessThanOrEqual(vp.height + 1); // +1 for sub-pixel
+
+        // --- Site header must not overlap the ledger header (#96). ---
+        const siteHeader = page.locator('header[class*="Header-module"]');
+        const siteHeaderBox = await siteHeader.boundingBox();
+        expect(siteHeaderBox).not.toBeNull();
+
+        const ledgerHead = page.locator('#hiw [class*="hiw__ledgerHead"]');
+        const ledgerHeadBox = await ledgerHead.boundingBox();
+        expect(ledgerHeadBox).not.toBeNull();
+
+        expect(ledgerHeadBox!.y).toBeGreaterThanOrEqual(
+          siteHeaderBox!.y + siteHeaderBox!.height - 1,
+        );
+
+        // --- All 3 actor pucks visible at pin activation (#96). ---
+        const actorOpacities = await page.evaluate(() => {
+          const actors = Array.from(
+            document.querySelectorAll('[data-hiw^="actor-"]'),
+          ) as SVGGElement[];
+          return actors.map((a) => ({
+            dataHiw: a.getAttribute('data-hiw'),
+            opacity: parseFloat(window.getComputedStyle(a).opacity),
+          }));
+        });
+        expect(actorOpacities.length).toBe(3);
+        for (const actor of actorOpacities) {
+          expect(
+            actor.opacity,
+            `actor ${actor.dataHiw} visible at pin start (opacity >= 0.9)`,
+          ).toBeGreaterThanOrEqual(0.9);
+        }
 
         // 4. Scrub through the pin — collect distinct chip states.
         const chip = page.locator(
