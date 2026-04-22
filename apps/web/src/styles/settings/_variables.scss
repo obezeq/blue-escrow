@@ -143,10 +143,12 @@ $bp-section: 900px;
   --on-card:       rgba(255, 255, 255, 0.06);
   --on-border:     rgba(255, 255, 255, 0.12);
 
+  // v6.html-literal values (rgba, not color-mix): upper glow 70×60 at 50/40
+  // a=0.32, lower glow 90×60 at 80/100 a=0.28, linear from #021039 to #03091c.
   --hero-grad:
-    radial-gradient(ellipse 60% 50% at 50% 30%, color-mix(in srgb, var(--blue-vivid) 35%, transparent), transparent 70%),
-    radial-gradient(ellipse 80% 60% at 80% 90%, color-mix(in srgb, var(--blue-primary) 25%, transparent), transparent 70%),
-    linear-gradient(180deg, #001b4d 0%, #0b1117 70%);
+    radial-gradient(ellipse 70% 60% at 50% 40%, rgba(0, 145, 255, 0.32), transparent 72%),
+    radial-gradient(ellipse 90% 60% at 80% 100%, rgba(0, 102, 255, 0.28), transparent 70%),
+    linear-gradient(180deg, #021039 0%, #03091c 70%);
   --blue-band:
     linear-gradient(135deg, var(--blue-primary) 0%, var(--blue-vivid) 100%);
 }
@@ -173,10 +175,13 @@ $bp-section: 900px;
   --on-card:       rgba(0, 27, 77, 0.04);
   --on-border:     rgba(0, 27, 77, 0.10);
 
+  // v6.html-literal values (rgba, not color-mix): lower glow shifts to 85% X
+  // with blue-deep (#0055e0), linear base #e6effc (less saturated than
+  // #e6f1ff), end #fbfcfe (not pure white — preserves subtle blue tint).
   --hero-grad:
-    radial-gradient(ellipse 70% 60% at 50% 30%, color-mix(in srgb, var(--blue-vivid) 18%, transparent), transparent 70%),
-    radial-gradient(ellipse 80% 60% at 80% 90%, color-mix(in srgb, var(--blue-primary) 10%, transparent), transparent 70%),
-    linear-gradient(180deg, #e6f1ff 0%, #ffffff 70%);
+    radial-gradient(ellipse 75% 70% at 50% 30%, rgba(0, 145, 255, 0.16), transparent 70%),
+    radial-gradient(ellipse 80% 60% at 85% 100%, rgba(0, 85, 224, 0.10), transparent 72%),
+    linear-gradient(180deg, #e6effc 0%, #fbfcfe 70%);
   --blue-band:
     linear-gradient(135deg, var(--blue-primary) 0%, var(--blue-vivid) 100%);
 }
