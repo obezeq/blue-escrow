@@ -11,11 +11,18 @@ vi.mock('lenis/react', () => ({
 }));
 
 import { Preloader } from './Preloader';
-import { PRELOADER_DONE_EVENT } from '@/lib/preloader/completion';
+import {
+  PRELOADER_DONE_EVENT,
+  PRELOADER_EXIT_START_EVENT,
+} from '@/lib/preloader/completion';
+import { mockMatchMedia } from '@/test/setup';
 
 // Baseline & compressed network budgets the Preloader uses internally.
 const DEFAULT_BUDGET_MS = 2800 + 1100 + 120;
 const SLOW_NET_BUDGET_MS = 1600;
+// Exit-start offsets (CSS `introOut` kickoff) — compressed on 2g/slow-2g.
+const EXIT_START_MS_DEFAULT = 2800;
+const EXIT_START_MS_SLOW_NET = 1200;
 
 // Install a stub `navigator.connection` for the adaptive-budget path.
 // The Navigator type doesn't expose `connection`, so cast through the
@@ -241,5 +248,203 @@ describe('Preloader — skip control', () => {
       fireEvent.keyDown(skip, { key: ' ' });
     });
     expect(screen.queryByRole('progressbar')).toBeNull();
+  });
+});
+
+describe('Preloader — exit-start signal', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  it('dispatches preloader:exit-start at 2800ms on default network', () => {
+    const exitStartSpy = vi.fn();
+    document.addEventListener(PRELOADER_EXIT_START_EVENT, exitStartSpy);
+    try {
+      render(<Preloader />);
+      // Before crossing the threshold: no dispatch yet.
+      act(() => {
+        vi.advanceTimersByTime(EXIT_START_MS_DEFAULT - 1);
+      });
+      expect(exitStartSpy).not.toHaveBeenCalled();
+      // Cross the threshold: exit-start fires exactly once and data flips.
+      act(() => {
+        vi.advanceTimersByTime(1);
+      });
+      expect(exitStartSpy).toHaveBeenCalledTimes(1);
+      // `data-preloader` is either 'exiting' (right at the signal) or 'done'
+      // if the hide budget has already elapsed. We only care that it has
+      // progressed past 'active'.
+      const state = document.documentElement.dataset.preloader;
+      expect(['exiting', 'done']).toContain(state);
+    } finally {
+      document.removeEventListener(PRELOADER_EXIT_START_EVENT, exitStartSpy);
+    }
+  });
+
+  it('dispatches preloader:exit-start at 1200ms on slow-2g', () => {
+    const restore = installConnection('slow-2g');
+    const exitStartSpy = vi.fn();
+    document.addEventListener(PRELOADER_EXIT_START_EVENT, exitStartSpy);
+    try {
+      render(<Preloader />);
+      // Just before the compressed budget — must not have fired yet.
+      act(() => {
+        vi.advanceTimersByTime(EXIT_START_MS_SLOW_NET - 1);
+      });
+      expect(exitStartSpy).not.toHaveBeenCalled();
+      // Crossing the compressed threshold fires exit-start (not 2800ms).
+      act(() => {
+        vi.advanceTimersByTime(1);
+      });
+      expect(exitStartSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      document.removeEventListener(PRELOADER_EXIT_START_EVENT, exitStartSpy);
+      restore();
+    }
+  });
+
+  it('skip button fires exit-start before done, each exactly once', () => {
+    const exitStartSpy = vi.fn();
+    const doneSpy = vi.fn();
+    document.addEventListener(PRELOADER_EXIT_START_EVENT, exitStartSpy);
+    document.addEventListener(PRELOADER_DONE_EVENT, doneSpy);
+    try {
+      render(<Preloader />);
+      const skip = screen.getByRole('button', { name: 'Skip preloader' });
+      act(() => {
+        fireEvent.click(skip);
+      });
+      expect(exitStartSpy).toHaveBeenCalledTimes(1);
+      expect(doneSpy).toHaveBeenCalledTimes(1);
+      // Ordering: exit-start fires BEFORE done within the same finish() call.
+      // The toHaveBeenCalledTimes(1) assertions above guarantee [0] is set.
+      const exitOrder = exitStartSpy.mock.invocationCallOrder[0]!;
+      const doneOrder = doneSpy.mock.invocationCallOrder[0]!;
+      expect(exitOrder).toBeLessThan(doneOrder);
+      // After finish(), the rest of the intro budget must not double-fire
+      // either event (the scheduled timers are guarded by idempotency).
+      act(() => {
+        vi.advanceTimersByTime(DEFAULT_BUDGET_MS + 100);
+      });
+      expect(exitStartSpy).toHaveBeenCalledTimes(1);
+      expect(doneSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      document.removeEventListener(PRELOADER_EXIT_START_EVENT, exitStartSpy);
+      document.removeEventListener(PRELOADER_DONE_EVENT, doneSpy);
+    }
+  });
+
+  it('Enter key on skip fires exit-start before done, each exactly once', () => {
+    const exitStartSpy = vi.fn();
+    const doneSpy = vi.fn();
+    document.addEventListener(PRELOADER_EXIT_START_EVENT, exitStartSpy);
+    document.addEventListener(PRELOADER_DONE_EVENT, doneSpy);
+    try {
+      render(<Preloader />);
+      const skip = screen.getByRole('button', { name: 'Skip preloader' });
+      act(() => {
+        fireEvent.keyDown(skip, { key: 'Enter' });
+      });
+      expect(exitStartSpy).toHaveBeenCalledTimes(1);
+      expect(doneSpy).toHaveBeenCalledTimes(1);
+      expect(exitStartSpy.mock.invocationCallOrder[0]!).toBeLessThan(
+        doneSpy.mock.invocationCallOrder[0]!,
+      );
+    } finally {
+      document.removeEventListener(PRELOADER_EXIT_START_EVENT, exitStartSpy);
+      document.removeEventListener(PRELOADER_DONE_EVENT, doneSpy);
+    }
+  });
+
+  it('Space key on skip fires exit-start before done, each exactly once', () => {
+    const exitStartSpy = vi.fn();
+    const doneSpy = vi.fn();
+    document.addEventListener(PRELOADER_EXIT_START_EVENT, exitStartSpy);
+    document.addEventListener(PRELOADER_DONE_EVENT, doneSpy);
+    try {
+      render(<Preloader />);
+      const skip = screen.getByRole('button', { name: 'Skip preloader' });
+      act(() => {
+        fireEvent.keyDown(skip, { key: ' ' });
+      });
+      expect(exitStartSpy).toHaveBeenCalledTimes(1);
+      expect(doneSpy).toHaveBeenCalledTimes(1);
+      expect(exitStartSpy.mock.invocationCallOrder[0]!).toBeLessThan(
+        doneSpy.mock.invocationCallOrder[0]!,
+      );
+    } finally {
+      document.removeEventListener(PRELOADER_EXIT_START_EVENT, exitStartSpy);
+      document.removeEventListener(PRELOADER_DONE_EVENT, doneSpy);
+    }
+  });
+
+  it('reduced-motion at mount fires both events exactly once and skips the overlay', () => {
+    const restoreMedia = mockMatchMedia((q) => q.includes('reduce'));
+    const exitStartSpy = vi.fn();
+    const doneSpy = vi.fn();
+    document.addEventListener(PRELOADER_EXIT_START_EVENT, exitStartSpy);
+    document.addEventListener(PRELOADER_DONE_EVENT, doneSpy);
+    try {
+      const { container } = render(<Preloader />);
+      // Overlay DOM must NOT exist when reduced-motion kicked in at mount.
+      expect(container.querySelector('[role="progressbar"]')).toBeNull();
+      // Both signals must have fired exactly once (and in the right order).
+      expect(exitStartSpy).toHaveBeenCalledTimes(1);
+      expect(doneSpy).toHaveBeenCalledTimes(1);
+      expect(exitStartSpy.mock.invocationCallOrder[0]!).toBeLessThan(
+        doneSpy.mock.invocationCallOrder[0]!,
+      );
+      // Final state: 'done' (exit-start marks 'exiting', done overrides).
+      expect(document.documentElement.dataset.preloader).toBe('done');
+    } finally {
+      document.removeEventListener(PRELOADER_EXIT_START_EVENT, exitStartSpy);
+      document.removeEventListener(PRELOADER_DONE_EVENT, doneSpy);
+      restoreMedia();
+    }
+  });
+
+  it('exit-start is idempotent: scheduled timer + skip tap coalesce to one dispatch', () => {
+    const exitStartSpy = vi.fn();
+    document.addEventListener(PRELOADER_EXIT_START_EVENT, exitStartSpy);
+    try {
+      render(<Preloader />);
+      // Advance exactly to the scheduled exit-start — first (and only) emission.
+      act(() => {
+        vi.advanceTimersByTime(EXIT_START_MS_DEFAULT);
+      });
+      expect(exitStartSpy).toHaveBeenCalledTimes(1);
+      // Now click skip — finish() re-invokes markPreloaderExitStart(), but
+      // the 'exiting'/'done' guard suppresses a second dispatch.
+      const skip = screen.getByRole('button', { name: 'Skip preloader' });
+      act(() => {
+        fireEvent.click(skip);
+      });
+      expect(exitStartSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      document.removeEventListener(PRELOADER_EXIT_START_EVENT, exitStartSpy);
+    }
+  });
+
+  it('data-preloader state machine: active → exiting → done', () => {
+    // Pre-mount sanity: afterEach wiped the attribute; start from blank.
+    expect(document.documentElement.dataset.preloader).toBeUndefined();
+    render(<Preloader />);
+    // Post-mount: the mount effect sets 'active'.
+    expect(document.documentElement.dataset.preloader).toBe('active');
+    // Halfway through the budget — still 'active'.
+    act(() => {
+      vi.advanceTimersByTime(EXIT_START_MS_DEFAULT - 1);
+    });
+    expect(document.documentElement.dataset.preloader).toBe('active');
+    // At 2800ms — transitions to 'exiting'.
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(document.documentElement.dataset.preloader).toBe('exiting');
+    // At the full hide budget — transitions to 'done'.
+    act(() => {
+      vi.advanceTimersByTime(DEFAULT_BUDGET_MS - EXIT_START_MS_DEFAULT + 100);
+    });
+    expect(document.documentElement.dataset.preloader).toBe('done');
   });
 });

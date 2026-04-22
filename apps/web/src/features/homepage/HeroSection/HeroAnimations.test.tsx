@@ -40,7 +40,6 @@ const {
     gsapTo: vi.fn(),
     gsapFrom: vi.fn(),
     gsapFromTo: vi.fn(),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     timelineFactory: vi.fn((_config?: unknown) => makeTimeline()),
     tlCalls: calls,
     mmAdd: vi.fn(),
@@ -296,8 +295,9 @@ describe('HeroAnimations', () => {
     expect(splitCreateCalls.length).toBe(1);
 
     // The SplitText's chars must feed into timeline.from — not top-level
-    // gsap.from.
-    const split = splitCreateCalls[0];
+    // gsap.from. Length assertion above proves the index is populated, so
+    // the non-null assertion is safe under noUncheckedIndexedAccess.
+    const split = splitCreateCalls[0]!;
     const fromFedTheChars = tlCalls.some(
       (c) => c.method === 'from' && c.args[0] === split.chars,
     );
