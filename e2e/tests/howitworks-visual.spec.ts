@@ -1,18 +1,16 @@
 import { expect, test } from '@playwright/test';
+import { primeThemeAndSkipPreloader } from './_utils/prime-theme';
 
 // HowItWorks visual parity across 5 breakpoints x 2 themes (10 snapshots)
-// + a reduced-motion smoke. Mirrors hero-visual.spec.ts so the helper /
-// matrix stay consistent across sections (refactor to a shared helper is
-// a follow-up after a third spec lands).
+// + a reduced-motion smoke. Shares primeThemeAndSkipPreloader with
+// hero-visual and receipts-visual so every homepage spec boots in the
+// same deterministic theme + preloader-skipped state.
 //
 // HIW has a pinned scrub timeline that mutates the DOM continuously while
 // the section is in view, which makes pixel-diffs flaky. We force
 // `prefers-reduced-motion: reduce` so HowItWorksAnimations falls into its
 // gsap.matchMedia reduce branch (clearProps: 'all') and the section parks
 // in a deterministic phase-0 state.
-
-const THEME_STORAGE_KEY = 'be-theme';
-const PRELOADER_SESSION_KEY = 'preloader:done';
 
 const VIEWPORTS = [
   { label: '1920x1080', width: 1920, height: 1080 },
@@ -23,31 +21,6 @@ const VIEWPORTS = [
 ] as const;
 
 const THEMES = ['dark', 'light'] as const;
-
-async function primeThemeAndSkipPreloader(
-  page: import('@playwright/test').Page,
-  theme: 'dark' | 'light',
-) {
-  await page.addInitScript(
-    ({ themeKey, themeValue, sessionKey }) => {
-      try {
-        sessionStorage.setItem(sessionKey, '1');
-      } catch {
-        /* noop */
-      }
-      try {
-        localStorage.setItem(themeKey, themeValue);
-      } catch {
-        /* noop */
-      }
-    },
-    {
-      themeKey: THEME_STORAGE_KEY,
-      themeValue: theme,
-      sessionKey: PRELOADER_SESSION_KEY,
-    },
-  );
-}
 
 test.describe('HowItWorks visual parity (v6 light/dark polish)', () => {
   for (const viewport of VIEWPORTS) {

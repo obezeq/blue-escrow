@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { primeThemeAndSkipPreloader } from './_utils/prime-theme';
 
 // Receipts visual parity across 5 breakpoints x 2 themes (10 snapshots)
 // + a reduced-motion smoke. Focus is the soulbound card "híbrido sofisticado"
@@ -8,9 +9,7 @@ import { expect, test } from '@playwright/test';
 // useCardTilt already short-circuits on prefers-reduced-motion, so forcing
 // reduce keeps the cards in their initial transform = 0 state for stable
 // screenshots. The card reveal stagger also collapses to clearProps.
-
-const THEME_STORAGE_KEY = 'be-theme';
-const PRELOADER_SESSION_KEY = 'preloader:done';
+// primeThemeAndSkipPreloader is shared with hero-visual + howitworks-visual.
 
 const VIEWPORTS = [
   { label: '1920x1080', width: 1920, height: 1080 },
@@ -21,31 +20,6 @@ const VIEWPORTS = [
 ] as const;
 
 const THEMES = ['dark', 'light'] as const;
-
-async function primeThemeAndSkipPreloader(
-  page: import('@playwright/test').Page,
-  theme: 'dark' | 'light',
-) {
-  await page.addInitScript(
-    ({ themeKey, themeValue, sessionKey }) => {
-      try {
-        sessionStorage.setItem(sessionKey, '1');
-      } catch {
-        /* noop */
-      }
-      try {
-        localStorage.setItem(themeKey, themeValue);
-      } catch {
-        /* noop */
-      }
-    },
-    {
-      themeKey: THEME_STORAGE_KEY,
-      themeValue: theme,
-      sessionKey: PRELOADER_SESSION_KEY,
-    },
-  );
-}
 
 test.describe('Receipts visual parity (soulbound híbrido)', () => {
   for (const viewport of VIEWPORTS) {
