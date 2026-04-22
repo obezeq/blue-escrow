@@ -82,4 +82,48 @@ describe('HeroAnimations', () => {
     expect(mmAdd).toHaveBeenCalled();
   });
 
+  it('parallax tween includes SCRUB_DEFAULTS_SAFE (invalidateOnRefresh + fastScrollEnd)', () => {
+    // Render a full hero-like DOM so the parallax branch can find
+    // `[class*="hero__title"]` and a closest<header>. The no-reduced-motion
+    // branch is invoked by running the captured matchMedia callback.
+    render(
+      <header className="hero">
+        <HeroAnimations>
+          <h1 className="hero__title">Hero</h1>
+        </HeroAnimations>
+      </header>,
+    );
+
+    act(() => {
+      document.dispatchEvent(new CustomEvent(PRELOADER_DONE_EVENT));
+    });
+
+    // mmAdd receives (query, callback). Invoke the no-reduced-motion
+    // callback to drive the parallax gsap.to call.
+    const noRmEntry = mmAdd.mock.calls.find(
+      ([query]) => query === '(prefers-reduced-motion: no-preference)',
+    );
+    expect(noRmEntry).toBeDefined();
+    const noRmCallback = noRmEntry![1] as () => void;
+    act(() => {
+      noRmCallback();
+    });
+
+    // Find the parallax tween (the one that attached a scrollTrigger).
+    const parallaxCall = gsapTo.mock.calls.find(
+      ([, vars]) =>
+        (vars as { scrollTrigger?: unknown } | undefined)?.scrollTrigger !==
+        undefined,
+    );
+    expect(parallaxCall).toBeDefined();
+    const scrollTriggerCfg = (
+      parallaxCall![1] as {
+        scrollTrigger: { scrub: unknown; invalidateOnRefresh: unknown; fastScrollEnd: unknown };
+      }
+    ).scrollTrigger;
+    expect(scrollTriggerCfg.scrub).toBe(0.6);
+    expect(scrollTriggerCfg.invalidateOnRefresh).toBe(true);
+    expect(scrollTriggerCfg.fastScrollEnd).toBe(true);
+  });
+
 });

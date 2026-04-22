@@ -3,6 +3,7 @@
 import { useRef } from 'react';
 import { gsap, useGSAP } from '@/animations/config/gsap-register';
 import { MATCH_MEDIA } from '@/animations/config/defaults';
+import { SCRUB_DEFAULTS_SAFE } from '@/animations/config/motion-system';
 import { onPreloaderDone } from '@/lib/preloader/completion';
 
 // Stagger offsets relative to the preloader:done event. The Preloader used
@@ -86,6 +87,13 @@ export function HeroAnimations({ children }: { children: React.ReactNode }) {
           });
 
           // Scroll parallax: title drifts up + fades as hero scrolls away.
+          //
+          // `scrub: 0.6` smooths the parallax under Lenis so a sudden
+          // page-height change (FAQ accordion opening below the fold)
+          // doesn't yank the title. `SCRUB_DEFAULTS_SAFE` adds
+          // `invalidateOnRefresh: true` so ScrollTrigger re-measures
+          // start/end on refresh, plus `fastScrollEnd: true` to kill
+          // chase-jitter on mobile flicks.
           const title = container.querySelector<HTMLElement>(
             '[class*="hero__title"]',
           );
@@ -99,7 +107,8 @@ export function HeroAnimations({ children }: { children: React.ReactNode }) {
                 trigger: parent,
                 start: 'top top',
                 end: 'bottom top',
-                scrub: true,
+                scrub: 0.6,
+                ...SCRUB_DEFAULTS_SAFE,
               },
             });
           }
