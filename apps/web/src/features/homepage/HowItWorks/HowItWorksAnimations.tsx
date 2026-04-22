@@ -1,22 +1,92 @@
 'use client';
 
-import { useRef, type RefObject } from 'react';
+// ---------------------------------------------------------------------------
+// HowItWorksAnimations (v7 — Wave 1 Agent A)
+// ---------------------------------------------------------------------------
+//
+// Master pinned timeline + Lenis-native rail seek + SplitText narration
+// reveals + stroke-dashoffset wire flow + MotionPath packet flights +
+// --hiw-heat CSS custom property for single-breath halo/background.
+//
+// COORDINATION CONTRACT (PRD §6):
+//   - Props: { children, stageRef, onPhaseChange } — do NOT change.
+//   - onPhaseChange captured via ref (NOT in useGSAP deps) — avoids
+//     re-runs on every parent render.
+//   - Reads PHASE_COUNT from steps.tsx (falls back to HIW_STEPS.length).
+//   - Dispatches React state by NEAREST LABEL, not integer bins.
+//   - Exposes dev-only window.__hiwStageTrigger for e2e harness.
+//   - Writes --hiw-heat (0..1) on the pinned stage via gsap.quickSetter.
+//   - Registered custom eases: hiw-enter, hiw-exit, hiw-snap, hiw-money,
+//     hiw-packet, hiw-halo (see hiw-eases.ts).
+//
+// TODO(Agent D):
+//   The narration title must carry `data-animate="narr-title"` and the
+//   narration body `data-animate="narr-body"` so the SplitText chars-reveal
+//   can target them. HowItWorks.tsx currently renders the narration <h3>
+//   without a data-attribute — please add those. The narration must also
+//   be keyed by React `key={active}` so each phase change remounts it and
+//   SplitText re-runs cleanly.
+//
+// TODO(Agent C):
+//   The packet <g> in HiwDiagram.tsx has `transform="translate(180 420)"`
+//   baked into JSX. We seed the initial position via gsap.set on mount
+//   (so it still works), but please remove the attribute so GSAP is the
+//   single source of truth for the packet's transform.
+//
+// TODO(Agent D / C):
+//   Mobile deck phase cards are expected to render with attribute
+//   `data-hiw-phase-card={n}` (0..4) and inner animatable elements with
+//   `[data-animate]`. If those markers aren't present, the mobile branch
+//   becomes a no-op (safe — phase state is driven by IntersectionObserver
+//   in the shell instead).
+
+import { useCallback, useEffect, useRef, type RefObject } from 'react';
 import {
   gsap,
   ScrollTrigger,
-  ScrollToPlugin,
+  SplitText,
+  MotionPathPlugin,
   useGSAP,
 } from '@/animations/config/gsap-register';
 import { MATCH_MEDIA } from '@/animations/config/defaults';
-import { ACTOR_POSITIONS, CORE_POSITION, HIW_STEPS } from './steps';
+import { useLenisInstance } from '@/providers/LenisProvider';
+import {
+  ACTOR_POSITIONS,
+  CORE_POSITION,
+  HIW_STEPS,
+  type HiwStep,
+} from './steps';
+import { HIW_EASE_NAMES, registerHiwEases } from './hiw-eases';
+
+// Ensure the eases are registered at module load time (once per JS bundle).
+// Guarded inside the helper against HMR double-registration.
+registerHiwEases();
+
+// Reference the MotionPath plugin so bundlers don't tree-shake the side-effect
+// import that registered it in gsap-register.ts.
+void MotionPathPlugin;
+
+// ---------------------------------------------------------------------------
+// Contract constants (match across all agents)
+// ---------------------------------------------------------------------------
+
+const PHASE_COUNT = HIW_STEPS.length;
+const PHASE_LABELS = Array.from(
+  { length: PHASE_COUNT },
+  (_, i) => `phase-${i}`,
+) as readonly string[];
+
+type PhaseIndex = 0 | 1 | 2 | 3 | 4;
 
 interface HowItWorksAnimationsProps {
   children: React.ReactNode;
   stageRef: RefObject<HTMLDivElement | null>;
-  onPhaseChange: (phase: 0 | 1 | 2 | 3 | 4) => void;
+  onPhaseChange: (phase: PhaseIndex) => void;
 }
 
-const PHASE_COUNT = HIW_STEPS.length;
+// ---------------------------------------------------------------------------
+// Small helpers
+// ---------------------------------------------------------------------------
 
 type ChildRef = SVGGraphicsElement | null;
 
@@ -25,25 +95,33 @@ function findChild(root: Element | null, tag: string): ChildRef {
   return root.querySelector<SVGGraphicsElement>(`[data-hiw="${tag}"]`);
 }
 
-function setPacketPosition(el: ChildRef, x: number, y: number) {
-  if (!el) return;
-  el.setAttribute('transform', `translate(${x} ${y})`);
+/**
+ * Find the label with the smallest |progress - p| for a given normalized
+ * progress value p. Returns the index (0..PHASE_COUNT-1). Ensures the React
+ * narration lines up with the snap target, not an integer bin.
+ */
+function nearestLabelIndex(
+  progress: number,
+  labelProgresses: readonly number[],
+): number {
+  let best = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i < labelProgresses.length; i++) {
+    const p = labelProgresses[i];
+    if (p === undefined) continue;
+    const d = Math.abs(progress - p);
+    if (d < bestDist) {
+      bestDist = d;
+      best = i;
+    }
+  }
+  return best;
 }
 
-/**
- * Head reveals + pinned scrub timeline that drives the v6 HIW diagram.
- *
- * Desktop (>= 900px, no reduced-motion): stage pins for 500vh of scroll.
- * A master GSAP timeline with 5 labels (phase-0..phase-4) fades actors in,
- * lights up the active wire overlay, flies the money packet between actors
- * via transform interpolation, and tweens the ledger amount. Rail button
- * clicks scroll the page to the corresponding phase's pinned offset so
- * everything — timeline + React state + ledger — stays in lockstep.
- *
- * Mobile (< 900px) and reduced-motion: the stage scrolls normally; a cheap
- * ScrollTrigger binned into 5 segments dispatches the phase to React state
- * so narration/rail still update. No pin, no packet flight.
- */
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
 export function HowItWorksAnimations({
   children,
   stageRef,
@@ -52,18 +130,59 @@ export function HowItWorksAnimations({
   const containerRef = useRef<HTMLDivElement>(null);
   const lastPhaseRef = useRef<number>(0);
 
+  // Capture the callback + stageRef in refs so they never trigger useGSAP
+  // dependency churn. The onPhaseChange prop from HowItWorks is a setState
+  // function so it's stable across renders in practice, but relying on that
+  // is brittle — this pattern is safer and documented in gsap-react.
+  const onPhaseChangeRef = useRef(onPhaseChange);
+  useEffect(() => {
+    onPhaseChangeRef.current = onPhaseChange;
+  }, [onPhaseChange]);
+
+  const stageRefRef = useRef(stageRef);
+  useEffect(() => {
+    stageRefRef.current = stageRef;
+  }, [stageRef]);
+
+  // Lenis instance for rail scroll-to. Reading at top level is the only
+  // supported pattern — useLenis must live inside a LenisProvider.
+  const lenis = useLenisInstance();
+  const lenisRef = useRef(lenis);
+  useEffect(() => {
+    lenisRef.current = lenis;
+  }, [lenis]);
+
+  // Stable dispatcher — reads latest callback via ref.
+  const dispatchPhase = useCallback((phase: number) => {
+    if (phase === lastPhaseRef.current) return;
+    lastPhaseRef.current = phase;
+    onPhaseChangeRef.current(phase as PhaseIndex);
+  }, []);
+
   useGSAP(
     () => {
       if (!containerRef.current) return;
       const container = containerRef.current;
       const mm = gsap.matchMedia();
 
-      const eyebrow = container.querySelector('[data-animate="eyebrow"]');
-      const heading = container.querySelector('[data-animate="heading"]');
-      const subtitle = container.querySelector('[data-animate="subtitle"]');
+      // Settle font-swap layout jumps. Optional chaining for Safari < 16
+      // where document.fonts may be undefined.
+      document.fonts?.ready
+        .then(() => ScrollTrigger.refresh())
+        .catch(() => {});
 
-      // Shared head reveals — live outside matchMedia so reduced-motion also gets
-      // them (simple fade-ups, no layout jumps).
+      const eyebrow = container.querySelector<HTMLElement>(
+        '[data-animate="eyebrow"]',
+      );
+      const heading = container.querySelector<HTMLElement>(
+        '[data-animate="heading"]',
+      );
+      const subtitle = container.querySelector<HTMLElement>(
+        '[data-animate="subtitle"]',
+      );
+
+      // Head reveals — kept in no-preference branch (reduced-motion branch
+      // handles visibility fallback separately).
       mm.add('(prefers-reduced-motion: no-preference)', () => {
         if (eyebrow) {
           gsap.from(eyebrow, {
@@ -96,273 +215,593 @@ export function HowItWorksAnimations({
         }
       });
 
-      // --- Desktop / tablet (>=900px): pinned master timeline with scrub ---
-      mm.add('(min-width: 900px) and (prefers-reduced-motion: no-preference)', () => {
-        if (!stageRef.current) return;
-        const stage = stageRef.current;
-        const svgRoot = stage.querySelector('svg');
-        const ledgerAmountEl = stage.querySelector<HTMLElement>(
-          '[data-hiw-ledger="amount"]',
-        );
+      // ----------------------------------------------------------------
+      // Desktop / tablet (>= 900px, no reduced-motion): pinned master timeline
+      // ----------------------------------------------------------------
+      mm.add(
+        '(min-width: 900px) and (prefers-reduced-motion: no-preference)',
+        () => {
+          const stage = stageRefRef.current.current;
+          if (!stage) return;
 
-        if (!svgRoot) return;
+          const svgRoot = stage.querySelector('svg');
+          const ledgerAmountEl = stage.querySelector<HTMLElement>(
+            '[data-hiw-ledger="amount"]',
+          );
+          if (!svgRoot) return;
 
-        const actors = {
-          client: findChild(svgRoot, 'actor-client'),
-          mid: findChild(svgRoot, 'actor-mid'),
-          seller: findChild(svgRoot, 'actor-seller'),
-        };
-        const wires = {
-          C: findChild(svgRoot, 'wire-active-C'),
-          M: findChild(svgRoot, 'wire-active-M'),
-          S: findChild(svgRoot, 'wire-active-S'),
-        };
-        const packet = findChild(svgRoot, 'packet');
-        const coreHalo = findChild(svgRoot, 'core-halo');
-        const orbits = findChild(svgRoot, 'orbits');
+          const actors = {
+            client: findChild(svgRoot, 'actor-client'),
+            mid: findChild(svgRoot, 'actor-mid'),
+            seller: findChild(svgRoot, 'actor-seller'),
+          };
+          const actorList = [actors.client, actors.mid, actors.seller].filter(
+            (n): n is SVGGraphicsElement => n !== null,
+          );
+          const wires = {
+            C: findChild(svgRoot, 'wire-active-C'),
+            M: findChild(svgRoot, 'wire-active-M'),
+            S: findChild(svgRoot, 'wire-active-S'),
+          };
+          const wireBases = {
+            C: findChild(svgRoot, 'wire-base-C'),
+            S: findChild(svgRoot, 'wire-base-S'),
+          };
+          const packet = findChild(svgRoot, 'packet');
+          const coreHalo = findChild(svgRoot, 'core-halo');
+          const orbits = findChild(svgRoot, 'orbits');
 
-        // Precompute packet coordinates per anchor
-        const packetAnchors: Record<'client' | 'core' | 'seller', { x: number; y: number }> = {
-          client: ACTOR_POSITIONS.client,
-          core: CORE_POSITION,
-          seller: ACTOR_POSITIONS.seller,
-        };
+          // --- Seed state ------------------------------------------------
+          // Actors hidden + scaled; orbits hidden; wires dark; halo off;
+          // packet at client position but invisible. If packet <g> still
+          // carries transform="translate(...)" from JSX, our gsap.set here
+          // overrides it cleanly because we use x/y (GSAP transform aliases).
+          gsap.set(actorList, {
+            opacity: 0,
+            scale: 0.94,
+            transformOrigin: '50% 50%',
+          });
+          gsap.set(Object.values(wires), { opacity: 0 });
+          gsap.set(coreHalo, { fillOpacity: 0 });
+          gsap.set(orbits, { opacity: 0 });
+          if (packet) {
+            gsap.set(packet, {
+              opacity: 0,
+              x: ACTOR_POSITIONS.client.x,
+              y: ACTOR_POSITIONS.client.y,
+            });
+          }
 
-        // Seed: actors + orbits invisible and under-scaled (for the
-        // back.out enter), packet hidden at client position, wires dark,
-        // ledger amount at 0.
-        gsap.set(Object.values(actors), {
-          opacity: 0,
-          scale: 0.9,
-          transformOrigin: '50% 50%',
-        });
-        gsap.set(Object.values(wires), { opacity: 0 });
-        gsap.set(coreHalo, { fillOpacity: 0 });
-        gsap.set(orbits, { opacity: 0 });
-        if (packet) {
-          setPacketPosition(packet, packetAnchors.client.x, packetAnchors.client.y);
-          gsap.set(packet, { opacity: 0 });
-        }
+          // --- Stroke-dashoffset wire flow (light flowing through wires) -
+          // Run an infinite ease:'none' loop on each active wire path; the
+          // timeline fades the wire's opacity in/out but the flow is always
+          // ticking underneath, so lit wires always feel alive.
+          const wireFlows: gsap.core.Tween[] = [];
+          for (const wire of [wires.C, wires.M, wires.S]) {
+            if (!wire) continue;
+            const path = wire as unknown as SVGPathElement;
+            const L = path.getTotalLength?.() ?? 0;
+            if (!L) continue;
+            gsap.set(wire, {
+              strokeDasharray: `${L * 0.22} ${L}`,
+              strokeDashoffset: L,
+            });
+            wireFlows.push(
+              gsap.to(wire, {
+                strokeDashoffset: -L,
+                duration: 1.1,
+                ease: 'none',
+                repeat: -1,
+              }),
+            );
+          }
 
-        const masterTl = gsap.timeline({
-          scrollTrigger: {
+          // --- quickSetter for --hiw-heat (0..1) on the pinned stage -----
+          const heatSetter = gsap.quickSetter(stage, '--hiw-heat');
+
+          // --- Master timeline ------------------------------------------
+          // We intentionally create this WITHOUT the ScrollTrigger first so
+          // we can compute labelProgresses AFTER it's fully authored, then
+          // attach the ScrollTrigger with the correct snap config.
+          const masterTl = gsap.timeline({
+            paused: true,
+            defaults: { ease: 'power2.inOut' },
+          });
+
+          // phase-0: Meet
+          masterTl.addLabel(PHASE_LABELS[0]!);
+          if (actorList.length) {
+            masterTl.to(
+              actorList,
+              {
+                opacity: 1,
+                scale: 1,
+                duration: 0.9,
+                stagger: 0.15,
+                ease: HIW_EASE_NAMES.enter,
+              },
+              PHASE_LABELS[0]!,
+            );
+          }
+          if (orbits) {
+            masterTl.to(
+              orbits,
+              { opacity: 1, duration: 0.5 },
+              PHASE_LABELS[0]!,
+            );
+          }
+
+          // phase-1: Sign — three wires pulse
+          masterTl.addLabel(PHASE_LABELS[1]!, `${PHASE_LABELS[0]!}+=0.7`);
+          const wireList = [wires.C, wires.M, wires.S].filter(
+            (w): w is SVGGraphicsElement => w !== null,
+          );
+          if (wireList.length) {
+            masterTl.to(
+              wireList,
+              { opacity: 0.6, duration: 0.4, stagger: 0.1 },
+              PHASE_LABELS[1]!,
+            );
+            masterTl.to(
+              wireList,
+              { opacity: 0, duration: 0.4, stagger: 0.1 },
+              `${PHASE_LABELS[1]!}+=0.5`,
+            );
+          }
+
+          // phase-2: Lock — packet flies client -> core along wire-base-C
+          masterTl.addLabel(PHASE_LABELS[2]!, `${PHASE_LABELS[1]!}+=0.7`);
+          if (wires.C) {
+            masterTl.to(
+              wires.C,
+              { opacity: 1, duration: 0.4 },
+              PHASE_LABELS[2]!,
+            );
+          }
+          if (packet && wireBases.C) {
+            masterTl.to(
+              packet,
+              { opacity: 1, duration: 0.2 },
+              PHASE_LABELS[2]!,
+            );
+            masterTl.to(
+              packet,
+              {
+                duration: 0.8,
+                ease: HIW_EASE_NAMES.packet,
+                motionPath: {
+                  path: wireBases.C as unknown as SVGPathElement,
+                  align: wireBases.C as unknown as SVGPathElement,
+                  alignOrigin: [0.5, 0.5],
+                  autoRotate: false,
+                },
+              },
+              `${PHASE_LABELS[2]!}+=0.1`,
+            );
+            masterTl.to(
+              packet,
+              { opacity: 0, duration: 0.2 },
+              `${PHASE_LABELS[2]!}+=0.9`,
+            );
+          }
+          if (coreHalo) {
+            masterTl.to(
+              coreHalo,
+              {
+                fillOpacity: 0.38,
+                duration: 0.45,
+                ease: HIW_EASE_NAMES.halo,
+              },
+              `${PHASE_LABELS[2]!}+=0.3`,
+            );
+          }
+          // Ledger amount proxy tween — 0 -> 2400 with deliberate ease.
+          if (ledgerAmountEl) {
+            const amountProxy = { value: 0 };
+            masterTl.to(
+              amountProxy,
+              {
+                value: 2400,
+                duration: 1.2,
+                ease: HIW_EASE_NAMES.money,
+                onUpdate() {
+                  ledgerAmountEl.textContent = Math.round(
+                    amountProxy.value,
+                  ).toLocaleString();
+                },
+              },
+              `${PHASE_LABELS[2]!}+=0.1`,
+            );
+          }
+
+          // phase-3: Deliver — seller highlights, client+mid dim, halo holds
+          masterTl.addLabel(PHASE_LABELS[3]!, `${PHASE_LABELS[2]!}+=1.1`);
+          const dimActors = [actors.client, actors.mid].filter(
+            (a): a is SVGGraphicsElement => a !== null,
+          );
+          if (dimActors.length) {
+            masterTl.to(
+              dimActors,
+              { opacity: 0.45, duration: 0.3 },
+              PHASE_LABELS[3]!,
+            );
+          }
+          if (actors.seller) {
+            masterTl.to(
+              actors.seller,
+              { opacity: 1, duration: 0.3 },
+              PHASE_LABELS[3]!,
+            );
+          }
+          if (coreHalo) {
+            masterTl.to(
+              coreHalo,
+              {
+                fillOpacity: 0.32,
+                duration: 0.45,
+                ease: HIW_EASE_NAMES.halo,
+              },
+              PHASE_LABELS[3]!,
+            );
+          }
+
+          // phase-4: Release — packet flies core -> seller, wire S lights,
+          // halo spikes then decays so section ends on release, not bright.
+          masterTl.addLabel(PHASE_LABELS[4]!, `${PHASE_LABELS[3]!}+=0.8`);
+          if (wires.C) {
+            masterTl.to(
+              wires.C,
+              { opacity: 0, duration: 0.3 },
+              PHASE_LABELS[4]!,
+            );
+          }
+          if (wires.S) {
+            masterTl.to(
+              wires.S,
+              { opacity: 1, duration: 0.4 },
+              PHASE_LABELS[4]!,
+            );
+          }
+          if (packet && wireBases.S) {
+            // Reposition to core before the flight, then fly along wire-base-S.
+            masterTl.set(
+              packet,
+              { x: CORE_POSITION.x, y: CORE_POSITION.y },
+              PHASE_LABELS[4]!,
+            );
+            masterTl.to(
+              packet,
+              { opacity: 1, duration: 0.2 },
+              PHASE_LABELS[4]!,
+            );
+            masterTl.to(
+              packet,
+              {
+                duration: 0.8,
+                ease: HIW_EASE_NAMES.packet,
+                motionPath: {
+                  path: wireBases.S as unknown as SVGPathElement,
+                  align: wireBases.S as unknown as SVGPathElement,
+                  alignOrigin: [0.5, 0.5],
+                  autoRotate: false,
+                  // wire-base-S is authored seller->core (940->660) but we
+                  // want core->seller; MotionPath reads the path as-is so we
+                  // let the tween play forward along that direction. If the
+                  // visual reads backwards after QA, Agent C can flip the
+                  // path's d attribute.
+                },
+              },
+              `${PHASE_LABELS[4]!}+=0.1`,
+            );
+            masterTl.to(
+              packet,
+              { opacity: 0, duration: 0.3 },
+              `${PHASE_LABELS[4]!}+=0.9`,
+            );
+          }
+          if (coreHalo) {
+            // Spike, then decay.
+            masterTl.to(
+              coreHalo,
+              {
+                fillOpacity: 0.55,
+                duration: 0.3,
+                ease: HIW_EASE_NAMES.halo,
+              },
+              `${PHASE_LABELS[4]!}+=0.2`,
+            );
+            masterTl.to(
+              coreHalo,
+              {
+                fillOpacity: 0.12,
+                duration: 1.0,
+                ease: 'power2.out',
+              },
+              `${PHASE_LABELS[4]!}+=0.6`,
+            );
+          }
+
+          // Tail so the last label has a stable progress < 1.0 and snap
+          // can settle on it without overshoot at the bottom of the range.
+          masterTl.to({}, { duration: 0.3 });
+
+          // --- Compute labelProgresses (AFTER authoring) -----------------
+          let labelProgresses: number[] = PHASE_LABELS.map((name) => {
+            const t = masterTl.labels[name];
+            const dur = masterTl.duration();
+            return dur > 0 && typeof t === 'number' ? t / dur : 0;
+          });
+
+          // --- Attach ScrollTrigger with snap to labelProgresses ---------
+          const st = ScrollTrigger.create({
             id: 'hiw-stage',
             trigger: stage,
             start: 'top top',
-            end: '+=500%',
+            end: () =>
+              '+=' +
+              Math.round(window.innerHeight * (PHASE_COUNT - 1) * 0.9),
             pin: true,
-            scrub: 0.5,
+            pinType: 'transform',
+            pinSpacing: true,
             anticipatePin: 1,
+            invalidateOnRefresh: true,
+            scrub: 0.6,
+            animation: masterTl,
+            snap: {
+              snapTo: labelProgresses,
+              duration: { min: 0.2, max: 0.6 },
+              delay: 0.05,
+              ease: HIW_EASE_NAMES.snap,
+              directional: false,
+            },
             onUpdate(self) {
-              const phase = Math.min(
-                PHASE_COUNT - 1,
-                Math.floor(self.progress * PHASE_COUNT),
-              );
-              if (phase !== lastPhaseRef.current) {
-                lastPhaseRef.current = phase;
-                onPhaseChange(phase as 0 | 1 | 2 | 3 | 4);
+              // Nearest-label dispatch
+              const idx = nearestLabelIndex(self.progress, labelProgresses);
+              if (idx !== lastPhaseRef.current) {
+                dispatchPhase(idx);
               }
+              // Write --hiw-heat from master timeline's own progress so the
+              // CSS custom property matches the tween scrub, not the raw
+              // ScrollTrigger progress (these only diverge during snap).
+              heatSetter(masterTl.progress());
             },
-          },
-          defaults: { ease: 'power2.inOut' },
-        });
-
-        // --- Phase 0: Meet ---
-        // Actors pop in with a back.out(1.4) scale + opacity stagger to
-        // match v6 main.js:145-150 ("gsap.from mech-node, back.out, stagger").
-        masterTl.addLabel('phase-0');
-        masterTl.to(
-          Object.values(actors),
-          {
-            opacity: 1,
-            scale: 1,
-            duration: 0.9,
-            stagger: 0.15,
-            ease: 'back.out(1.4)',
-          },
-          'phase-0',
-        );
-        masterTl.to(orbits, { opacity: 1, duration: 0.5 }, 'phase-0');
-
-        // --- Phase 1: Sign (all 3 wires pulse briefly) ---
-        masterTl.addLabel('phase-1', 'phase-0+=0.6');
-        masterTl.to(
-          [wires.C, wires.M, wires.S],
-          { opacity: 0.6, duration: 0.4, stagger: 0.1 },
-          'phase-1',
-        );
-        masterTl.to(
-          [wires.C, wires.M, wires.S],
-          { opacity: 0, duration: 0.4, stagger: 0.1 },
-          'phase-1+=0.5',
-        );
-
-        // --- Phase 2: Lock — packet flies client -> core, wire C lights, amount tweens ---
-        masterTl.addLabel('phase-2', 'phase-1+=0.8');
-        masterTl.to(wires.C, { opacity: 1, duration: 0.4 }, 'phase-2');
-
-        if (packet) {
-          const from = packetAnchors.client;
-          const to = packetAnchors.core;
-          const proxy = { x: from.x, y: from.y };
-          masterTl.to(packet, { opacity: 1, duration: 0.2 }, 'phase-2');
-          masterTl.to(
-            proxy,
-            {
-              x: to.x,
-              y: to.y,
-              duration: 0.8,
-              onUpdate() {
-                setPacketPosition(packet, proxy.x, proxy.y);
-              },
+            onRefresh() {
+              // Duration can change if the timeline gets re-authored (rare
+              // here, but safe). Recompute labelProgresses and re-apply.
+              labelProgresses = PHASE_LABELS.map((name) => {
+                const t = masterTl.labels[name];
+                const dur = masterTl.duration();
+                return dur > 0 && typeof t === 'number' ? t / dur : 0;
+              });
             },
-            'phase-2+=0.1',
-          );
-          masterTl.to(
-            packet,
-            { opacity: 0, duration: 0.2 },
-            'phase-2+=0.9',
-          );
-        }
-
-        masterTl.to(coreHalo, { fillOpacity: 0.25, duration: 0.4 }, 'phase-2+=0.3');
-
-        // Tween ledger amount display 0 -> 2400.
-        // v6 timing: 2.0s with `power3.out` for a deliberate, money-flows-in
-        // feeling. Phase 4 shipped 0.8s `power2.out` — 2.5x too fast vs design.
-        if (ledgerAmountEl) {
-          const amountProxy = { value: 0 };
-          masterTl.to(
-            amountProxy,
-            {
-              value: 2400,
-              duration: 2.0,
-              ease: 'power3.out',
-              onUpdate() {
-                ledgerAmountEl.textContent = Math.round(
-                  amountProxy.value,
-                ).toLocaleString();
-              },
-            },
-            'phase-2+=0.1',
-          );
-        }
-
-        // --- Phase 3: Deliver — seller actor highlights, subtle halo hold ---
-        masterTl.addLabel('phase-3', 'phase-2+=1.4');
-        masterTl.to(
-          [actors.client, actors.mid],
-          { opacity: 0.45, duration: 0.3 },
-          'phase-3',
-        );
-        masterTl.to(actors.seller, { opacity: 1, duration: 0.3 }, 'phase-3');
-        masterTl.to(coreHalo, { fillOpacity: 0.4, duration: 0.4 }, 'phase-3');
-
-        // --- Phase 4: Release — packet flies core -> seller, wire S lights, core releases ---
-        masterTl.addLabel('phase-4', 'phase-3+=0.6');
-        masterTl.to(wires.C, { opacity: 0, duration: 0.3 }, 'phase-4');
-        masterTl.to(wires.S, { opacity: 1, duration: 0.4 }, 'phase-4');
-
-        if (packet) {
-          const from = packetAnchors.core;
-          const to = packetAnchors.seller;
-          const proxy = { x: from.x, y: from.y };
-          masterTl.to(packet, { opacity: 1, duration: 0.2 }, 'phase-4');
-          masterTl.to(
-            proxy,
-            {
-              x: to.x,
-              y: to.y,
-              duration: 0.8,
-              onUpdate() {
-                setPacketPosition(packet, proxy.x, proxy.y);
-              },
-            },
-            'phase-4+=0.1',
-          );
-          masterTl.to(
-            packet,
-            { opacity: 0, duration: 0.3 },
-            'phase-4+=0.9',
-          );
-        }
-
-        masterTl.to(coreHalo, { fillOpacity: 0.15, duration: 0.4 }, 'phase-4+=0.4');
-
-        // Trailing buffer so scrub has room to breathe at the bottom
-        masterTl.to({}, { duration: 0.6 });
-
-        // Expose seek for rail button click handlers. We scroll the window to
-        // the correct pinned offset — that way Lenis + ScrollTrigger + state
-        // all stay in sync automatically.
-        const stageTrigger = ScrollTrigger.getById('hiw-stage');
-        const seekToPhase = (phase: number) => {
-          if (!stageTrigger) return;
-          const progress = phase / (PHASE_COUNT - 1);
-          const target =
-            stageTrigger.start + (stageTrigger.end - stageTrigger.start) * progress;
-          gsap.to(window, {
-            duration: 0.8,
-            ease: 'power3.inOut',
-            scrollTo: { y: target, autoKill: true },
           });
-        };
 
-        const railButtons = container.querySelectorAll<HTMLButtonElement>(
-          '[data-hiw-rail]',
-        );
-        const cleanups: Array<() => void> = [];
-        railButtons.forEach((btn) => {
-          const handler = () => {
-            const phase = Number(btn.dataset.hiwRail);
-            if (!Number.isFinite(phase)) return;
-            seekToPhase(phase);
+          // --- Dev-only: expose { start, end } for e2e test harness ------
+          if (process.env.NODE_ENV !== 'production') {
+            (
+              window as unknown as {
+                __hiwStageTrigger?: { start: number; end: number };
+              }
+            ).__hiwStageTrigger = {
+              get start() {
+                return st.start;
+              },
+              get end() {
+                return st.end;
+              },
+            };
+          }
+
+          // --- Rail seek via Lenis scrollTo ------------------------------
+          const seekToPhase = (phase: number) => {
+            const lenisInstance = lenisRef.current;
+            const label = PHASE_LABELS[phase];
+            if (!label) return;
+            const labelTime = masterTl.labels[label];
+            const totalDur = masterTl.duration();
+            if (typeof labelTime !== 'number' || totalDur <= 0) return;
+            const labelProgress = labelTime / totalDur;
+            const targetY =
+              st.start + (st.end - st.start) * labelProgress;
+            if (lenisInstance) {
+              lenisInstance.scrollTo(targetY, {
+                duration: 0.8,
+                easing: (t: number) => 1 - Math.pow(1 - t, 3),
+              });
+            } else {
+              // Fallback — if Lenis isn't initialized yet, plain scroll.
+              window.scrollTo({ top: targetY, behavior: 'smooth' });
+            }
           };
-          btn.addEventListener('click', handler);
-          cleanups.push(() => btn.removeEventListener('click', handler));
-        });
 
-        return () => {
-          cleanups.forEach((fn) => fn());
-        };
-      });
+          const railButtons = container.querySelectorAll<HTMLButtonElement>(
+            '[data-hiw-rail]',
+          );
+          const cleanups: Array<() => void> = [];
+          railButtons.forEach((btn) => {
+            const handler = () => {
+              const phase = Number(btn.dataset.hiwRail);
+              if (!Number.isFinite(phase)) return;
+              seekToPhase(phase);
+            };
+            btn.addEventListener('click', handler);
+            cleanups.push(() => btn.removeEventListener('click', handler));
+          });
 
-      // --- Mobile (<900px) fallback: scroll-binned dispatch, no pin ---
-      mm.add('(max-width: 899px) and (prefers-reduced-motion: no-preference)', () => {
-        if (!stageRef.current) return;
+          // --- SplitText narration chars-reveal --------------------------
+          // The narration title is re-mounted per phase via React key={active};
+          // we attach a MutationObserver so we re-run the char-reveal every
+          // time the title element is replaced in the DOM.
+          const narrTarget = () =>
+            container.querySelector<HTMLElement>(
+              '[data-animate="narr-title"]',
+            );
+          const revealNarr = () => {
+            const el = narrTarget();
+            if (!el) return;
+            const split = SplitText.create(el, {
+              type: 'chars',
+              aria: 'hidden',
+            });
+            gsap.from(split.chars, {
+              yPercent: 100,
+              opacity: 0,
+              stagger: 0.018,
+              duration: 0.55,
+              ease: 'power4.out',
+              onComplete: () => {
+                try {
+                  split.revert();
+                } catch {
+                  // Element may have been swapped by React between start
+                  // and onComplete — SplitText.revert is safe to miss.
+                }
+              },
+            });
+          };
+          revealNarr();
+
+          const narrationHost = container.querySelector(
+            '[data-hiw-narr-host]',
+          );
+          let narrObserver: MutationObserver | null = null;
+          if (narrationHost) {
+            narrObserver = new MutationObserver(() => revealNarr());
+            narrObserver.observe(narrationHost, {
+              childList: true,
+              subtree: true,
+            });
+          }
+
+          // --- Cleanup ---------------------------------------------------
+          return () => {
+            cleanups.forEach((fn) => fn());
+            wireFlows.forEach((tw) => tw.kill());
+            narrObserver?.disconnect();
+            st.kill();
+            masterTl.kill();
+            if (process.env.NODE_ENV !== 'production') {
+              delete (
+                window as unknown as {
+                  __hiwStageTrigger?: unknown;
+                }
+              ).__hiwStageTrigger;
+            }
+          };
+        },
+      );
+
+      // ----------------------------------------------------------------
+      // Mobile (< 900px, no reduced-motion): per-card reveals, no pin
+      // ----------------------------------------------------------------
+      mm.add(
+        '(max-width: 899px) and (prefers-reduced-motion: no-preference)',
+        () => {
+          const triggers: ScrollTrigger[] = [];
+          const cleanups: Array<() => void> = [];
+
+          for (let n = 0; n < PHASE_COUNT; n++) {
+            const card = container.querySelector<HTMLElement>(
+              `[data-hiw-phase-card="${n}"]`,
+            );
+            if (!card) continue;
+            const children = card.querySelectorAll<HTMLElement>(
+              '[data-animate]',
+            );
+            if (children.length > 0) {
+              gsap.from(children, {
+                y: 30,
+                opacity: 0,
+                stagger: 0.1,
+                duration: 0.7,
+                ease: 'power3.out',
+                scrollTrigger: {
+                  trigger: card,
+                  start: 'top 80%',
+                  once: true,
+                },
+              });
+            }
+
+            // Dispatch phase state when card enters viewport (mobile has no
+            // single shared narration so Agent D may choose to ignore this,
+            // but if they reuse the ledger or narration block above the deck
+            // this keeps it in sync).
+            const t = ScrollTrigger.create({
+              trigger: card,
+              start: 'top 60%',
+              end: 'bottom 40%',
+              onEnter: () => dispatchPhase(n),
+              onEnterBack: () => dispatchPhase(n),
+            });
+            triggers.push(t);
+          }
+
+          return () => {
+            triggers.forEach((t) => t.kill());
+            cleanups.forEach((fn) => fn());
+          };
+        },
+      );
+
+      // ----------------------------------------------------------------
+      // Reduced-motion (both desktop & mobile)
+      // ----------------------------------------------------------------
+      mm.add(MATCH_MEDIA.reducedMotion, () => {
+        const stage = stageRefRef.current.current;
+        const svgRoot = stage?.querySelector('svg');
+        if (svgRoot) {
+          gsap.set(
+            svgRoot.querySelectorAll<SVGGraphicsElement>(
+              '[data-hiw^="actor-"]',
+            ),
+            { opacity: 1, scale: 1, transformOrigin: '50% 50%' },
+          );
+          const orbitsEl = svgRoot.querySelector<SVGGraphicsElement>(
+            '[data-hiw="orbits"]',
+          );
+          if (orbitsEl) gsap.set(orbitsEl, { opacity: 1 });
+          const halo = svgRoot.querySelector<SVGGraphicsElement>(
+            '[data-hiw="core-halo"]',
+          );
+          if (halo) gsap.set(halo, { fillOpacity: 0.25 });
+          const packet = svgRoot.querySelector<SVGGraphicsElement>(
+            '[data-hiw="packet"]',
+          );
+          if (packet) {
+            gsap.set(packet, {
+              x: ACTOR_POSITIONS.seller.x,
+              y: ACTOR_POSITIONS.seller.y,
+              opacity: 0,
+            });
+          }
+        }
+
+        if (!stage) return;
+
+        // Cheap dispatcher — one ScrollTrigger, nearest-of-N binning.
         const trigger = ScrollTrigger.create({
-          trigger: stageRef.current,
+          trigger: stage,
           start: 'top 70%',
           end: 'bottom 30%',
           onUpdate(self) {
-            const phase = Math.min(
+            const nearest = Math.min(
               PHASE_COUNT - 1,
-              Math.floor(self.progress * PHASE_COUNT),
+              Math.round(self.progress * (PHASE_COUNT - 1)),
             );
-            if (phase !== lastPhaseRef.current) {
-              lastPhaseRef.current = phase;
-              onPhaseChange(phase as 0 | 1 | 2 | 3 | 4);
+            if (nearest !== lastPhaseRef.current) {
+              dispatchPhase(nearest);
             }
           },
         });
         return () => trigger.kill();
       });
-
-      // --- Reduced-motion: skip everything, show static final state ---
-      mm.add(MATCH_MEDIA.reducedMotion, () => {
-        gsap.set(container.querySelectorAll('[data-animate]'), {
-          clearProps: 'all',
-        });
-        // Park on phase 0 so the static content still reads
-        onPhaseChange(0);
-      });
-
-      // Ensure the plugin is referenced — tree-shaking safety since we only use
-      // its side effect through gsap.to(window, { scrollTo }).
-      void ScrollToPlugin;
     },
-    { scope: containerRef, dependencies: [onPhaseChange, stageRef] },
+    { scope: containerRef, dependencies: [] },
   );
 
   return <div ref={containerRef}>{children}</div>;
 }
+
+// Type export for consumers/tests that need to reference the step shape.
+export type { HiwStep };
