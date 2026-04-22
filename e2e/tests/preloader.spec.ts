@@ -35,7 +35,11 @@ test.describe('Preloader', () => {
     await expect(page.locator('#hero')).toBeVisible();
   });
 
-  test('reduced-motion unmounts under 2s', async ({ page }) => {
+  test('reduced-motion skips the preloader entirely', async ({ page }) => {
+    // Preloader.tsx:44-52 — when prefers-reduced-motion: reduce matches,
+    // the component flips hidden=true on mount so the overlay never
+    // renders. The progressbar must never appear; the hero must be
+    // immediately accessible.
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.addInitScript(() => {
       try {
@@ -49,8 +53,8 @@ test.describe('Preloader', () => {
     const bar = page.getByRole('progressbar', {
       name: 'Loading Blue Escrow',
     });
-    await expect(bar).toBeVisible();
     await expect(bar).toBeHidden({ timeout: 2_000 });
+    await expect(page.locator('#hero')).toBeVisible();
   });
 
   test('same-session navigation does not replay the intro', async ({
