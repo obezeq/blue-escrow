@@ -73,6 +73,10 @@ vi.mock('@/animations/config/gsap-register', () => {
         timelineCalls.push({ method: 'to', args });
         return tl;
       }),
+      from: vi.fn((...args: unknown[]) => {
+        timelineCalls.push({ method: 'from', args });
+        return tl;
+      }),
       set: vi.fn((...args: unknown[]) => {
         timelineCalls.push({ method: 'set', args });
         return tl;
@@ -487,14 +491,22 @@ describe('HowItWorksAnimations — desktop pinned timeline shape', () => {
 });
 
 describe('HowItWorksAnimations — pin anchor contract', () => {
-  it('pins with start:"top top", pinSpacing:true, and trigger=stage element', () => {
+  it('pins with start = function returning "top Npx" (header-offset), pinSpacing:true, trigger=stage', () => {
     const { stage } = renderAnimationsWithFixture();
     runBranch(
       '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
     );
     const cfg = scrollTriggerCreateCalls.find((c) => c.id === 'hiw-stage');
     expect(cfg).toBeDefined();
-    expect(cfg!.start).toBe('top top');
+    // `start` is a function that reads --header-height and returns
+    // `top ${headerPx}px` so the pinned stage activates BELOW the site's
+    // fixed header (#96). The resolved string must match `top <n>px`.
+    expect(typeof cfg!.start).toBe('function');
+    const resolved =
+      typeof cfg!.start === 'function'
+        ? (cfg!.start as () => string)()
+        : cfg!.start;
+    expect(resolved).toMatch(/^top \d+(\.\d+)?px$/);
     expect(cfg!.pin).toBe(true);
     expect(cfg!.pinType).toBe('transform');
     expect(cfg!.pinSpacing).toBe(true);
