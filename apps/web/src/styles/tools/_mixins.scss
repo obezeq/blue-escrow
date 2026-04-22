@@ -177,9 +177,9 @@
     background: conic-gradient(
       from var(--halo-angle, 0deg) at 50% 50%,
       rgba(0, 145, 255, 0) 0deg,
-      rgba(120, 180, 255, #{$alpha}) 90deg,
-      rgba(0, 145, 255, #{$alpha}) 180deg,
-      rgba(120, 180, 255, #{$alpha}) 270deg,
+      rgba(120, 180, 255, $alpha) 90deg,
+      rgba(0, 145, 255, $alpha) 180deg,
+      rgba(120, 180, 255, $alpha) 270deg,
       rgba(0, 145, 255, 0) 360deg
     );
     -webkit-mask:
