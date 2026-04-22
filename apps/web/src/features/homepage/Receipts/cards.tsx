@@ -16,13 +16,12 @@ export interface ReceiptCard {
   figCaption: string; // NEW — screen-reader description for <figure><figcaption>
 }
 
-// All strokes/fills inherit currentColor from the parent
-// .receipts__card--soul, whose `color` property flips per theme
-// (`#fff` on dark surface, `var(--text)` on light surface). The
-// radial gradient stops consume `var(--receipt-soul-core)` via
-// inline `style` (SVG `stopColor` attr does not accept var()), so
-// the inner radiant core flips in lockstep: #fff in dark mode,
-// var(--blue-primary) in light mode.
+// All strokes/fills inherit `currentColor` from the parent
+// .receipts__card--soul, which flips per theme (white on dark surface,
+// dark text on light surface). The radial gradient core consumes
+// `var(--receipt-soul-core)` via inline CSS style (SVG attributes don't
+// accept `var()`; the `stop-color` CSS property does), so the inner
+// glow flips in lockstep: white on dark, brand-blue on light.
 const SoulVisual = (
   <svg viewBox="0 0 200 200" aria-hidden="true">
     <defs>
