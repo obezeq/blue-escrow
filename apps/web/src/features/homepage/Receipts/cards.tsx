@@ -16,18 +16,25 @@ export interface ReceiptCard {
   figCaption: string; // NEW — screen-reader description for <figure><figcaption>
 }
 
-// All white strokes/fills inherit `currentColor` from the parent
-// .receipts__card--soul (which sets `color: #fff` in both themes), so the
-// SVG stays in lockstep with the card colour even if the card is ever
-// re-themed. The radial gradient stops cannot inherit currentColor (SVG
-// limitation), so they stay literal #fff — fine because the soul card
-// is dark-base in both themes.
+// All strokes/fills inherit currentColor from the parent
+// .receipts__card--soul, whose `color` property flips per theme
+// (`#fff` on dark surface, `var(--text)` on light surface). The
+// radial gradient stops consume `var(--receipt-soul-core)` via
+// inline `style` (SVG `stopColor` attr does not accept var()), so
+// the inner radiant core flips in lockstep: #fff in dark mode,
+// var(--blue-primary) in light mode.
 const SoulVisual = (
   <svg viewBox="0 0 200 200" aria-hidden="true">
     <defs>
       <radialGradient id="receipt-soul-gradient" cx="50%" cy="50%">
-        <stop offset="0" stopColor="#fff" stopOpacity=".9" />
-        <stop offset="1" stopColor="#fff" stopOpacity="0" />
+        <stop
+          offset="0"
+          style={{ stopColor: 'var(--receipt-soul-core)', stopOpacity: 0.9 }}
+        />
+        <stop
+          offset="1"
+          style={{ stopColor: 'var(--receipt-soul-core)', stopOpacity: 0 }}
+        />
       </radialGradient>
     </defs>
     <circle
