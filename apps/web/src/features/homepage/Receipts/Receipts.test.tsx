@@ -188,10 +188,16 @@ describe('Receipts v6 — Soulbound theme-flip regression', () => {
     expect(soulGradient).toBeTruthy();
     const soulSvg = soulGradient!.closest('svg');
     expect(soulSvg).toBeTruthy();
+    // 3 elements carry the `stroke` attribute: the 2 concentric <circle>
+    // rings (r=72 dashed, r=56 solid) and the <g> wrapping the 4 crosshair
+    // <line>s. The lines inherit stroke via the <g>, not their own attr.
     const strokedChildren = soulSvg!.querySelectorAll('[stroke]');
-    expect(strokedChildren.length).toBeGreaterThanOrEqual(6);
+    expect(strokedChildren.length).toBeGreaterThanOrEqual(3);
     strokedChildren.forEach((el) => {
       expect(el.getAttribute('stroke')).toBe('currentColor');
     });
+    const crosshairGroup = soulSvg!.querySelector('g[stroke="currentColor"]');
+    expect(crosshairGroup).toBeTruthy();
+    expect(crosshairGroup!.querySelectorAll('line').length).toBe(4);
   });
 });
