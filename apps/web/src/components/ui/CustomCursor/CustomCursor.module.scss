@@ -1,5 +1,17 @@
 @use '../../../styles/settings/variables' as *;
 
+// ---------------------------------------------------------------------------
+// CustomCursor styles — transform-only animation surface.
+//
+// Layout-affecting properties (width/height/border/background) NEVER change
+// at runtime. Hover differentiation is handled here:
+//   * `@supports (mix-blend-mode: difference)`: dot uses blend mode so it
+//     inverts whatever is behind it — white-on-dark, dark-on-white, without
+//     JS writing any color.
+//   * Fallback (no blend-mode support): plain `var(--accent)` swatch. JS
+//     still only tweens `scale` — zero visual regression beyond the blend.
+// ---------------------------------------------------------------------------
+
 .cursor {
   position: fixed;
   top: 0;
@@ -26,7 +38,13 @@
   background: var(--accent);
   transform: translate(-50%, -50%);
   opacity: 0;
-  will-change: transform;
+  will-change: transform, opacity;
+
+  // Preferred path — blend mode inverts whatever is underneath.
+  @supports (mix-blend-mode: difference) {
+    background: #ffffff;
+    mix-blend-mode: difference;
+  }
 }
 
 .cursor__circle {
@@ -40,5 +58,5 @@
   background: transparent;
   transform: translate(-50%, -50%);
   opacity: 0;
-  will-change: transform;
+  will-change: transform, opacity;
 }
