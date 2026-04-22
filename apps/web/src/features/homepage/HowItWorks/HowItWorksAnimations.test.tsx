@@ -7,11 +7,26 @@ vi.mock('@/animations/config/gsap-register', () => ({
     matchMedia: () => ({ add: vi.fn() }),
     from: vi.fn(),
     set: vi.fn(),
+    to: vi.fn(),
+    timeline: vi.fn(() => ({
+      addLabel: vi.fn().mockReturnThis(),
+      to: vi.fn().mockReturnThis(),
+      from: vi.fn().mockReturnThis(),
+      set: vi.fn().mockReturnThis(),
+      kill: vi.fn(),
+    })),
   },
   ScrollTrigger: {
     create: vi.fn(() => ({ kill: vi.fn() })),
+    refresh: vi.fn(),
   },
+  SplitText: vi.fn(() => ({ revert: vi.fn(), chars: [], words: [], lines: [] })),
+  MotionPathPlugin: { name: 'MotionPathPlugin' },
   useGSAP: vi.fn(),
+}));
+
+vi.mock('@/providers/LenisProvider', () => ({
+  useLenisInstance: () => ({ scrollTo: vi.fn() }),
 }));
 
 import { HowItWorksAnimations } from './HowItWorksAnimations';
