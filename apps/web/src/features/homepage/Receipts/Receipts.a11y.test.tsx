@@ -49,6 +49,25 @@ describe.each(['dark', 'light'] as const)(
       const svg = soulCard?.querySelector('svg[aria-hidden="true"]');
       expect(svg).not.toBeNull();
     });
+
+    it('each <article> is labelled by its own <h3> via aria-labelledby', () => {
+      const { container } = render(<Receipts />);
+      container.querySelectorAll('article').forEach((article) => {
+        const labelId = article.getAttribute('aria-labelledby');
+        expect(labelId).toBeTruthy();
+        expect(article.querySelector(`h3#${labelId}`)).not.toBeNull();
+      });
+    });
+
+    it('each <figure> exposes a <figcaption> (visually-hidden) with descriptive text', () => {
+      const { container } = render(<Receipts />);
+      const figcaptions = container.querySelectorAll('figure figcaption');
+      expect(figcaptions.length).toBe(3);
+      figcaptions.forEach((fc) => {
+        expect(fc.textContent?.trim().length ?? 0).toBeGreaterThan(20);
+        expect(fc.className).toContain('u-visually-hidden');
+      });
+    });
   },
 );
 
