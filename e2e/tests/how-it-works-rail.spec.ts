@@ -14,6 +14,11 @@ test.describe('HowItWorks rail interaction', () => {
     page,
   }) => {
     await primeThemeAndSkipPreloader(page, 'dark');
+    // The desktop stage (which hosts the rail) requires min-width:900 and
+    // min-height:700 after the #96 header-clearance change (which bumps the
+    // short-viewport fallback to max-height:771). Playwright's default 1280×720
+    // otherwise falls into the mobile deck branch where there's no rail.
+    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');
 
     await page.waitForFunction(
