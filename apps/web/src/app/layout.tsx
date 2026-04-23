@@ -1,8 +1,14 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { cookies } from 'next/headers';
 import { getSiteUrl } from '@blue-escrow/config';
 import { ThemeProvider } from '@/providers/ThemeProvider';
-import { THEME_INIT_SCRIPT } from '@/providers/theme-bootstrap';
+import {
+  DEFAULT_THEME,
+  THEME_COOKIE_NAME,
+  THEME_INIT_SCRIPT,
+  parseThemeCookie,
+} from '@/providers/theme-bootstrap';
 import '@/styles/globals.scss';
 
 /**
@@ -80,11 +86,22 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Cookie-driven SSR theming: the server reads `be-theme` and renders the
+  // matching `data-theme` + threads it to ThemeProvider, so the initial HTML
+  // byte-matches the client's first render. Eliminates the ThemeToggle
+  // hydration mismatch for every returning visitor. `suppressHydrationWarning`
+  // stays on <html> to cover the first-visit edge (script resolves from
+  // `prefers-color-scheme` and rewrites `data-theme` before React hydrates)
+  // and the `js-loaded` class added synchronously by JsLoadedScript.
+  const jar = await cookies();
+  const initialTheme =
+    parseThemeCookie(jar.get(THEME_COOKIE_NAME)?.value) ?? DEFAULT_THEME;
+
   return (
     <html
       lang="en"
-      data-theme="dark"
+      data-theme={initialTheme}
       className={`${geistSans.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
@@ -94,7 +111,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SpeculationRules />
       </head>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider initialTheme={initialTheme}>{children}</ThemeProvider>
       </body>
     </html>
   );

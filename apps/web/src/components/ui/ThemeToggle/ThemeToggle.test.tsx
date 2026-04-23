@@ -3,9 +3,9 @@ import { render, screen, fireEvent, act, cleanup } from '@testing-library/react'
 import { ThemeProvider } from '@/providers/ThemeProvider';
 import { ThemeToggle } from './ThemeToggle';
 
-function renderWithProvider() {
+function renderWithProvider(initialTheme: 'dark' | 'light' = 'dark') {
   return render(
-    <ThemeProvider>
+    <ThemeProvider initialTheme={initialTheme}>
       <ThemeToggle />
     </ThemeProvider>,
   );
@@ -53,7 +53,7 @@ describe('ThemeToggle', () => {
 
   it('accepts a className prop appended to the base class', () => {
     const { container } = render(
-      <ThemeProvider>
+      <ThemeProvider initialTheme="dark">
         <ThemeToggle className="custom-extra" />
       </ThemeProvider>,
     );

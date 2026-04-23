@@ -5,7 +5,7 @@ import { Header } from './Header';
 
 function renderHeader() {
   return render(
-    <ThemeProvider>
+    <ThemeProvider initialTheme="dark">
       <Header />
     </ThemeProvider>,
   );

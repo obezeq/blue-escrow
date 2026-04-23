@@ -4,10 +4,18 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
-import { DEFAULT_THEME, THEME_STORAGE_KEY, isTheme, type Theme } from './theme-bootstrap';
+import {
+  THEME_COOKIE_MAX_AGE,
+  THEME_COOKIE_NAME,
+  THEME_STORAGE_KEY,
+  isTheme,
+  type Theme,
+} from './theme-bootstrap';
 
 interface ThemeContextValue {
   theme: Theme;
@@ -18,10 +26,10 @@ interface ThemeContextValue {
 // S11 — Wrap theme-swap mutations in document.startViewTransition so the
 // browser captures before/after snapshots and animates a root crossfade.
 // The callback runs synchronously and MUST contain all DOM changes
-// (dataset + localStorage) for the browser to diff correctly. The returned
-// ViewTransition instance is intentionally ignored — we don't need to await
-// `finished` and Next.js's React 19 runtime prefers fire-and-forget here.
-// Animation tuning lives in utilities/_view-transitions.scss.
+// (dataset + localStorage + cookie) for the browser to diff correctly.
+// The returned ViewTransition instance is intentionally ignored — we don't
+// need to await `finished` and Next.js's React 19 runtime prefers
+// fire-and-forget here. Animation tuning lives in utilities/_view-transitions.scss.
 //
 // TypeScript 5.4+ ships ambient types for the View Transitions API via lib.dom
 // (`Document.startViewTransition` is optional), so feature detection with
@@ -38,33 +46,52 @@ function runThemeTransition(apply: () => void): void {
   apply();
 }
 
+function persistTheme(next: Theme): void {
+  document.documentElement.dataset.theme = next;
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, next);
+  } catch {
+    // localStorage unavailable (private mode, quota) — cookie still works.
+  }
+  document.cookie = `${THEME_COOKIE_NAME}=${next}; Max-Age=${THEME_COOKIE_MAX_AGE}; Path=/; SameSite=Lax`;
+}
+
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  // Initial state must match between SSR and the first client render to avoid
-  // hydration mismatches — so on the server we always use DEFAULT_THEME. On
-  // the client, the pre-hydration script in theme-bootstrap.ts has already
-  // written the resolved theme onto document.documentElement.dataset.theme
-  // BEFORE React hydrates. We lazily read that value here so React state is
-  // in sync from the very first render, avoiding a setState-in-effect cascade
-  // (react-hooks/set-state-in-effect) and any visible theme flicker.
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof document === 'undefined') {
-      return DEFAULT_THEME;
+export function ThemeProvider({
+  initialTheme,
+  children,
+}: {
+  initialTheme: Theme;
+  children: ReactNode;
+}) {
+  // initialTheme is resolved server-side from the `be-theme` cookie by the
+  // root layout. Server and client now render identical output on first paint,
+  // eliminating the ThemeToggle `aria-checked` / `aria-label` mismatch.
+  const [theme, setThemeState] = useState<Theme>(initialTheme);
+
+  // First-visit reconciliation — only fires when no cookie existed at SSR
+  // time and the pre-hydration script (theme-bootstrap.ts) has just resolved
+  // the theme from `prefers-color-scheme` and written it to `dataset.theme`
+  // + cookie. Sync React state once so `ThemeToggle.aria-checked` matches
+  // the DOM theme. Guarded with a ref so it never re-runs on subsequent
+  // state changes — this is a bounded one-shot DOM→React sync, not a
+  // cascading update loop, so the setState-in-effect rule doesn't apply.
+  const didReconcileRef = useRef(false);
+  useEffect(() => {
+    if (didReconcileRef.current) return;
+    didReconcileRef.current = true;
+    const resolved = document.documentElement.dataset.theme;
+    if (isTheme(resolved) && resolved !== theme) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- guarded one-shot DOM→state sync for first-visit path; never cascades
+      setThemeState(resolved);
     }
-    const current = document.documentElement.dataset.theme;
-    return isTheme(current) ? current : DEFAULT_THEME;
-  });
+  }, [theme]);
 
   const setTheme = useCallback((next: Theme) => {
     runThemeTransition(() => {
       setThemeState(next);
-      document.documentElement.dataset.theme = next;
-      try {
-        window.localStorage.setItem(THEME_STORAGE_KEY, next);
-      } catch {
-        // localStorage unavailable (private mode, quota, server) — in-memory state still works.
-      }
+      persistTheme(next);
     });
   }, []);
 
@@ -72,12 +99,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     runThemeTransition(() => {
       setThemeState((prev) => {
         const next: Theme = prev === 'dark' ? 'light' : 'dark';
-        document.documentElement.dataset.theme = next;
-        try {
-          window.localStorage.setItem(THEME_STORAGE_KEY, next);
-        } catch {
-          // ignore
-        }
+        persistTheme(next);
         return next;
       });
     });
