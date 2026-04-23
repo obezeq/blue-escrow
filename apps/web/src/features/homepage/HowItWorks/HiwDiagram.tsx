@@ -193,7 +193,7 @@ export function HiwDiagram() {
         </g>
         <text
           x="600"
-          y="462"
+          y="468"
           textAnchor="middle"
           className={styles.hiw__diagCoreLabel}
         >
@@ -201,7 +201,7 @@ export function HiwDiagram() {
         </text>
         <text
           x="600"
-          y="488"
+          y="498"
           textAnchor="middle"
           className={styles.hiw__diagCoreTitle}
         >
@@ -232,21 +232,21 @@ export function HiwDiagram() {
           <path d="M 0 -16 L -14 -8 V 6 C -14 16 -8 22 0 24 C 8 22 14 16 14 6 V -8 Z" />
         </g>
         <text
-          y="-86"
+          y="-92"
           textAnchor="middle"
           className={styles.hiw__diagActorRole}
         >
           CLIENT
         </text>
         <text
-          y="92"
+          y="100"
           textAnchor="middle"
           className={styles.hiw__diagActorText}
         >
           Sofia R.
         </text>
         <text
-          y="118"
+          y="132"
           textAnchor="middle"
           className={styles.hiw__diagActorMuted}
         >
@@ -278,21 +278,21 @@ export function HiwDiagram() {
           <path d="M -16 -2 L 16 -2" />
         </g>
         <text
-          y="-86"
+          y="-92"
           textAnchor="middle"
           className={styles.hiw__diagActorRole}
         >
           MIDDLEMAN
         </text>
         <text
-          y="92"
+          y="100"
           textAnchor="middle"
           className={styles.hiw__diagActorText}
         >
           @archer
         </text>
         <text
-          y="118"
+          y="132"
           textAnchor="middle"
           className={styles.hiw__diagActorMuted}
         >
@@ -324,21 +324,21 @@ export function HiwDiagram() {
           <path d="M -6 -12 V -18 A 6 6 0 0 1 6 -18 V -12" />
         </g>
         <text
-          y="-86"
+          y="-92"
           textAnchor="middle"
           className={styles.hiw__diagActorRole}
         >
           SELLER
         </text>
         <text
-          y="92"
+          y="100"
           textAnchor="middle"
           className={styles.hiw__diagActorText}
         >
           Diego M.
         </text>
         <text
-          y="118"
+          y="132"
           textAnchor="middle"
           className={styles.hiw__diagActorMuted}
         >

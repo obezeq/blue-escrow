@@ -77,10 +77,15 @@ function MiniActor({
         {children}
       </g>
       <text
-        y="52"
+        y="56"
         textAnchor="middle"
         fontFamily="Geist Mono, ui-monospace"
-        fontSize="9"
+        // 14 SVG-units — renders ~10px on a 480-wide viewBox inside a
+        // 342px mobile card (scale 0.71), clears the readable floor after
+        // the preserveAspectRatio down-scale. Previous 9-unit value
+        // resolved to ~6.4px on 390px viewports.
+        fontSize="14"
+        fontWeight="500"
         fill="var(--muted-2)"
         letterSpacing="1.5"
       >
@@ -189,9 +194,9 @@ function MiniPacket({ x, y }: { x: number; y: number }) {
       />
       <text
         textAnchor="middle"
-        y="4"
+        y="5"
         fontFamily="Geist Mono, ui-monospace"
-        fontSize="9"
+        fontSize="13"
         fill="#001B4D"
         fontWeight="700"
       >
