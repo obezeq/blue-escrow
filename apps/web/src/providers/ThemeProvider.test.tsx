@@ -23,6 +23,10 @@ afterEach(() => {
   cleanup();
   window.localStorage.clear();
   delete document.documentElement.dataset.theme;
+  // Clear the be-theme cookie so setTheme() writes in one test don't leak
+  // into other test files sharing the same jsdom document (vitest runs
+  // multiple test files against a single environment per pool).
+  document.cookie = `${THEME_COOKIE_NAME}=; Max-Age=0; Path=/; SameSite=Lax`;
 });
 
 describe('theme-bootstrap constants', () => {
