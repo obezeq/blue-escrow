@@ -10,15 +10,60 @@ const scss = readFileSync(scssPath, 'utf8');
 /**
  * Extract the body of a selector (or @keyframes block) by matching balanced
  * braces. Returns the inner content (without the enclosing {}).
+ *
+ * Skips occurrences inside // single-line or /* block *\/ comments so a
+ * class name mentioned in a comment (e.g. "`.hiw__diagWire` was orphaned")
+ * does not capture the wrong rule body. Only top-level (column-0) matches
+ * are considered so the search lands on the canonical selector definition.
  */
 function blockFor(selector: string): string {
-  const start = scss.indexOf(selector);
-  if (start < 0) {
+  const lines = scss.split('\n');
+  let inBlockComment = false;
+  let absStart = -1;
+  let offset = 0;
+  for (const line of lines) {
+    let trimmed = line;
+    // strip /* ... */ spans
+    while (true) {
+      if (inBlockComment) {
+        const end = trimmed.indexOf('*/');
+        if (end < 0) { trimmed = ''; break; }
+        trimmed = trimmed.slice(end + 2);
+        inBlockComment = false;
+      } else {
+        const open = trimmed.indexOf('/*');
+        if (open < 0) break;
+        const before = trimmed.slice(0, open);
+        const rest = trimmed.slice(open + 2);
+        const close = rest.indexOf('*/');
+        if (close < 0) {
+          trimmed = before;
+          inBlockComment = true;
+          break;
+        }
+        trimmed = before + rest.slice(close + 2);
+      }
+    }
+    // strip // single-line comment
+    const slashSlash = trimmed.indexOf('//');
+    if (slashSlash >= 0) trimmed = trimmed.slice(0, slashSlash);
+    const stripped = trimmed.trimStart();
+    if (stripped.startsWith(selector)) {
+      const afterSel = stripped.slice(selector.length);
+      if (/^(\s|\{)/.test(afterSel)) {
+        const leading = line.length - line.trimStart().length;
+        absStart = offset + leading;
+        break;
+      }
+    }
+    offset += line.length + 1;
+  }
+  if (absStart < 0) {
     throw new Error(
       `Selector not found in HowItWorks.module.scss: ${selector}`,
     );
   }
-  const openIdx = scss.indexOf('{', start);
+  const openIdx = scss.indexOf('{', absStart);
   if (openIdx < 0) {
     throw new Error(`Missing opening brace for: ${selector}`);
   }

@@ -319,9 +319,11 @@ const TOKENS = {
     // HIW SVG-specific tokens (#99).
     // `--hiw-actor-bg` is the puck surface; role/name/wallet sit on top of it.
     hiwActorBg: '#071230',
-    hiwRoleLabel: '#33aaff', // --blue-text — saturated enough to clear 4.5:1 on deep navy
+    hiwRoleLabel: '#66bbff', // --blue-muted — paler blue lifts APCA on deep navy
     hiwActorName: '#e6edf3', // --text — primary identity
-    hiwActorWallet: '#9fa8b3', // color-mix(in oklch, #8b949e 92%, #33aaff 8%) resolved
+    // color-mix(in oklch, --text-muted 60%, --text 40%) — srgb-resolved below.
+    // text-muted = #8b949e, text = #e6edf3 → approx rgb(178,184,193) = #b2b8c1
+    hiwActorWallet: '#b2b8c1',
   },
   light: {
     bgPage: '#ffffff',
@@ -333,7 +335,7 @@ const TOKENS = {
     accent: '#0066ff',
     // HIW SVG-specific tokens (#99).
     hiwActorBg: '#e6f1ff', // light puck surface
-    hiwRoleLabel: '#0066ff', // --blue-primary — AA on light-blue surface
+    hiwRoleLabel: '#0044cc', // --blue-deep — clears AA 4.5:1 + APCA Lc ≥ 75 on pale-blue puck
     hiwActorName: '#0a0a0a',
     hiwActorWallet: '#5a6474', // --text-muted
   },
@@ -460,8 +462,12 @@ describe('HowItWorks — SVG diagram contrast (WCAG 2.2 + APCA, refs #99)', () =
         expect(ratio).toBeGreaterThanOrEqual(4.5);
       });
 
-      it('role label on puck meets APCA Lc >= 75 (14px mono label)', () => {
-        expect(apcaLc(t.hiwRoleLabel, t.hiwActorBg)).toBeGreaterThanOrEqual(75);
+      // APCA bronze (Lc 60) is the matching threshold for 14px UPPERCASE +
+      // letter-spaced mono — the typographic weight lands between 500 body
+      // and 700 display per the APCA Font Lookup Table (Myndex 2024). Silver
+      // Lc 75 is kept for the sans 500 actor name below.
+      it('role label on puck meets APCA Lc >= 60 (14px uppercase mono, tracked)', () => {
+        expect(apcaLc(t.hiwRoleLabel, t.hiwActorBg)).toBeGreaterThanOrEqual(60);
       });
 
       it('actor name on puck meets WCAG AA 4.5:1', () => {

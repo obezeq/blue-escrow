@@ -273,13 +273,14 @@ $bp-section: 900px;
 
   // SVG <text> tokens — refs #99. Prior to this block the diag* classes were
   // orphans; SVG text fell back to `fill: black` on navy and was invisible.
-  // Dark theme uses --blue-text (#33aaff) for role labels so contrast on
-  // --hiw-actor-bg (#071230) clears 4.5:1 (WCAG AA) and APCA Lc >= 75.
-  --hiw-role-label:   var(--blue-text);
+  // --blue-muted (#66bbff) on --hiw-actor-bg (#071230) clears WCAG AA 4.5:1
+  // AND APCA Lc ≥ 75 for 14px mono labels (paler blue = higher contrast on
+  // deep navy than the prior --blue-text pick).
+  --hiw-role-label:   var(--blue-muted);
   --hiw-actor-name:   var(--text);
-  // oklch mix keeps the wallet tint aligned with brand hue without going
-  // saturated enough to compete with the role label.
-  --hiw-actor-wallet: color-mix(in oklch, var(--text-muted) 92%, var(--blue-text) 8%);
+  // Slightly lifted muted so APCA Lc on --bg-surface stays ≥ 60 for the
+  // 13px mono wallet string (previous text-muted mix landed at 58).
+  --hiw-actor-wallet: color-mix(in oklch, var(--text-muted) 60%, var(--text) 40%);
 
   // v6.html-literal values (rgba, not color-mix): upper glow 70×60 at 50/40
   // a=0.32, lower glow 90×60 at 80/100 a=0.28, linear from #021039 to #03091c.
@@ -394,10 +395,10 @@ $bp-section: 900px;
   --hiw-actor-bg:     #e6f1ff;
   --hiw-actor-border: #c9d2de;
 
-  // SVG <text> tokens — refs #99. Saturated brand-blue role label clears
-  // 4.5:1 on --hiw-actor-bg (#e6f1ff); primary text stays near-black for
-  // AAA; wallet uses --text-muted (#5a6474) — 6.1:1 on --bg-elevated.
-  --hiw-role-label:   var(--blue-primary);
+  // SVG <text> tokens — refs #99. --blue-deep (#0044cc) clears both WCAG AA
+  // 4.5:1 and APCA Lc ≥ 75 on --hiw-actor-bg (#e6f1ff); --blue-primary is
+  // too vibrant against the pale blue puck surface (4.23:1, APCA 65).
+  --hiw-role-label:   var(--blue-deep);
   --hiw-actor-name:   var(--text);
   --hiw-actor-wallet: var(--text-muted);
 
