@@ -536,10 +536,13 @@
   align-items: center;
   border-bottom: 1px solid var(--border);
   font-family: var(--ff-mono);
-  font-size: 11px;
-  letter-spacing: 0.14em;
+  font-size: 12px;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  // Scene header is the card banner, not footnote — promote from --text-muted
+  // to --text for a stronger read in both themes (#98).
+  color: var(--text);
+  font-weight: 500;
 }
 
 .hiw__sceneStep {
@@ -613,8 +616,10 @@
 }
 
 .hiw__actorPuck {
-  width: 72px;
-  height: 72px;
+  // Bumped from 72→88 so the puck trio reads against the 168px core without
+  // feeling like a footnote (#98). 88/168 ≈ 0.52 — balanced orbital hierarchy.
+  width: 88px;
+  height: 88px;
   border-radius: 50%;
   background: var(--hiw-actor-bg);
   border: 1px solid var(--hiw-actor-border);
@@ -622,7 +627,7 @@
   align-items: center;
   justify-content: center;
   font-family: var(--ff-mono);
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
   color: var(--text-muted);
   transition:
@@ -647,9 +652,11 @@
 
 .hiw__actorRole {
   font-family: var(--ff-mono);
-  font-size: 11px;
+  // 13px (was 11) — readable at viewing distance; letter-spacing tightened
+  // to 0.16em for the uppercase mono cohesion (#98).
+  font-size: 13px;
   color: var(--accent);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   font-weight: 500;
 }
@@ -660,8 +667,10 @@
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 1;
-  width: 140px;
-  height: 140px;
+  // Bumped 140→168 (+20%) to strengthen the focal hierarchy against the
+  // 88px actor pucks (#98). Fits comfortably in sceneBody at all viewports.
+  width: 168px;
+  height: 168px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -691,8 +700,9 @@
   padding: 10px;
 
   svg {
-    width: 28px;
-    height: 28px;
+    // 32px (was 28) — proportional bump with the 168px core (#98).
+    width: 32px;
+    height: 32px;
   }
 
   :root[data-theme='light'] & {
@@ -704,8 +714,10 @@
 
 .hiw__coreLabel {
   font-family: var(--ff-mono);
-  font-size: 9px;
-  letter-spacing: 0.18em;
+  // 11px (was 9) — 9px falls below the readable floor. 11px with wider
+  // letter-spacing keeps the compact mono feel while staying legible (#98).
+  font-size: 11px;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
 }
 
@@ -751,30 +763,33 @@
 
 .hiw__narrationStep {
   font-family: var(--ff-mono);
-  font-size: 11px;
-  letter-spacing: 0.16em;
+  // 12px (was 11) matches the sceneHead banner's new size (#98).
+  font-size: 12px;
+  letter-spacing: 0.18em;
   color: var(--accent);
   text-transform: uppercase;
   font-weight: 500;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 
   &::before {
     content: '';
-    width: 22px;
+    width: 26px;
     height: 1px;
     background: currentColor;
   }
 }
 
 .hiw__narrationTitle {
-  font-size: clamp(20px, 2.2vw, 28px);
-  line-height: 1.15;
+  // Clamp floor/ceiling bumped (20→22 / 28→34) for tighter hierarchy
+  // against the 168px core + 88px actor pucks (#98).
+  font-size: clamp(22px, 2.4vw, 34px);
+  line-height: 1.12;
   letter-spacing: -0.02em;
   font-weight: 500;
-  margin: 0 0 8px;
+  margin: 0 0 10px;
   text-wrap: balance;
   color: var(--text);
 
@@ -786,8 +801,10 @@
 }
 
 .hiw__narrationBody {
-  font-size: 14px;
-  line-height: 1.55;
+  // 15px + 1.6 line-height (was 14 / 1.55) — Awwwards-tier reading density
+  // without losing the "muted body below bright title" hierarchy (#98).
+  font-size: 15px;
+  line-height: 1.6;
   color: var(--text-muted);
   margin: 0;
   text-wrap: pretty;
