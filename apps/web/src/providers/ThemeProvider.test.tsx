@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, act, cleanup, renderHook } from '@testing-library/react';
 import { ThemeProvider, useTheme } from './ThemeProvider';
 import {
@@ -116,6 +116,25 @@ describe('ThemeProvider', () => {
     expect(result.current.theme).toBe('light');
     expect(document.documentElement.dataset.theme).toBe('light');
     expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe('light');
+  });
+
+  it('setTheme persists a SameSite=Lax cookie for SSR-aligned return visits', async () => {
+    // The cookie is the server-readable source of truth: without it, SSR
+    // ships DEFAULT_THEME and re-introduces the hydration mismatch on
+    // return visits. Assert the full attribute string so a regression in
+    // Path/Max-Age/SameSite surfaces in unit tests, not in e2e.
+    const cookieSetter = vi.spyOn(document, 'cookie', 'set');
+    const { result } = renderHook(() => useTheme(), { wrapper });
+    await act(async () => {});
+    act(() => {
+      result.current.setTheme('light');
+    });
+    const written = cookieSetter.mock.calls.map((c) => c[0]).join('\n');
+    expect(written).toContain(`${THEME_COOKIE_NAME}=light`);
+    expect(written).toContain('Max-Age=');
+    expect(written).toContain('Path=/');
+    expect(written).toContain('SameSite=Lax');
+    cookieSetter.mockRestore();
   });
 
   it('toggle flips between dark and light', async () => {

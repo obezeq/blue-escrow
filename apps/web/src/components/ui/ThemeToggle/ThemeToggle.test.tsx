@@ -34,6 +34,18 @@ describe('ThemeToggle', () => {
     expect(screen.getByRole('switch').getAttribute('aria-checked')).toBe('false');
   });
 
+  it('renders aria-checked=true synchronously with initialTheme=light (SSR-aligned)', () => {
+    // No act/await — the check runs before any effect flush to prove that
+    // the first render ships the correct ARIA state. This is the exact
+    // contract the cookie-driven SSR theming is designed to guarantee:
+    // server HTML === client first render, zero hydration mismatch.
+    document.documentElement.dataset.theme = 'light';
+    renderWithProvider('light');
+    const btn = screen.getByRole('switch');
+    expect(btn.getAttribute('aria-checked')).toBe('true');
+    expect(btn.getAttribute('aria-label')?.toLowerCase()).toContain('dark');
+  });
+
   it('toggles theme to light and writes data-theme + localStorage', () => {
     renderWithProvider();
     fireEvent.click(screen.getByRole('switch'));

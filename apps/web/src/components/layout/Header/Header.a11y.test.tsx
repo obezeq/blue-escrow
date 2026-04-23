@@ -39,26 +39,31 @@ describe.each(['dark', 'light'] as const)(
   'Header a11y (%s theme)',
   (theme) => {
     beforeEach(() => {
+      // Mirror the production flow: cookie-driven SSR sets html[data-theme]
+      // to match initialTheme before React mounts. Tests set the dataset so
+      // the reconcile effect sees matching state.
       document.documentElement.dataset.theme = theme;
     });
 
     it('has no detectable axe violations', async () => {
-      const { container } = renderWithProviders(<Header />);
+      const { container } = renderWithProviders(<Header />, { initialTheme: theme });
       const results = await axe(container);
       expect(results).toHaveNoViolations();
     });
 
     it('exposes the main navigation landmark with aria-label "Main navigation"', () => {
-      const { getByRole } = renderWithProviders(<Header />);
+      const { getByRole } = renderWithProviders(<Header />, { initialTheme: theme });
       const nav = getByRole('navigation', { name: 'Main navigation' });
       expect(nav).not.toBeNull();
     });
 
     it('exposes the theme toggle as a role=switch with aria-checked reflecting the active theme', () => {
-      const { getByRole } = renderWithProviders(<Header />);
+      const { getByRole } = renderWithProviders(<Header />, { initialTheme: theme });
       const toggle = getByRole('switch');
       expect(toggle).not.toBeNull();
-      // dark => aria-checked=false, light => aria-checked=true
+      // dark => aria-checked=false, light => aria-checked=true — asserted
+      // synchronously without waiting for any effect, proving the toggle
+      // is SSR-aligned from the very first render (no hydration mismatch).
       expect(toggle.getAttribute('aria-checked')).toBe(
         theme === 'light' ? 'true' : 'false',
       );
