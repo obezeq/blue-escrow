@@ -530,19 +530,24 @@
 }
 
 .hiw__sceneHead {
-  padding: 24px 28px;
+  padding: clamp(18px, 2.4vh, 28px) clamp(22px, 3vw, 32px);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
   border-bottom: 1px solid var(--border);
   font-family: var(--ff-mono);
-  font-size: 12px;
-  letter-spacing: 0.16em;
+  // Awwwards-tier banner weight — the "LIVE CONTRACT VIEW" eyebrow has to
+  // read as the card's title, not a footnote. Floor 15 / ceiling 20 with
+  // 0.22em tracking gives it Spotify/Stripe dashboard gravity at 1440+.
+  font-size: clamp(15px, 2.2cqi, 20px);
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   // Scene header is the card banner, not footnote — promote from --text-muted
   // to --text for a stronger read in both themes (#98).
   color: var(--text);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .hiw__sceneStep {
@@ -562,6 +567,10 @@
   align-items: center;
   justify-content: center;
   padding: 8px;
+  // Containment context for SVG text (cqi) — lets the diagram scale labels
+  // with the scene-card width, not the viewport, so the three role chips stay
+  // legible from 320px mobile to 2560px ultra-wide. Refs #99.
+  container-type: inline-size;
 }
 
 .hiw__svg {
@@ -569,6 +578,94 @@
   height: 100%;
   min-height: 280px;
   display: block;
+}
+
+// ---------------------------------------------------------------------------
+// Diagram SVG fills (HiwDiagram.tsx) — refs #99.
+//
+// Prior to this block HiwDiagram.tsx referenced `.hiw__diagActorPuck/Role/
+// Text/Muted` + `.hiw__diagWire` on every SVG element, but the module had
+// no rules for any of them — so `<text>` fell back to `fill: black` on the
+// dark navy surface and the CLIENT / MIDDLEMAN / SELLER trio was invisible.
+// The selectors live here (not inline in HiwDiagram) so theme tokens drive
+// the palette and container queries can size text fluidly with the scene.
+// ---------------------------------------------------------------------------
+
+.hiw__diagActorPuck {
+  fill: var(--hiw-actor-bg);
+  stroke: var(--hiw-actor-border);
+}
+
+.hiw__diagActorRole {
+  fill: var(--hiw-role-label);
+  font-family: var(--ff-mono);
+  // Awwwards-tier label read — cqi on .hiw__sceneBody keeps the text
+  // legible at 320px mobile without steamrolling the 1440+ desktop cap.
+  // Floor 15 / ceiling 24 lifts the role chips to first-class banner
+  // typography; multiplier 3.0cqi reaches ceiling on 800px+ scene cards.
+  font-size: clamp(15px, 3.0cqi, 24px);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+}
+
+.hiw__diagActorText {
+  fill: var(--hiw-actor-name);
+  font-family: var(--ff-sans);
+  // Primary name gets the strongest read in the trio — 18/28 sans 500.
+  font-size: clamp(18px, 3.4cqi, 28px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.hiw__diagActorMuted {
+  fill: var(--hiw-actor-wallet);
+  font-family: var(--ff-mono);
+  // 14 floor keeps the 10-char wallet hash legible; ceiling 18 so the
+  // muted line never overshadows the actor name.
+  font-size: clamp(14px, 2.2cqi, 18px);
+  letter-spacing: 0.02em;
+}
+
+.hiw__diagCoreLabel {
+  fill: var(--muted-2);
+  font-family: var(--ff-mono);
+  font-size: clamp(13px, 2.0cqi, 18px);
+  font-weight: 500;
+  letter-spacing: 0.24em;
+}
+
+.hiw__diagCoreTitle {
+  fill: var(--text);
+  font-family: var(--ff-sans);
+  font-size: clamp(16px, 2.5cqi, 22px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.hiw__diagWire {
+  stroke: var(--hiw-wire-base);
+}
+
+.hiw__diagPacket {
+  font-family: var(--ff-mono);
+  font-size: clamp(14px, 2.2cqi, 18px);
+  font-weight: 700;
+}
+
+// `prefers-contrast: more` — bump role label + wallet to the strongest
+// available tokens so low-vision users see the diagram without relying on
+// brand-blue tints. forced-colors is already handled at the token level
+// (`_variables.scss`).
+@media (prefers-contrast: more) {
+  .hiw__diagActorRole {
+    fill: var(--text);
+  }
+  .hiw__diagActorMuted {
+    fill: var(--text);
+  }
+  .hiw__diagWire {
+    stroke: var(--text);
+  }
 }
 
 .hiw__actors {
@@ -1062,6 +1159,16 @@
     height: 1px;
     background: currentColor;
   }
+}
+
+// Mobile mini SVG itself — `HiwPhaseDiagram` renders into this and was
+// orphan-classed prior to #99. Fill width of its containing diagram slot;
+// auto height preserves the viewBox 2:1 ratio at every breakpoint.
+.hiw__miniDiagram {
+  inline-size: 100%;
+  block-size: auto;
+  max-block-size: 260px;
+  display: block;
 }
 
 // Mini-diagram slot (Agent C emits HiwPhaseDiagram inside this). Reuses

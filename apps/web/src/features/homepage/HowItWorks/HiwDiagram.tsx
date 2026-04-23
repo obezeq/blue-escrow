@@ -1,23 +1,23 @@
 import styles from './HowItWorks.module.scss';
 
-/**
- * v6 HIW SVG diagram (Blue Escrow v6.html:1390-1483) —
- * contract core + 3 actor pucks + 3 base dashed wires + 3 active gradient
- * overlays + money packet. Every animated sub-element is data-tagged so
- * HowItWorksAnimations can target it without leaking ids into the DOM.
- *
- * viewBox 0 0 1200 720 matches the v6 coordinate system; actor + core
- * positions are defined in steps.tsx so the GSAP timeline can reference
- * them programmatically.
- */
 export function HiwDiagram() {
   return (
     <svg
       className={styles.hiw__svg}
       viewBox="0 0 1200 720"
       preserveAspectRatio="xMidYMid meet"
-      aria-hidden="true"
+      role="img"
+      aria-labelledby="hiw-diag-title hiw-diag-desc"
     >
+      <title id="hiw-diag-title">Three-party escrow smart contract diagram</title>
+      <desc id="hiw-diag-desc">
+        A central smart-contract core holds funds. Client, middleman, and
+        seller are three wallets, each connected to the core by dashed wires
+        that glow when a phase activates them. A money packet flows from the
+        client to the core when the deal is locked, then from the core to the
+        seller when funds are released.
+      </desc>
+
       <defs>
         <radialGradient id="hiw-core-grad" cx="50%" cy="40%" r="60%">
           <stop offset="0" stopColor="#33AAFF" />
@@ -42,7 +42,6 @@ export function HiwDiagram() {
           <stop offset=".5" stopColor="#0091FF" />
           <stop offset="1" stopColor="#0091FF" stopOpacity="0" />
         </linearGradient>
-        {/* Motion-blur trail for the money packet — Agent A may tween stdDeviation */}
         <filter
           id="hiw-packet-trail"
           x="-50%"
@@ -52,7 +51,6 @@ export function HiwDiagram() {
         >
           <feGaussianBlur in="SourceGraphic" stdDeviation="0" />
         </filter>
-        {/* Inner rim-light for the core (creative polish, no-op if unused) */}
         <filter
           id="hiw-core-rim"
           x="-50%"
@@ -72,8 +70,8 @@ export function HiwDiagram() {
         </filter>
       </defs>
 
-      {/* Concentric orbits around contract core */}
-      <g data-hiw="orbits" opacity="0">
+      {/* Concentric orbits around the contract core — decorative. */}
+      <g data-hiw="orbits" opacity="0" aria-hidden="true">
         <circle
           cx="600"
           cy="380"
@@ -82,6 +80,7 @@ export function HiwDiagram() {
           stroke="#0091FF"
           strokeOpacity=".15"
           strokeDasharray="2 6"
+          vectorEffect="non-scaling-stroke"
         />
         <circle
           cx="600"
@@ -91,6 +90,7 @@ export function HiwDiagram() {
           stroke="#0091FF"
           strokeOpacity=".1"
           strokeDasharray="2 8"
+          vectorEffect="non-scaling-stroke"
         />
         <circle
           cx="600"
@@ -100,11 +100,12 @@ export function HiwDiagram() {
           stroke="#0091FF"
           strokeOpacity=".07"
           strokeDasharray="2 10"
+          vectorEffect="non-scaling-stroke"
         />
       </g>
 
       {/* Wires — base dashed (always visible) + active gradient overlays (tweened) */}
-      <g strokeLinecap="round" fill="none" strokeWidth="1.5">
+      <g strokeLinecap="round" fill="none" strokeWidth="1.5" aria-hidden="true">
         <path
           data-hiw="wire-base-C"
           className={styles.hiw__diagWire}
@@ -157,6 +158,7 @@ export function HiwDiagram() {
           fill="#0091FF"
           fillOpacity="0"
           filter="url(#hiw-core-glow)"
+          aria-hidden="true"
         />
         <circle
           cx="600"
@@ -166,6 +168,8 @@ export function HiwDiagram() {
           stroke="#0091FF"
           strokeOpacity=".5"
           strokeDasharray="4 5"
+          vectorEffect="non-scaling-stroke"
+          aria-hidden="true"
         />
         <circle
           cx="600"
@@ -182,28 +186,24 @@ export function HiwDiagram() {
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
+          aria-hidden="true"
         >
           <rect x="-14" y="-4" width="28" height="20" rx="3" />
           <path d="M -9 -4 V -10 A 9 9 0 0 1 9 -10 V -4" />
         </g>
         <text
           x="600"
-          y="460"
+          y="468"
           textAnchor="middle"
-          fontFamily="Geist Mono, ui-monospace"
-          fontSize="11"
-          fill="var(--muted-2)"
-          letterSpacing="2"
+          className={styles.hiw__diagCoreLabel}
         >
           SMART CONTRACT
         </text>
         <text
           x="600"
-          y="478"
+          y="498"
           textAnchor="middle"
-          fontFamily="Geist, ui-sans-serif"
-          fontSize="13"
-          fill="var(--text)"
+          className={styles.hiw__diagCoreTitle}
         >
           Escrow #4821
         </text>
@@ -218,6 +218,8 @@ export function HiwDiagram() {
           stroke="#0091FF"
           strokeOpacity=".3"
           strokeDasharray="2 5"
+          vectorEffect="non-scaling-stroke"
+          aria-hidden="true"
         />
         <g
           stroke="#0091FF"
@@ -225,33 +227,27 @@ export function HiwDiagram() {
           fill="none"
           strokeLinecap="round"
           strokeLinejoin="round"
+          aria-hidden="true"
         >
           <path d="M 0 -16 L -14 -8 V 6 C -14 16 -8 22 0 24 C 8 22 14 16 14 6 V -8 Z" />
         </g>
         <text
-          y="-82"
+          y="-92"
           textAnchor="middle"
-          fontFamily="Geist Mono, ui-monospace"
-          fontSize="10"
           className={styles.hiw__diagActorRole}
-          letterSpacing="2"
         >
           CLIENT
         </text>
         <text
-          y="88"
+          y="100"
           textAnchor="middle"
-          fontFamily="Geist, ui-sans-serif"
-          fontSize="14"
           className={styles.hiw__diagActorText}
         >
           Sofia R.
         </text>
         <text
-          y="106"
+          y="132"
           textAnchor="middle"
-          fontFamily="Geist Mono, ui-monospace"
-          fontSize="10"
           className={styles.hiw__diagActorMuted}
         >
           0x7a2f…e91c
@@ -267,6 +263,8 @@ export function HiwDiagram() {
           stroke="#0091FF"
           strokeOpacity=".3"
           strokeDasharray="2 5"
+          vectorEffect="non-scaling-stroke"
+          aria-hidden="true"
         />
         <g
           stroke="#0091FF"
@@ -274,34 +272,28 @@ export function HiwDiagram() {
           fill="none"
           strokeLinecap="round"
           strokeLinejoin="round"
+          aria-hidden="true"
         >
           <path d="M 0 -18 L 16 -10 V 8 L 0 20 L -16 8 V -10 Z" />
           <path d="M -16 -2 L 16 -2" />
         </g>
         <text
-          y="-82"
+          y="-92"
           textAnchor="middle"
-          fontFamily="Geist Mono, ui-monospace"
-          fontSize="10"
           className={styles.hiw__diagActorRole}
-          letterSpacing="2"
         >
           MIDDLEMAN
         </text>
         <text
-          y="88"
+          y="100"
           textAnchor="middle"
-          fontFamily="Geist, ui-sans-serif"
-          fontSize="14"
           className={styles.hiw__diagActorText}
         >
           @archer
         </text>
         <text
-          y="106"
+          y="132"
           textAnchor="middle"
-          fontFamily="Geist Mono, ui-monospace"
-          fontSize="10"
           className={styles.hiw__diagActorMuted}
         >
           REP 4.98 · 214 deals
@@ -317,6 +309,8 @@ export function HiwDiagram() {
           stroke="#0091FF"
           strokeOpacity=".3"
           strokeDasharray="2 5"
+          vectorEffect="non-scaling-stroke"
+          aria-hidden="true"
         />
         <g
           stroke="#0091FF"
@@ -324,34 +318,28 @@ export function HiwDiagram() {
           fill="none"
           strokeLinecap="round"
           strokeLinejoin="round"
+          aria-hidden="true"
         >
           <path d="M -14 -12 H 14 L 18 14 A 2 2 0 0 1 16 16 H -16 A 2 2 0 0 1 -18 14 Z" />
           <path d="M -6 -12 V -18 A 6 6 0 0 1 6 -18 V -12" />
         </g>
         <text
-          y="-82"
+          y="-92"
           textAnchor="middle"
-          fontFamily="Geist Mono, ui-monospace"
-          fontSize="10"
           className={styles.hiw__diagActorRole}
-          letterSpacing="2"
         >
           SELLER
         </text>
         <text
-          y="88"
+          y="100"
           textAnchor="middle"
-          fontFamily="Geist, ui-sans-serif"
-          fontSize="14"
           className={styles.hiw__diagActorText}
         >
           Diego M.
         </text>
         <text
-          y="106"
+          y="132"
           textAnchor="middle"
-          fontFamily="Geist Mono, ui-monospace"
-          fontSize="10"
           className={styles.hiw__diagActorMuted}
         >
           0xd20e…77ab
@@ -373,10 +361,8 @@ export function HiwDiagram() {
         <text
           textAnchor="middle"
           y="5"
-          fontFamily="Geist Mono, ui-monospace"
-          fontSize="11"
           fill="#001B4D"
-          fontWeight="700"
+          className={styles.hiw__diagPacket}
         >
           $2,400
         </text>

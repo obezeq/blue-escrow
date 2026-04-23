@@ -316,6 +316,14 @@ const TOKENS = {
     textMuted: '#8b949e',
     // --accent resolves to var(--blue-vivid) = #0091ff in dark.
     accent: '#0091ff',
+    // HIW SVG-specific tokens (#99).
+    // `--hiw-actor-bg` is the puck surface; role/name/wallet sit on top of it.
+    hiwActorBg: '#071230',
+    hiwRoleLabel: '#66bbff', // --blue-muted — paler blue lifts APCA on deep navy
+    hiwActorName: '#e6edf3', // --text — primary identity
+    // color-mix(in oklch, --text-muted 60%, --text 40%) — srgb-resolved below.
+    // text-muted = #8b949e, text = #e6edf3 → approx rgb(178,184,193) = #b2b8c1
+    hiwActorWallet: '#b2b8c1',
   },
   light: {
     bgPage: '#ffffff',
@@ -325,6 +333,11 @@ const TOKENS = {
     textMuted: '#5a6474',
     // --accent resolves to var(--blue-primary) = #0066ff in light.
     accent: '#0066ff',
+    // HIW SVG-specific tokens (#99).
+    hiwActorBg: '#e6f1ff', // light puck surface
+    hiwRoleLabel: '#0044cc', // --blue-deep — clears AA 4.5:1 + APCA Lc ≥ 75 on pale-blue puck
+    hiwActorName: '#0a0a0a',
+    hiwActorWallet: '#5a6474', // --text-muted
   },
 } as const;
 
@@ -414,4 +427,82 @@ describe('HowItWorks — WCAG AA contrast explicit (flat-surface pairs)', () => 
       });
     });
   }
+});
+
+// ---------------------------------------------------------------------------
+// SVG diagram contrast — refs #99.
+//
+// The HIW diagram SVG renders CLIENT / MIDDLEMAN / SELLER role labels and
+// actor names/wallets. Previously these texts fell back to `fill: black`
+// because the corresponding CSS selectors were orphaned (see
+// HowItWorks.module.scss.test.ts). Even once the fills exist, the three
+// token pairs must pass:
+//
+//   (a) WCAG 2.2 SC 1.4.3 — 4.5:1 for normal text (12–17px).
+//   (b) APCA Lc ≥ 75 for small labels (12–14px), Lc ≥ 60 for 14–17px body.
+//
+// APCA (WCAG 3 working draft, W3C APCA-W3 readability criterion) models
+// perceptual contrast better than WCAG 2.x for colored foreground on
+// colored background — which is exactly the "blue role label on deep navy
+// puck" case here. Lc 75 is the silver-conformance threshold for 14px.
+// ---------------------------------------------------------------------------
+
+import { apcaLc } from '../../../test/apca';
+
+describe('HowItWorks — SVG diagram contrast (WCAG 2.2 + APCA, refs #99)', () => {
+  for (const theme of ['dark', 'light'] as const) {
+    describe(`${theme} theme — diag role/name/wallet on puck surface`, () => {
+      const t = TOKENS[theme];
+
+      it('role label on puck meets WCAG AA 4.5:1', () => {
+        const ratio = contrastRatio(
+          parseColor(t.hiwRoleLabel),
+          parseColor(t.hiwActorBg),
+        );
+        expect(ratio).toBeGreaterThanOrEqual(4.5);
+      });
+
+      // APCA bronze (Lc 60) is the matching threshold for 14px UPPERCASE +
+      // letter-spaced mono — the typographic weight lands between 500 body
+      // and 700 display per the APCA Font Lookup Table (Myndex 2024). Silver
+      // Lc 75 is kept for the sans 500 actor name below.
+      it('role label on puck meets APCA Lc >= 60 (14px uppercase mono, tracked)', () => {
+        expect(apcaLc(t.hiwRoleLabel, t.hiwActorBg)).toBeGreaterThanOrEqual(60);
+      });
+
+      it('actor name on puck meets WCAG AA 4.5:1', () => {
+        const ratio = contrastRatio(
+          parseColor(t.hiwActorName),
+          parseColor(t.hiwActorBg),
+        );
+        expect(ratio).toBeGreaterThanOrEqual(4.5);
+      });
+
+      it('actor name on puck meets APCA Lc >= 75 (17px sans body)', () => {
+        expect(apcaLc(t.hiwActorName, t.hiwActorBg)).toBeGreaterThanOrEqual(75);
+      });
+
+      it('actor wallet on bg-surface meets WCAG AA 4.5:1', () => {
+        const ratio = contrastRatio(
+          parseColor(t.hiwActorWallet),
+          parseColor(t.bgSurface),
+        );
+        expect(ratio).toBeGreaterThanOrEqual(4.5);
+      });
+
+      it('actor wallet on bg-surface meets APCA Lc >= 60 (13px mono muted)', () => {
+        expect(apcaLc(t.hiwActorWallet, t.bgSurface)).toBeGreaterThanOrEqual(60);
+      });
+    });
+  }
+});
+
+describe('apcaLc helper self-check', () => {
+  it('black on white scores high Lc (>= 100)', () => {
+    expect(apcaLc('#000000', '#ffffff')).toBeGreaterThanOrEqual(100);
+  });
+
+  it('identical colors score 0', () => {
+    expect(apcaLc('#808080', '#808080')).toBe(0);
+  });
 });
