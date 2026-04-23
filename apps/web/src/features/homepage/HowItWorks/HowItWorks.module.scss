@@ -530,23 +530,24 @@
 }
 
 .hiw__sceneHead {
-  padding: clamp(16px, 2vh, 24px) clamp(20px, 3vw, 28px);
+  padding: clamp(18px, 2.4vh, 28px) clamp(22px, 3vw, 32px);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   flex-wrap: wrap;
   border-bottom: 1px solid var(--border);
   font-family: var(--ff-mono);
-  // Banner-grade read at viewing distance (#99). cqi scales with the scene
-  // card width; floor 12px keeps the mobile deck readable.
-  font-size: clamp(12px, 1.15cqi, 14px);
-  letter-spacing: 0.18em;
+  // Awwwards-tier banner weight — the "LIVE CONTRACT VIEW" eyebrow has to
+  // read as the card's title, not a footnote. Floor 14 / ceiling 18 with
+  // 0.2em tracking gives it Spotify/Stripe dashboard gravity at 1440+.
+  font-size: clamp(14px, 1.5cqi, 18px);
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   // Scene header is the card banner, not footnote — promote from --text-muted
   // to --text for a stronger read in both themes (#98).
   color: var(--text);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .hiw__sceneStep {
@@ -598,37 +599,45 @@
 .hiw__diagActorRole {
   fill: var(--hiw-role-label);
   font-family: var(--ff-mono);
-  // cqi on .hiw__sceneBody (container-type: inline-size). Floor 12px matches
-  // the readable mono baseline; 14px ceiling tracks the desktop 1440+ width.
-  font-size: clamp(12px, 1.6cqi, 14px);
-  font-weight: 500;
+  // Awwwards-tier label read — cqi on .hiw__sceneBody keeps the text
+  // legible at 320px mobile without steamrolling the 1440+ desktop cap.
+  // Floor 14 / ceiling 20 lifts the role chips from "footnote" to "chip".
+  font-size: clamp(14px, 2.3cqi, 20px);
+  font-weight: 600;
+  letter-spacing: 0.14em;
 }
 
 .hiw__diagActorText {
   fill: var(--hiw-actor-name);
   font-family: var(--ff-sans);
-  font-size: clamp(14px, 1.9cqi, 17px);
+  // Primary name gets the strongest read in the trio.
+  font-size: clamp(17px, 2.7cqi, 24px);
   font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
 .hiw__diagActorMuted {
   fill: var(--hiw-actor-wallet);
   font-family: var(--ff-mono);
-  font-size: clamp(11px, 1.4cqi, 13px);
+  // 13px floor clears the 12px readable floor even after letter-spacing.
+  font-size: clamp(13px, 1.8cqi, 16px);
   letter-spacing: 0.02em;
 }
 
 .hiw__diagCoreLabel {
   fill: var(--muted-2);
   font-family: var(--ff-mono);
-  font-size: clamp(11px, 1.3cqi, 13px);
-  letter-spacing: 0.2em;
+  font-size: clamp(12px, 1.7cqi, 16px);
+  font-weight: 500;
+  letter-spacing: 0.22em;
 }
 
 .hiw__diagCoreTitle {
   fill: var(--text);
   font-family: var(--ff-sans);
-  font-size: clamp(13px, 1.5cqi, 15px);
+  font-size: clamp(15px, 2.1cqi, 19px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
 .hiw__diagWire {
@@ -637,7 +646,7 @@
 
 .hiw__diagPacket {
   font-family: var(--ff-mono);
-  font-size: clamp(11px, 1.3cqi, 13px);
+  font-size: clamp(13px, 1.8cqi, 16px);
   font-weight: 700;
 }
 
