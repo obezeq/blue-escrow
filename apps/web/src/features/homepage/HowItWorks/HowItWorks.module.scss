@@ -1150,6 +1150,16 @@
   }
 }
 
+// Mobile mini SVG itself — `HiwPhaseDiagram` renders into this and was
+// orphan-classed prior to #99. Fill width of its containing diagram slot;
+// auto height preserves the viewBox 2:1 ratio at every breakpoint.
+.hiw__miniDiagram {
+  inline-size: 100%;
+  block-size: auto;
+  max-block-size: 260px;
+  display: block;
+}
+
 // Mini-diagram slot (Agent C emits HiwPhaseDiagram inside this). Reuses
 // the scene's accent-soft glow without the full desktop card chrome.
 .hiw__phaseDiagram {
