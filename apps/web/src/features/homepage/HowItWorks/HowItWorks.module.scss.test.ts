@@ -69,3 +69,72 @@ describe('HowItWorks.module.scss — theme token discipline', () => {
     expect(body).toMatch(/var\(--core-glow-ring-strong\)/);
   });
 });
+
+// ---------------------------------------------------------------------------
+// SVG Diagram selectors — refs #99.
+// HiwDiagram.tsx references these CSS Module classes on every <text>, <circle>,
+// and <path> in the SVG. If the selector is missing, the browser defaults SVG
+// `<text>` to `fill: black` — invisible in dark mode. Guard against silent
+// regression by asserting each selector exists AND uses a design token (not a
+// hardcoded color literal).
+// ---------------------------------------------------------------------------
+
+describe('HowItWorks.module.scss — SVG diagram selectors (refs #99)', () => {
+  it.each([
+    '.hiw__diagActorPuck',
+    '.hiw__diagActorRole',
+    '.hiw__diagActorText',
+    '.hiw__diagActorMuted',
+    '.hiw__diagWire',
+  ])('defines %s so the SVG text is not invisible in dark mode', (sel) => {
+    expect(() => blockFor(sel)).not.toThrow();
+  });
+
+  it('.hiw__diagActorPuck fills with --hiw-actor-bg and strokes with --hiw-actor-border', () => {
+    const body = blockFor('.hiw__diagActorPuck');
+    expect(body).toMatch(/fill:\s*var\(--hiw-actor-bg\)/);
+    expect(body).toMatch(/stroke:\s*var\(--hiw-actor-border\)/);
+  });
+
+  it('.hiw__diagActorRole fills with a role-label token and uses fluid cqi sizing', () => {
+    const body = blockFor('.hiw__diagActorRole');
+    expect(body).toMatch(/fill:\s*var\(--hiw-role-label\)/);
+    expect(body).toMatch(/clamp\([^)]*cqi[^)]*\)/);
+  });
+
+  it('.hiw__diagActorText fills with the actor-name token (high contrast primary)', () => {
+    const body = blockFor('.hiw__diagActorText');
+    expect(body).toMatch(/fill:\s*var\(--hiw-actor-name\)/);
+    expect(body).toMatch(/clamp\([^)]*cqi[^)]*\)/);
+  });
+
+  it('.hiw__diagActorMuted fills with the actor-wallet token', () => {
+    const body = blockFor('.hiw__diagActorMuted');
+    expect(body).toMatch(/fill:\s*var\(--hiw-actor-wallet\)/);
+  });
+
+  it('.hiw__diagWire strokes with --hiw-wire-base', () => {
+    const body = blockFor('.hiw__diagWire');
+    expect(body).toMatch(/stroke:\s*var\(--hiw-wire-base\)/);
+  });
+
+  it('.hiw__sceneBody sets container-type: inline-size so SVG cqi resolves', () => {
+    const body = blockFor('.hiw__sceneBody');
+    expect(body).toMatch(/container-type:\s*inline-size/);
+  });
+
+  it('no hard-coded hex / rgb color in the diag* selectors', () => {
+    const selectors = [
+      '.hiw__diagActorPuck',
+      '.hiw__diagActorRole',
+      '.hiw__diagActorText',
+      '.hiw__diagActorMuted',
+      '.hiw__diagWire',
+    ];
+    for (const sel of selectors) {
+      const body = blockFor(sel);
+      expect(body).not.toMatch(/#[0-9a-f]{3,6}\b/i);
+      expect(body).not.toMatch(/rgba?\(\s*\d/);
+    }
+  });
+});
