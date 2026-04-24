@@ -28,7 +28,7 @@ export function HowItWorks() {
 
 function HowItWorksContent() {
   const sectionRef = useRef<HTMLElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
+  const pinHostRef = useRef<HTMLDivElement>(null);
   const { phase: active, setPhase: setActive, outcome } = useHiw();
   useOutcomeBranch({ targetRef: sectionRef, outcome });
   const step = HIW_STEPS[active]!;
@@ -42,29 +42,20 @@ function HowItWorksContent() {
       id="hiw"
       aria-label="How it works in five steps"
     >
-      <HowItWorksAnimations onPhaseChange={setActive} stageRef={stageRef}>
-        <div className={styles.hiw__intro}>
-          <div className={styles.hiw__wrap}>
-            <div className={styles.hiw__head}>
-              <div>
-                <div className={styles.hiw__eyebrow} data-animate="eyebrow">
-                  How it works
-                </div>
-                <h2 className={styles.hiw__heading} data-animate="heading">
-                  Three people. One{' '}
-                  <em className={styles.hiw__emphasis}>smart contract.</em>{' '}
-                  Zero trust.
-                </h2>
-              </div>
-              <p className={styles.hiw__subtitle} data-animate="subtitle">
-                Scroll to watch one deal unfold, step by step. Nobody holds
-                the money — the code does.
-              </p>
+      <HowItWorksAnimations onPhaseChange={setActive} pinHostRef={pinHostRef}>
+        <div ref={pinHostRef} className={styles.hiw__pinHost}>
+          <header className={styles.hiw__intro}>
+            <div className={styles.hiw__eyebrow} data-animate="eyebrow">
+              How it works
             </div>
-          </div>
-        </div>
+            <h2 className={styles.hiw__heading} data-animate="heading">
+              Three people. One{' '}
+              <em className={styles.hiw__emphasis}>smart contract.</em>{' '}
+              Zero trust.
+            </h2>
+          </header>
 
-        <div ref={stageRef} className={styles.hiw__stage}>
+          <div className={styles.hiw__stage}>
           <div className={styles.hiw__grid}>
             <aside
               className={styles.hiw__ledger}
@@ -174,6 +165,7 @@ function HowItWorksContent() {
               </button>
             ))}
           </nav>
+        </div>
         </div>
 
         <div

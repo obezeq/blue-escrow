@@ -26,33 +26,19 @@
 }
 
 .hiw__intro {
-  // Fluid vertical rhythm — no 720px step. Floor = 100/60 (matches
-  // the old mobile fallback), ceiling = 140/80 (matches old desktop).
-  padding-block-start: clamp(100px, 10vw, 140px);
-  padding-block-end: clamp(60px, 6vw, 80px);
-}
-
-.hiw__wrap {
+  // Intro now lives INSIDE the pinHost (flex column), so it sizes to
+  // its natural content height instead of dictating the scroll gap
+  // before the pin. Padding tightened to 20-36 / 12-20 (from 100-140 /
+  // 60-80) — caps intro height at ~120-180px across 1024→1920 viewports
+  // so the pinHost has plenty of room for stage (grid+rail).
+  flex: 0 0 auto;
+  padding-block: clamp(20px, 3vh, 36px) clamp(12px, 1.5vh, 20px);
+  // Container-type for the emphasis cqi scaling (was on the now-removed
+  // .hiw__wrap). Preserves the italic "smart contract." responsive read.
+  container-type: inline-size;
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
-  // Mirror --container-padding (clamp(1.5rem, 4vw, 2.5rem)) — same tokens
-  // used by .o-container, eliminating the 720px step.
-  padding-inline: clamp(1.5rem, 4vw, 2.5rem);
-  // Size-query context for italic cohesion + heading wrap safety.
-  container-type: inline-size;
-}
-
-.hiw__head {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 80px;
-  align-items: end;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-    gap: 28px;
-  }
 }
 
 .hiw__eyebrow {
@@ -76,12 +62,15 @@
 }
 
 .hiw__heading {
-  font-size: clamp(42px, 6.4vw, 92px);
-  // Tighter stack prevents the three-line heading from feeling airy at 768.
-  line-height: 1.02;
-  letter-spacing: -0.04em;
+  // Compact heading scale so the intro caps at ~180px and the stage
+  // underneath keeps the majority of the pinned viewport for the live
+  // contract view. Previous clamp (42→92) made the heading 3 lines ×
+  // 92px at 1440+, dominating the viewport before the pin even engaged.
+  font-size: clamp(28px, 4.2vw, 52px);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
   font-weight: 600;
-  margin: 18px 0 0;
+  margin: 10px 0 0;
   text-wrap: balance;
   color: var(--text);
 }
@@ -119,53 +108,27 @@
   margin-inline: -0.15em;
 }
 
-.hiw__subtitle {
-  font-size: 17px;
-  color: var(--text-muted);
-  max-width: 48ch;
-  margin: 0;
-  text-wrap: pretty;
-}
+// --- PinHost (ScrollTrigger pin target) ------------------------------------
+// NEW container that wraps intro + stage so the pin engages at #hiw top
+// (pre-pin scroll = 0) instead of after the user has scrolled past the
+// intro heading. Responsive 100%: block-size = 100svh - header across
+// every viewport.
 
-// --- Stage (desktop pin container) -----------------------------------------
-// The stage is the ScrollTrigger pin target. It holds the full-viewport
-// ledger + scene + rail composition. On mobile it's hidden in favor of
-// .hiw__deck which uses native scroll-snap (cheaper + more natural on touch).
-
-.hiw__stage {
+.hiw__pinHost {
   position: relative;
+  display: flex;
+  flex-direction: column;
   // svh (small viewport height) avoids iOS URL-bar jitter that 100vh triggers.
-  // Subtract the fixed site header (72px / 4.5rem, see --header-height in
-  // settings/_variables.scss) so the pinned stage fits between the header
-  // and the bottom of the viewport. ScrollTrigger's `start` offset (set in
-  // HowItWorksAnimations.tsx) anchors pin activation at y = --header-height
-  // so the ledger header (Contract / Escrow #4821) isn't occluded.
   block-size: calc(100svh - var(--header-height));
   max-block-size: calc(100svh - var(--header-height));
   min-block-size: calc(640px - var(--header-height));
-  padding-block: clamp(16px, 3vh, 40px);
-  // Same fluid rule as .hiw__wrap — 20px min matches the old mobile
-  // fallback, 40px max matches desktop.
   padding-inline: clamp(1.25rem, 4vw, 2.5rem);
-  // Flex column so the grid (ledger + scene) expands to fill the available
-  // vertical space and the rail sits at the exact bottom of the stage
-  // regardless of viewport height. Without this, the natural content
-  // (grid 723 + rail 54) stops short at 1920×1080 by ~170px, leaving
-  // dead space below the rail that reads as "the pin keeps going past
-  // the nav" from a user POV. Responsive-100% contract.
-  display: flex;
-  flex-direction: column;
 
   // --- Heat plumbing ---
-  // Agent C (animations) writes --hiw-heat (0 → 1) to this element as the
-  // section scrubs. 0 = neutral surface, 1 = deep-navy well + vignette.
-  // Default declaration lets the CSS stand alone without JS.
+  // GSAP writes --hiw-heat (0 → 1) onto this element now (was stage).
+  // Downstream ::before/::after consume it for the backdrop effects.
   --hiw-heat: 0;
-  // Rail progress (0 → 1) is likewise written from scrub; inherited down
-  // into .hiw__railProgress > i.
   --hiw-rail-progress: 0;
-  // Middleman judge-podium dimmer (0 happy-path standby, 1 dispute active).
-  // Dispute branch timelines overwrite this via the outcome context.
   --hiw-judge-opacity: 0.3;
 
   // Deep navy radial well — color-mix against --blue-ink for theme cohesion.
@@ -198,7 +161,7 @@
     transition: background 0.4s var(--ease-out-expo);
   }
 
-  // Children sit above the heat overlays.
+  // Children (intro, stage) sit above the heat overlays.
   > * {
     position: relative;
     z-index: 1;
@@ -212,10 +175,27 @@
     }
   }
 
-  // Mobile step-deck replaces the stage; skip the expensive overlays.
+  // Mobile step-deck replaces the pinHost; skip the expensive overlays.
   @media (max-width: 899px), (max-height: 771px) {
     display: none;
   }
+}
+
+// --- Stage (flex: 1 inside pinHost) ----------------------------------------
+// Stage is no longer the pin target — it's the stretching middle row of
+// the pinHost (intro above, rail inside). Block-size/padding-inline moved
+// up to .hiw__pinHost; the stage just flexes to fill the remaining height.
+
+.hiw__stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-block-size: 0;
+  padding-block: clamp(12px, 2vh, 24px);
+  display: flex;
+  flex-direction: column;
+  // NOTE: heat plumbing + backdrop pseudos + display:none on mobile
+  // moved UP to .hiw__pinHost (the new pin target). This block stays
+  // lean: stage is now just the flex child that holds grid + rail.
 }
 
 .hiw__grid {

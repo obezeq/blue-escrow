@@ -172,7 +172,7 @@ import * as gsapReg from '@/animations/config/gsap-register';
 
 // ---------------------------------------------------------------------------
 // Test fixtures — built via createElement (no innerHTML) to avoid triggering
-// the security hook. The stage (passed via stageRef) is a detached div; the
+// the security hook. The pin-host (passed via pinHostRef) is a detached div; the
 // container ref children are passed as JSX.
 // ---------------------------------------------------------------------------
 
@@ -291,17 +291,17 @@ afterEach(() => {
 });
 
 /**
- * Render the component with a stageRef pointing at our test stage DOM, then
+ * Render the component with a pinHostRef pointing at our test stage DOM, then
  * execute the useGSAP() callback manually so every matchMedia branch is
  * registered.
  */
 function renderAnimationsWithFixture(onPhaseChange = vi.fn()) {
   const stage = buildStage();
-  const stageRef: RefObject<HTMLDivElement | null> = { current: stage };
+  const pinHostRef: RefObject<HTMLDivElement | null> = { current: stage };
 
   const result = render(
     <HowItWorksAnimations
-      stageRef={stageRef}
+      pinHostRef={pinHostRef}
       onPhaseChange={onPhaseChange}
     >
       <FixtureChildren />
@@ -313,7 +313,7 @@ function renderAnimationsWithFixture(onPhaseChange = vi.fn()) {
   }).lastFn;
   if (fn) fn({ kill: () => {} });
 
-  return { ...result, stage, onPhaseChange, stageRef };
+  return { ...result, stage, onPhaseChange, pinHostRef };
 }
 
 // ===========================================================================

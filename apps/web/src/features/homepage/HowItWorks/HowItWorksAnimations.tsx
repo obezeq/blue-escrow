@@ -81,7 +81,7 @@ type PhaseIndex = 0 | 1 | 2 | 3 | 4;
 
 interface HowItWorksAnimationsProps {
   children: React.ReactNode;
-  stageRef: RefObject<HTMLDivElement | null>;
+  pinHostRef: RefObject<HTMLDivElement | null>;
   onPhaseChange: (phase: PhaseIndex) => void;
 }
 
@@ -125,13 +125,13 @@ function nearestLabelIndex(
 
 export function HowItWorksAnimations({
   children,
-  stageRef,
+  pinHostRef,
   onPhaseChange,
 }: HowItWorksAnimationsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const lastPhaseRef = useRef<number>(0);
 
-  // Capture the callback + stageRef in refs so they never trigger useGSAP
+  // Capture the callback + pinHostRef in refs so they never trigger useGSAP
   // dependency churn. The onPhaseChange prop from HowItWorks is a setState
   // function so it's stable across renders in practice, but relying on that
   // is brittle — this pattern is safer and documented in gsap-react.
@@ -140,10 +140,10 @@ export function HowItWorksAnimations({
     onPhaseChangeRef.current = onPhaseChange;
   }, [onPhaseChange]);
 
-  const stageRefRef = useRef(stageRef);
+  const pinHostRefRef = useRef(pinHostRef);
   useEffect(() => {
-    stageRefRef.current = stageRef;
-  }, [stageRef]);
+    pinHostRefRef.current = pinHostRef;
+  }, [pinHostRef]);
 
   // Lenis instance for rail scroll-to. Reading at top level is the only
   // supported pattern — useLenis must live inside a LenisProvider.
@@ -222,14 +222,21 @@ export function HowItWorksAnimations({
       mm.add(
         '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
         () => {
-          const stage = stageRefRef.current.current;
-          if (!stage) return;
+          const pinHost = pinHostRefRef.current.current;
+          if (!pinHost) return;
 
-          const svgRoot = stage.querySelector('svg');
-          const ledgerAmountEl = stage.querySelector<HTMLElement>(
+          // The pinHost contains .hiw__intro + .hiw__stage. The SVG and
+          // ledger-amount live inside .hiw__stage → .hiw__scene; descendant
+          // queries from pinHost still resolve them unambiguously.
+          const svgRoot = pinHost.querySelector('svg');
+          const ledgerAmountEl = pinHost.querySelector<HTMLElement>(
             '[data-hiw-ledger="amount"]',
           );
           if (!svgRoot) return;
+          // `stage` used downstream for --hiw-heat / --hiw-rail-progress
+          // quickSetters and rail hitboxes stays the SAME DOM node; alias
+          // it so the rest of the closure reads unchanged.
+          const stage = pinHost;
 
           // Read --header-height once so the pin start can offset by the
           // fixed nav's height. Without this, `start: 'top top'` anchors the
@@ -830,7 +837,7 @@ export function HowItWorksAnimations({
       // Reduced-motion (both desktop & mobile)
       // ----------------------------------------------------------------
       mm.add(MATCH_MEDIA.reducedMotion, () => {
-        const stage = stageRefRef.current.current;
+        const stage = pinHostRefRef.current.current;
         const svgRoot = stage?.querySelector('svg');
         if (svgRoot) {
           gsap.set(
