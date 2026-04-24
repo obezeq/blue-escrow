@@ -34,17 +34,53 @@ export type OutcomeKey = OutcomeId | 'happy';
 interface OutcomeVars {
   '--hiw-judge-opacity'?: number;
   '--hiw-vault-charge'?: number;
+  /** Numeric flag consumed by CSS: 1 if fees are deducted, 0 if fee-free. */
+  '--hiw-fee-applies'?: number;
 }
 
+/**
+ * The reactive driver for all five surface states. Every outcome
+ * preserves the vault as charged (--hiw-vault-charge: 1) because funding
+ * has already happened by the time Safeguards fires — the branch story
+ * is about how the vault pays OUT, not whether it was filled.
+ *
+ * --hiw-fee-applies is boolean-as-number so the CSS layer can gate
+ * fee-split visuals (buckets + spouts) without re-deriving the
+ * resolutionAppliesFees rule, and so forced-colors falls back cleanly.
+ */
 const OUTCOME_VARS: Record<OutcomeKey, OutcomeVars> = {
-  happy: { '--hiw-judge-opacity': 0.3 },
-  refund: { '--hiw-judge-opacity': 0.3 },
-  disputeBuyer: { '--hiw-judge-opacity': 1 },
-  disputeSeller: { '--hiw-judge-opacity': 1 },
-  timeout: { '--hiw-judge-opacity': 0.3 },
+  happy: {
+    '--hiw-judge-opacity': 0.3,
+    '--hiw-vault-charge': 1,
+    '--hiw-fee-applies': 1, // Delivery → fees apply
+  },
+  refund: {
+    '--hiw-judge-opacity': 0.3,
+    '--hiw-vault-charge': 1,
+    '--hiw-fee-applies': 0, // no fees — seller volunteered refund
+  },
+  disputeBuyer: {
+    '--hiw-judge-opacity': 1,
+    '--hiw-vault-charge': 1,
+    '--hiw-fee-applies': 0, // buyer protection — no fees
+  },
+  disputeSeller: {
+    '--hiw-judge-opacity': 1,
+    '--hiw-vault-charge': 1,
+    '--hiw-fee-applies': 1, // same split as delivery
+  },
+  timeout: {
+    '--hiw-judge-opacity': 0.3,
+    '--hiw-vault-charge': 1,
+    '--hiw-fee-applies': 0, // permissionless rescue — no fees
+  },
 };
 
-const TRACKED_VARS = ['--hiw-judge-opacity', '--hiw-vault-charge'] as const;
+const TRACKED_VARS = [
+  '--hiw-judge-opacity',
+  '--hiw-vault-charge',
+  '--hiw-fee-applies',
+] as const;
 
 export interface UseOutcomeBranchParams {
   targetRef: RefObject<HTMLElement | null>;
