@@ -32,11 +32,12 @@
   .problem {
     padding-block: clamp(120px, 10vw, 180px) clamp(100px, 9vw, 160px);
     position: relative;
-    // Progressive enhancement: skip paint for offscreen; intrinsic-size
-    // reserves vertical space so CLS stays flat while content-visibility
-    // defers rasterization.
-    content-visibility: auto;
-    contain-intrinsic-size: auto 800px;
+    // content-visibility: auto is now scoped to .problem__answer only. The
+    // line-3 wrapper is pinned by ScrollTrigger on desktop, and a CV:auto
+    // ancestor can defer layout so that ST caches stale offscreen values
+    // during hydration. Keeping the root rule off guarantees the pin's
+    // start/end always measure against live layout; the CV optimization
+    // still applies below-the-fold to the "The fix" grid.
   }
 
   .problem__wrap {
@@ -87,6 +88,18 @@
     text-wrap: balance;
     color: var(--text-muted);
     max-inline-size: 22ch;
+  }
+
+  // Wrapper for line 3. On desktop >=900px, ScrollTrigger pins this stage
+  // while the master timeline orchestrates curtain → fall → strike. The
+  // `will-change: transform` hint is scoped to the stage (not the paragraph
+  // nor the strike svg) so the compositor promotes a single layer during
+  // pin without leaking GPU pressure to siblings. On mobile the rule is a
+  // no-op visually — the three animations run as independent ScrollTriggers
+  // like the other lines.
+  .problem__stage {
+    position: relative;
+    will-change: transform;
   }
 
   .problem__highlight {
@@ -161,6 +174,11 @@
     display: grid;
     grid-template-columns: 220px 1fr 1fr;
     gap: 56px;
+    // Below-the-fold grid — deferring paint here is safe because it is never
+    // a ScrollTrigger pin target. The pinned line-3 wrapper above is always
+    // measured against live layout (CV:auto removed from the root .problem).
+    content-visibility: auto;
+    contain-intrinsic-size: auto 400px;
 
     @media (max-width: 900px) {
       grid-template-columns: 1fr;
