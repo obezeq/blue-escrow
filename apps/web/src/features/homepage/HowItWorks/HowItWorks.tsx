@@ -168,6 +168,28 @@ function HowItWorksContent() {
         </div>
         </div>
 
+        {/*
+          Mobile-only intro — the desktop intro lives INSIDE .hiw__pinHost
+          (so the pinned experience opens with the heading visible), but
+          pinHost is display:none at <900px width. Rendering a second
+          intro here means mobile users still see "HOW IT WORKS / Three
+          people. One smart contract. Zero trust." above the step deck.
+          aria-hidden on the duplicate prevents screen readers from
+          reading the heading twice — the desktop one stays in the
+          accessibility tree.
+        */}
+        <header
+          className={`${styles.hiw__intro} ${styles['hiw__intro--mobile']}`}
+          aria-hidden="true"
+        >
+          <div className={styles.hiw__eyebrow}>How it works</div>
+          <h2 className={styles.hiw__heading}>
+            Three people. One{' '}
+            <em className={styles.hiw__emphasis}>smart contract.</em>{' '}
+            Zero trust.
+          </h2>
+        </header>
+
         <div
           className={styles.hiw__deck}
           aria-label="How it works — step deck"

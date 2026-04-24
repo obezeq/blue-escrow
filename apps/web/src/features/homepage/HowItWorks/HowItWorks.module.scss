@@ -33,12 +33,30 @@
   // so the pinHost has plenty of room for stage (grid+rail).
   flex: 0 0 auto;
   padding-block: clamp(20px, 3vh, 36px) clamp(12px, 1.5vh, 20px);
+  padding-inline: clamp(1.25rem, 4vw, 2.5rem);
   // Container-type for the emphasis cqi scaling (was on the now-removed
   // .hiw__wrap). Preserves the italic "smart contract." responsive read.
   container-type: inline-size;
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
+}
+
+// Mobile-only intro (rendered outside pinHost). The desktop intro is
+// inside pinHost which is display:none at <900px, so without this copy
+// mobile users would see the step deck with zero narrative context.
+.hiw__intro--mobile {
+  display: none;
+
+  @media (max-width: 899px) {
+    display: block;
+    padding-block: clamp(48px, 10vw, 80px) clamp(24px, 5vw, 36px);
+    // Mobile gets a chunkier heading (we can afford the vertical space
+    // before the scroll-snap cards start).
+    .hiw__heading {
+      font-size: clamp(32px, 7vw, 54px);
+    }
+  }
 }
 
 .hiw__eyebrow {
