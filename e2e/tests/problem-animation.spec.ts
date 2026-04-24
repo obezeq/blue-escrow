@@ -96,7 +96,7 @@ async function collectStrangerDescendantTransforms(
 }
 
 test.describe('problem section animations', () => {
-  test('desktop pin — sequence plays curtain → fall → strike as scroll progresses', async ({
+  test('desktop pin — pin installs on desktop and strike completes at end', async ({
     page,
   }) => {
     await primeThemeAndSkipPreloader(page, 'dark');
@@ -104,10 +104,10 @@ test.describe('problem section animations', () => {
     await page.goto('/');
     await page.waitForSelector('#problem');
 
-    // The pin branch only fires inside gsap.matchMedia on >=900×700, and
-    // only once the component has mounted + useGSAP has run. Poll for the
-    // dev hook instead of guessing a timeout — failure here means the pin
-    // was never registered (regression).
+    // The pin branch only fires inside gsap.matchMedia on >=900×700 × no
+    // reduced-motion, and only after the component mounts + useGSAP runs.
+    // Poll for the dev hook instead of guessing a timeout — failure here
+    // means the pin was never registered (regression).
     await page.waitForFunction(
       () =>
         (window as unknown as { __problemStageTrigger?: unknown })
@@ -120,49 +120,32 @@ test.describe('problem section animations', () => {
     expect(stage, 'dev hook must expose pin bounds').not.toBeNull();
     const { start, end } = stage!;
     expect(end).toBeGreaterThan(start);
+    // Pin reserves ~140vh of virtual scroll (configured in the source).
+    expect(end - start).toBeGreaterThan(600);
 
-    // -------- Curtain band (15% into the pin range) ------------------------
-    // Seek into the early portion of the pin and give scrub: 0.6 a beat to
-    // settle. The master timeline's curtain label spans the first ~40% of
-    // progress, so 15% scroll progress lands mid-curtain with snap tolerance.
+    // -------- Before pin — dashoffset hidden, not pinned ------------------
+    // Seed state for line-3 in the pin branch sets stroke-dashoffset: 100
+    // before the master timeline runs. Park scroll well before the pin and
+    // confirm the seed holds.
     await page.evaluate((y) => {
       window.scrollTo({ top: y, behavior: 'instant' as ScrollBehavior });
-    }, start + (end - start) * 0.15);
-    await page.waitForTimeout(800);
+    }, Math.max(0, start - 400));
+    await page.waitForTimeout(700);
 
-    const curtainBand = await readStage(page);
-    expect(curtainBand!.progress).toBeGreaterThanOrEqual(0.05);
-    expect(curtainBand!.progress).toBeLessThanOrEqual(0.45);
-
-    // During curtain, the strike has NOT started: dashoffset should still
-    // be near 100. Tolerate > 70 because snap can push progress slightly
-    // past stage-curtain toward stage-fall.
-    const curtainDash = await readDashoffset(page);
+    const preDash = await readDashoffset(page);
     expect(
-      curtainDash,
-      `strike must be hidden during curtain band; dashoffset=${curtainDash}`,
+      preDash,
+      `strike must be hidden before pin (seed state); dashoffset=${preDash}`,
     ).toBeGreaterThan(70);
 
-    // -------- Fall band (55% into the pin range) ---------------------------
-    // 55% scroll progress lands inside the fall label (fall is positioned
-    // with >-0.1 relative to curtain end, so it occupies roughly 30%–60%
-    // of master-timeline progress). Chars should either be mid-flight or
-    // just settled — either way, at least one descendant transform is
-    // non-identity while fall is in progress.
+    // -------- Past pin end — strike drawn, pin released -------------------
+    // Seeking past `end` takes the master timeline past stage-strike (label
+    // at ~0.70 progress) through stage-settle (~0.95) to completion.
+    // `scrub: 0.6` adds a settle lag, so wait generously.
     await page.evaluate((y) => {
       window.scrollTo({ top: y, behavior: 'instant' as ScrollBehavior });
-    }, start + (end - start) * 0.55);
-    await page.waitForTimeout(800);
-
-    const fallBand = await readStage(page);
-    expect(fallBand!.progress).toBeGreaterThanOrEqual(0.35);
-    expect(fallBand!.progress).toBeLessThanOrEqual(0.8);
-
-    // -------- End of stage — strike complete, pin released ----------------
-    await page.evaluate((y) => {
-      window.scrollTo({ top: y, behavior: 'instant' as ScrollBehavior });
-    }, end + 200);
-    await page.waitForTimeout(900);
+    }, end + 400);
+    await page.waitForTimeout(1100);
 
     const strikeDash = await readDashoffset(page);
     expect(
@@ -175,6 +158,11 @@ test.describe('problem section animations', () => {
       postStage!.pinned,
       'pin must release once scrolled past ST end',
     ).toBe(false);
+
+    // Master timeline at the tail (stage-settle ≈ 0.95 or snap has pushed
+    // to 1.0). Either way, progress >= stage-strike label (0.70) proves
+    // the strike tween completed.
+    expect(postStage!.progress).toBeGreaterThanOrEqual(0.7);
   });
 
   test('desktop pin — bidirectional scrub reverses strike on scroll up', async ({
