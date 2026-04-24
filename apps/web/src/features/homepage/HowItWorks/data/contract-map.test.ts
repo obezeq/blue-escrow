@@ -75,16 +75,19 @@ describe('resolutionAppliesFees — matches Escrow.sol:576-586', () => {
   });
 });
 
-describe('resolutionMintsSoulbound — matches Escrow.sol dispute-only mint logic', () => {
-  it('mints soulbound only for middleman-arbitrated outcomes', () => {
+describe('resolutionMintsSoulbound — matches Escrow.sol:594-603 unconditional mint', () => {
+  it('mints on every resolution that runs _resolveDeal', () => {
+    // Escrow.sol:601 mints soulboundNFT unconditionally inside _resolveDeal,
+    // which is called for Delivery, Refund, MiddlemanBuyer, MiddlemanSeller,
+    // and Timeout. Only the cancel path (resolution stays None) skips mint.
+    expect(resolutionMintsSoulbound(ResolutionType.Delivery)).toBe(true);
+    expect(resolutionMintsSoulbound(ResolutionType.Refund)).toBe(true);
     expect(resolutionMintsSoulbound(ResolutionType.MiddlemanBuyer)).toBe(true);
     expect(resolutionMintsSoulbound(ResolutionType.MiddlemanSeller)).toBe(true);
+    expect(resolutionMintsSoulbound(ResolutionType.Timeout)).toBe(true);
   });
 
-  it('does not mint soulbound on happy path or auto-resolution', () => {
-    expect(resolutionMintsSoulbound(ResolutionType.Delivery)).toBe(false);
-    expect(resolutionMintsSoulbound(ResolutionType.Refund)).toBe(false);
-    expect(resolutionMintsSoulbound(ResolutionType.Timeout)).toBe(false);
+  it('does not mint for unresolved / cancelled deals (resolution = None)', () => {
     expect(resolutionMintsSoulbound(ResolutionType.None)).toBe(false);
   });
 });

@@ -21,9 +21,9 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from 'react';
 import type { PhaseIndex } from '../data/types';
@@ -45,6 +45,41 @@ export interface HiwProviderProps {
   initialOutcome?: OutcomeId | null;
 }
 
+// --- prefers-reduced-motion external store ---------------------------------
+//
+// useSyncExternalStore is the React-recommended path for subscribing to
+// browser-native stores (matchMedia / online status / etc.). It sidesteps
+// the `react-hooks/set-state-in-effect` foot-gun that a useEffect-based
+// subscription hits — the store itself drives updates, so React can never
+// schedule a cascading render from synchronous setState in the effect body.
+// Both the subscribe function and the snapshot getter are stable module
+// references so memoized subscribers never re-register.
+
+function subscribeReducedMotion(callback: () => void): () => void {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return () => {};
+  }
+  const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+  if (typeof mq.addEventListener === 'function') {
+    mq.addEventListener('change', callback);
+    return () => mq.removeEventListener('change', callback);
+  }
+  // Older Safari lacks addEventListener on MediaQueryList
+  mq.addListener(callback);
+  return () => mq.removeListener(callback);
+}
+
+function getReducedMotionSnapshot(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return false;
+  }
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function getReducedMotionServerSnapshot(): boolean {
+  return false;
+}
+
 export function HiwProvider({
   children,
   initialPhase = 0,
@@ -52,23 +87,11 @@ export function HiwProvider({
 }: HiwProviderProps) {
   const [phase, setPhaseState] = useState<PhaseIndex>(initialPhase);
   const [outcome, setOutcomeState] = useState<OutcomeId | null>(initialOutcome);
-  const [reducedMotion, setReducedMotion] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      return;
-    }
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(mq.matches);
-    const handler = (event: MediaQueryListEvent) => setReducedMotion(event.matches);
-    // Older Safari lacks addEventListener on MediaQueryList
-    if (typeof mq.addEventListener === 'function') {
-      mq.addEventListener('change', handler);
-      return () => mq.removeEventListener('change', handler);
-    }
-    mq.addListener(handler);
-    return () => mq.removeListener(handler);
-  }, []);
+  const reducedMotion = useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotionSnapshot,
+    getReducedMotionServerSnapshot,
+  );
 
   const setPhase = useCallback((next: PhaseIndex) => setPhaseState(next), []);
   const setOutcome = useCallback(

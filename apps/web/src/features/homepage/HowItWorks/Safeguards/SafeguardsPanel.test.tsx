@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { render, cleanup, fireEvent, within } from '@testing-library/react';
+import { render, cleanup, fireEvent } from '@testing-library/react';
 import { HiwProvider } from '../context/HiwContext';
 import { SafeguardsPanel, announceOutcome } from './SafeguardsPanel';
 

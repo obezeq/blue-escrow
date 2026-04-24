@@ -54,7 +54,7 @@ const CASES: OutcomeCase[] = [
     id: 'refund',
     judgeOpacity: '0.3',
     feeApplies: '0',
-    soulboundMint: '0',
+    soulboundMint: '1', // _resolveDeal always mints soulbound (Escrow.sol:601)
     announcement: /Refund outcome selected/i,
   },
   {
@@ -75,7 +75,7 @@ const CASES: OutcomeCase[] = [
     id: 'timeout',
     judgeOpacity: '0.3',
     feeApplies: '0',
-    soulboundMint: '0',
+    soulboundMint: '1',
     announcement: /Timeout outcome selected/i,
   },
 ];

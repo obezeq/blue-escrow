@@ -8,11 +8,13 @@ afterEach(cleanup);
 function wrap(
   initial?: { phase?: 0 | 1 | 2 | 3 | 4; outcome?: 'refund' | null },
 ) {
-  return ({ children }: { children: ReactNode }) => (
+  const Wrapper = ({ children }: { children: ReactNode }) => (
     <HiwProvider initialPhase={initial?.phase} initialOutcome={initial?.outcome}>
       {children}
     </HiwProvider>
   );
+  Wrapper.displayName = 'TestHiwProviderWrapper';
+  return Wrapper;
 }
 
 describe('useHiw', () => {

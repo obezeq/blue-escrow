@@ -58,21 +58,21 @@ const OUTCOME_VARS: Record<OutcomeKey, OutcomeVars> = {
     '--hiw-vault-charge': 1,
     '--hiw-fee-applies': 1, // Delivery → fees apply
     '--hiw-outcome-active': 0, // happy path = default scroll narrative
-    '--hiw-soulbound-mint': 0, // no middleman vote on happy path
+    '--hiw-soulbound-mint': 1, // _resolveDeal always mints (Escrow.sol:601)
   },
   refund: {
     '--hiw-judge-opacity': 0.3,
     '--hiw-vault-charge': 1,
     '--hiw-fee-applies': 0, // no fees — seller volunteered refund
     '--hiw-outcome-active': 1,
-    '--hiw-soulbound-mint': 0,
+    '--hiw-soulbound-mint': 1,
   },
   disputeBuyer: {
     '--hiw-judge-opacity': 1,
     '--hiw-vault-charge': 1,
     '--hiw-fee-applies': 0, // buyer protection — no fees
     '--hiw-outcome-active': 1,
-    '--hiw-soulbound-mint': 1, // middleman ruled → soulbound receipt
+    '--hiw-soulbound-mint': 1,
   },
   disputeSeller: {
     '--hiw-judge-opacity': 1,
@@ -86,7 +86,7 @@ const OUTCOME_VARS: Record<OutcomeKey, OutcomeVars> = {
     '--hiw-vault-charge': 1,
     '--hiw-fee-applies': 0, // permissionless rescue — no fees
     '--hiw-outcome-active': 1,
-    '--hiw-soulbound-mint': 0,
+    '--hiw-soulbound-mint': 1,
   },
 };
 

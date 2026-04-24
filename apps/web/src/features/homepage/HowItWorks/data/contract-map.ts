@@ -69,14 +69,17 @@ export function resolutionAppliesFees(resolution: ResolutionType): boolean {
 }
 
 /**
- * Every resolution mints one ReceiptNFT for the client + one for the
- * seller. SoulboundNFT only mints when the middleman actually ruled
- * (dispute outcomes) — not on happy-path delivery, mutual refund, or
- * permissionless timeout.
+ * `_resolveDeal` (Escrow.sol:594-603) mints three NFTs unconditionally
+ * whenever it runs — a ReceiptNFT for the client, a ReceiptNFT for the
+ * seller, and a SoulboundNFT for the middleman. The try/catch wrapping
+ * means a failed mint never reverts the payout but the default behavior
+ * is to mint on every resolution.
+ *
+ * The only way to reach a resolution WITHOUT `_resolveDeal` running is
+ * `cancelDeal` (pre-funding), which leaves `resolution = None`. So the
+ * soulbound mints for Delivery / Refund / MiddlemanBuyer /
+ * MiddlemanSeller / Timeout — everything except `None`.
  */
 export function resolutionMintsSoulbound(resolution: ResolutionType): boolean {
-  return (
-    resolution === ResolutionType.MiddlemanBuyer ||
-    resolution === ResolutionType.MiddlemanSeller
-  );
+  return resolution !== ResolutionType.None;
 }
