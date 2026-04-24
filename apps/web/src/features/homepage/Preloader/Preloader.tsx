@@ -290,34 +290,17 @@ export function Preloader() {
         </span>
       </div>
 
-      {/* Keyboard- and click-accessible skip control. The DOM node exists
-          from mount so screen readers discover it, but it stays invisible
-          (and keyboard-focusable) until `showSkipHint` flips true ~1.5s
-          in. Inline styles (rather than a module class) keep the scope
-          minimal — no Preloader.module.scss edit needed. */}
+      {/* Keyboard- and click-accessible skip control. Static presentation
+          lives in Preloader.module.scss (`.intro__skip`); the --visible
+          modifier flips opacity + pointer-events once `showSkipHint` goes
+          true ~1.5s in. DOM node exists from mount so screen readers
+          discover it. */}
       <button
         type="button"
         aria-label="Skip preloader"
         onClick={finish}
         onKeyDown={onSkipKey}
-        style={{
-          position: 'absolute',
-          top: 16,
-          right: 16,
-          padding: '8px 14px',
-          fontFamily: 'var(--ff-mono)',
-          fontSize: 11,
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.85)',
-          background: 'rgba(255,255,255,0.06)',
-          border: '1px solid rgba(255,255,255,0.18)',
-          borderRadius: 999,
-          cursor: 'pointer',
-          opacity: showSkipHint ? 1 : 0,
-          pointerEvents: showSkipHint ? 'auto' : 'none',
-          transition: 'opacity 300ms ease-out',
-        }}
+        className={`${styles.intro__skip}${showSkipHint ? ` ${styles['intro__skip--visible']}` : ''}`}
       >
         Tap to skip
       </button>

@@ -138,6 +138,13 @@
   color: var(--text-muted);
   padding-top: 6px;
   flex-wrap: wrap;
+  // Chip row, not prose: opt out of the reset's 75ch inline-size cap
+  // (generic/_reset.scss `p, li, figcaption { max-inline-size: 75ch }`)
+  // so this flex container can span the hero's full width and
+  // `justify-content: center` actually centers the chips in the viewport
+  // rather than inside a 75ch box pinned to the start.
+  max-inline-size: none;
+  inline-size: 100%;
 }
 
 .hero__chipDot {
@@ -277,7 +284,7 @@
 
 .hero__btn--primary {
   background: var(--blue-primary);
-  color: #fff;
+  color: var(--text-inverse);
   box-shadow:
     0 10px 36px -12px rgba(0, 102, 255, 0.7),
     inset 0 1px 0 rgba(255, 255, 255, 0.25);
@@ -460,14 +467,24 @@
     will-change: transform;
   }
 
-  [data-animate='eyebrow'],
-  [data-animate='sub'],
-  [data-animate='ctas'],
-  [data-animate='bottom'],
-  [data-animate='ticker'] {
-    opacity: 0;
-    transform: translateY(16px);
-    will-change: transform, opacity;
+  // Scope to .hero — the [data-animate="..."] attribute names are reused
+  // by sibling features (CtaSection, HowItWorks, etc.). Without the
+  // .hero qualifier, this gate would apply opacity:0 to every matching
+  // element in the document while the preloader is active, which is
+  // what trapped CtaSection's gsap.from() tweens: they read opacity:0
+  // at tween-creation time and captured it as the "to" target, leaving
+  // the CTAs stuck invisible. Scoping keeps the FOUC protection local
+  // to the pinned hero intro.
+  .hero {
+    [data-animate='eyebrow'],
+    [data-animate='sub'],
+    [data-animate='ctas'],
+    [data-animate='bottom'],
+    [data-animate='ticker'] {
+      opacity: 0;
+      transform: translateY(16px);
+      will-change: transform, opacity;
+    }
   }
 }
 
@@ -479,13 +496,15 @@
     .hero__word {
       transform: none;
     }
-    [data-animate='eyebrow'],
-    [data-animate='sub'],
-    [data-animate='ctas'],
-    [data-animate='bottom'],
-    [data-animate='ticker'] {
-      opacity: 1;
-      transform: none;
+    .hero {
+      [data-animate='eyebrow'],
+      [data-animate='sub'],
+      [data-animate='ctas'],
+      [data-animate='bottom'],
+      [data-animate='ticker'] {
+        opacity: 1;
+        transform: none;
+      }
     }
   }
 }

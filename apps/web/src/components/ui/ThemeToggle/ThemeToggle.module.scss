@@ -49,7 +49,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--text-inverse);
   font-size: 10px;
   transition: transform 0.45s var(--ease-out-expo);
 

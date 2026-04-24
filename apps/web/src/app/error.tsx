@@ -8,6 +8,7 @@
 // listens for: deployment-agnostic (no SDK), digest-only (no PII).
 // Docs: https://nextjs.org/docs/app/api-reference/file-conventions/error.
 import { useEffect } from 'react';
+import styles from './error.module.scss';
 
 interface RootErrorProps {
   error: Error & { digest?: string };
@@ -29,14 +30,9 @@ export default function RootError({ error, reset }: RootErrorProps) {
       id="main-content"
       role="alert"
       aria-live="assertive"
-      style={{
-        minHeight: '100dvh',
-        display: 'grid',
-        placeItems: 'center',
-        padding: '2rem',
-      }}
+      className={styles.error}
     >
-      <div style={{ maxWidth: '36rem', textAlign: 'center' }}>
+      <div className={styles.error__well}>
         <h1>Something broke.</h1>
         <p>
           The funds are still safe in the contract — this screen isn&apos;t. Reference:{' '}

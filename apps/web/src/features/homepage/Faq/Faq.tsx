@@ -24,9 +24,9 @@ export function Faq() {
         <div className={styles.faq__wrap}>
           <div className={styles.faq__head}>
             <div>
-              <div className={styles.faq__eyebrow} data-animate="eyebrow">
+              <p className={styles.faq__eyebrow} data-animate="eyebrow">
                 Questions
-              </div>
+              </p>
               <h2 className={styles.faq__heading} data-animate="heading">
                 Answers, <em className={styles.faq__emphasis}>plainly said.</em>
               </h2>

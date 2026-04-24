@@ -18,6 +18,7 @@ vi.mock('@/animations/config/gsap-register', async () => {
       matchMedia: () => ({ add: matchMediaAddSpy }),
       set: vi.fn(),
       from: vi.fn(),
+      fromTo: vi.fn(),
     },
     SplitText: {
       create: vi.fn((_target, opts: { onSplit?: (self: unknown) => unknown }) => {

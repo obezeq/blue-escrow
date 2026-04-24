@@ -5,42 +5,23 @@
 // app/not-found.tsx.
 // Docs: https://nextjs.org/docs/app/api-reference/file-conventions/not-found.
 import Link from 'next/link';
+import styles from './not-found.module.scss';
 
 export default function NotFound() {
   return (
-    <main
-      id="main-content"
-      style={{
-        minHeight: '100dvh',
-        display: 'grid',
-        gridTemplateRows: 'auto 1fr',
-        padding: '1.5rem',
-      }}
-    >
-      <header
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
+    <main id="main-content" className={styles.notFound}>
+      <header className={styles.notFound__header}>
         <Link
           href="/"
           aria-label="Blue Escrow home"
-          style={{ fontWeight: 600, textDecoration: 'none' }}
+          className={styles.notFound__brand}
         >
           Blue <em>Escrow</em>
         </Link>
       </header>
 
-      <section
-        style={{
-          display: 'grid',
-          placeItems: 'center',
-          textAlign: 'center',
-        }}
-      >
-        <div style={{ maxWidth: '36rem' }}>
+      <section className={styles.notFound__body}>
+        <div className={styles.notFound__well}>
           <h1>This page isn&apos;t here.</h1>
           <p>
             The funds are still safe in the contract, but this URL isn&apos;t one

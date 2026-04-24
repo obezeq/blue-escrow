@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, type CSSProperties } from 'react';
 import { HowItWorksAnimations } from './HowItWorksAnimations';
 import { HiwDiagram } from './HiwDiagram';
 import { HiwPhaseDiagram } from './HiwPhaseDiagram';
@@ -45,9 +45,9 @@ function HowItWorksContent() {
       <HowItWorksAnimations onPhaseChange={setActive} pinHostRef={pinHostRef}>
         <div ref={pinHostRef} className={styles.hiw__pinHost}>
           <header className={styles.hiw__intro}>
-            <div className={styles.hiw__eyebrow} data-animate="eyebrow">
+            <p className={styles.hiw__eyebrow} data-animate="eyebrow">
               How it works
-            </div>
+            </p>
             <h2 className={styles.hiw__heading} data-animate="heading">
               Three people. One{' '}
               <em className={styles.hiw__emphasis}>smart contract.</em>{' '}
@@ -86,7 +86,7 @@ function HowItWorksContent() {
               </div>
 
               <div className={styles.hiw__progress} aria-hidden="true">
-                <i style={{ width: `${progress}%` }} />
+                <i style={{ '--hiw-progress': `${progress}%` } as CSSProperties} />
               </div>
 
               <ul className={styles.hiw__logs}>
@@ -103,7 +103,9 @@ function HowItWorksContent() {
                       key={log.time}
                       className={`${styles.hiw__log} ${stateCls}`}
                     >
-                      <span className={styles.hiw__logTime}>{log.time}</span>
+                      <time className={styles.hiw__logTime} dateTime={log.time}>
+                        {log.time}
+                      </time>
                       <span className={styles.hiw__logLabel}>
                         <span className={styles.hiw__logDot} aria-hidden="true" />
                         {log.label}
@@ -171,18 +173,19 @@ function HowItWorksContent() {
         {/*
           Mobile-only intro — the desktop intro lives INSIDE .hiw__pinHost
           (so the pinned experience opens with the heading visible), but
-          pinHost is display:none at <900px width. Rendering a second
-          intro here means mobile users still see "HOW IT WORKS / Three
-          people. One smart contract. Zero trust." above the step deck.
-          aria-hidden on the duplicate prevents screen readers from
-          reading the heading twice — the desktop one stays in the
-          accessibility tree.
+          pinHost is display:none at <900px width. This duplicate renders
+          the heading above the step deck for mobile users. The modifier
+          .hiw__intro--mobile is display:none at ≥900px (see
+          HowItWorks.module.scss — .hiw__intro--mobile), which removes it
+          from the a11y tree at desktop; the desktop intro becomes the
+          sole heading there, and this copy becomes the sole heading
+          below 900px. No aria-hidden needed — the CSS handles the
+          duplicate via display:none.
         */}
         <header
           className={`${styles.hiw__intro} ${styles['hiw__intro--mobile']}`}
-          aria-hidden="true"
         >
-          <div className={styles.hiw__eyebrow}>How it works</div>
+          <p className={styles.hiw__eyebrow}>How it works</p>
           <h2 className={styles.hiw__heading}>
             Three people. One{' '}
             <em className={styles.hiw__emphasis}>smart contract.</em>{' '}

@@ -27,12 +27,12 @@ export function FeeSection() {
             </div>
 
             <div className={styles.fees__copy}>
-              <div
+              <p
                 className={styles.fees__eyebrow}
                 data-animate="eyebrow"
               >
                 The only fee
-              </div>
+              </p>
               <h2 className={styles.fees__heading} data-animate="heading">
                 A third of{' '}
                 <em className={styles.fees__emphasis}>a percent.</em>{' '}

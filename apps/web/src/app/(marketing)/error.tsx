@@ -6,6 +6,7 @@
 // sibling to the root boundary but scoped to the marketing surface.
 // Docs: https://nextjs.org/docs/app/api-reference/file-conventions/error.
 import { useEffect } from 'react';
+import styles from '../error.module.scss';
 
 interface MarketingErrorProps {
   error: Error & { digest?: string };
@@ -26,14 +27,9 @@ export default function MarketingError({ error, reset }: MarketingErrorProps) {
     <section
       role="alert"
       aria-live="assertive"
-      style={{
-        minHeight: '60dvh',
-        display: 'grid',
-        placeItems: 'center',
-        padding: '2rem',
-      }}
+      className={`${styles.error} ${styles['error--partial']}`}
     >
-      <div style={{ maxWidth: '36rem', textAlign: 'center' }}>
+      <div className={styles.error__well}>
         <h1>Something broke.</h1>
         <p>
           The page stumbled loading. Funds in the contract are unaffected. Reference:{' '}

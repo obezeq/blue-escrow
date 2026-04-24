@@ -28,18 +28,30 @@ export function CtaSectionAnimations({
         const heading = container.querySelector('[data-animate="heading"]');
         const ctas = container.querySelector('[data-animate="ctas"]');
 
+        // fromTo with immediateRender:true (mirrors HeroAnimations.tsx
+        // docstring at lines 90-100): explicit FROM and TO decouples the
+        // tween from whatever the element's computed opacity is at
+        // tween-creation time. gsap.from() would capture "current" as the
+        // TO value — if any CSS rule or parent compositing drops the
+        // element to opacity:0 during preloader, the tween ends up
+        // animating 0→0 (no-op) and the element stays invisible.
         if (eyebrow) {
-          gsap.from(eyebrow, {
-            y: 20,
-            opacity: 0,
-            duration: 0.7,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: eyebrow,
-              start: 'top 85%',
-              once: true,
+          gsap.fromTo(
+            eyebrow,
+            { y: 20, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.7,
+              ease: 'power3.out',
+              immediateRender: true,
+              scrollTrigger: {
+                trigger: eyebrow,
+                start: 'top 85%',
+                once: true,
+              },
             },
-          });
+          );
         }
 
         if (heading) {
@@ -50,35 +62,45 @@ export function CtaSectionAnimations({
               // `autoSplit: true` recreates splits on container resize; keep
               // the outer capture up-to-date so cleanup reverts the latest.
               split = self;
-              return gsap.from(self.words, {
-                yPercent: 110,
-                opacity: 0,
-                duration: 1,
-                ease: 'power4.out',
-                stagger: 0.06,
-                scrollTrigger: {
-                  trigger: heading,
-                  start: 'top 70%',
-                  once: true,
+              return gsap.fromTo(
+                self.words,
+                { yPercent: 110, opacity: 0 },
+                {
+                  yPercent: 0,
+                  opacity: 1,
+                  duration: 1,
+                  ease: 'power4.out',
+                  stagger: 0.06,
+                  immediateRender: true,
+                  scrollTrigger: {
+                    trigger: heading,
+                    start: 'top 70%',
+                    once: true,
+                  },
                 },
-              });
+              );
             },
           });
         }
 
         if (ctas) {
-          gsap.from(Array.from(ctas.children), {
-            y: 20,
-            opacity: 0,
-            duration: 0.6,
-            ease: 'power3.out',
-            stagger: 0.12,
-            scrollTrigger: {
-              trigger: ctas,
-              start: 'top 85%',
-              once: true,
+          gsap.fromTo(
+            Array.from(ctas.children),
+            { y: 20, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.6,
+              ease: 'power3.out',
+              stagger: 0.12,
+              immediateRender: true,
+              scrollTrigger: {
+                trigger: ctas,
+                start: 'top 85%',
+                once: true,
+              },
             },
-          });
+          );
         }
       });
 

@@ -11,9 +11,9 @@ export function CtaSection() {
     >
       <CtaSectionAnimations>
         <div className={styles.closing__wrap}>
-          <div className={styles.closing__eyebrow} data-animate="eyebrow">
+          <p className={styles.closing__eyebrow} data-animate="eyebrow">
             <span>Ready when you are</span>
-          </div>
+          </p>
           <h2 className={styles.closing__heading} data-animate="heading">
             Trade{' '}
             <em className={styles.closing__emphasis}>like you trust</em>{' '}

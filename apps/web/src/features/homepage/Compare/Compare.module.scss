@@ -19,7 +19,7 @@
       transparent 60%
     ),
     linear-gradient(135deg, var(--blue-primary) 0%, var(--blue-ink) 100%);
-  color: #fff; // v6-literal: inverted band copy
+  color: var(--text-inverse); // theme-invariant band copy
   padding-block-start: clamp(100px, 9vw, 160px);
   padding-block-end: clamp(80px, 8vw, 140px);
   position: relative;
@@ -97,7 +97,7 @@
   font-weight: 600;
   margin: 18px 0 0;
   text-wrap: balance;
-  color: #fff; // v6-literal: inverted band copy
+  color: var(--text-inverse); // theme-invariant band copy
 }
 
 .compare__emphasis {
@@ -188,7 +188,7 @@
 }
 
 .compare__headerCell--be {
-  color: #fff; // v6-literal: inverted band copy
+  color: var(--text-inverse); // theme-invariant band copy
   background: rgba(255, 255, 255, 0.1);
   font-weight: 500;
   border-radius: 16px 16px 0 0;
@@ -203,7 +203,7 @@
   padding: var(--space-24) var(--space-22);
   font-weight: 500;
   font-size: 15px;
-  color: #fff; // v6-literal: inverted band copy
+  color: var(--text-inverse); // theme-invariant band copy
   // <th scope="row"> defaults to bold + center — reassert v6 design.
   text-align: start;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
@@ -250,7 +250,7 @@
 
 .compare__cell--be {
   background: rgba(255, 255, 255, 0.1);
-  color: #fff; // v6-literal: inverted band copy
+  color: var(--text-inverse); // theme-invariant band copy
   font-weight: 500;
 }
 

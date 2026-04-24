@@ -131,7 +131,7 @@
   // Tokenized — same gradient stack as before, now reusable as
   // --surface-premium-dark (also future Compare/CTA premium cards).
   background: var(--surface-premium-dark);
-  color: #fff;
+  color: var(--text-inverse);
 
   // Light mode: flip to a light pastel surface with Soulbound-specific
   // brand-blue radial overlays (--surface-soul-overlay, stronger than
@@ -189,7 +189,7 @@
       transparent 60%
     ),
     linear-gradient(135deg, #0a1b44, #071230);
-  color: #fff;
+  color: var(--text-inverse);
 
   :root[data-theme='light'] & {
     background:

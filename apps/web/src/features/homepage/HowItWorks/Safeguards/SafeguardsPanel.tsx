@@ -54,7 +54,7 @@ export function SafeguardsPanel() {
       aria-labelledby={`${baseId}-heading`}
     >
       <header className={styles.safeguards__head}>
-        <div className={styles.safeguards__eyebrow}>Safeguards</div>
+        <p className={styles.safeguards__eyebrow}>Safeguards</p>
         <h3 id={`${baseId}-heading`} className={styles.safeguards__heading}>
           What if it <em>goes wrong?</em>
         </h3>

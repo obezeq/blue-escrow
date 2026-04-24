@@ -186,14 +186,14 @@
   @media (hover: hover) {
     &:hover {
       background: var(--accent);
-      color: #fff;
+      color: var(--text-inverse);
       border-color: var(--accent);
     }
   }
 
   &:active {
     background: var(--accent);
-    color: #fff;
+    color: var(--text-inverse);
     border-color: var(--accent);
     transform: scale(0.97);
   }

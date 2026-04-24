@@ -24,7 +24,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--text-inverse);
 
   // Size-query context so .intro__mark's font-size tracks the overlay's
   // actual inline size via cqw, not the viewport.
@@ -79,7 +79,7 @@
   line-height: 0.85;
   letter-spacing: -0.05em;
   white-space: nowrap;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .intro__word {
@@ -116,7 +116,7 @@
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--text-inverse-muted);
 
   @media (max-width: 640px) {
     inset-inline-start: 22px;
@@ -135,7 +135,7 @@
   i {
     display: block;
     block-size: 100%;
-    background: #fff;
+    background: var(--text-inverse);
     inline-size: 0%;
     animation: introFill 2.5s cubic-bezier(0.77, 0, 0.175, 1) 0.2s forwards;
   }
@@ -144,6 +144,34 @@
 .intro__num {
   min-inline-size: 6ch;
   font-variant-numeric: tabular-nums;
+}
+
+// Keyboard- and click-accessible skip control. The DOM node exists from
+// mount so screen readers discover it, but the --visible modifier toggles
+// opacity + pointer-events so it stays inert until ~1.5s in (see
+// Preloader.tsx `showSkipHint` state).
+.intro__skip {
+  position: absolute;
+  top: var(--space-16);
+  right: var(--space-16);
+  padding: var(--space-8) 14px; // 14px: v6-literal chip inline padding
+  font-family: var(--ff-mono);
+  font-size: var(--t-caption-sm);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-inverse-muted);
+  background: var(--surface-inverse-1);
+  border: 1px solid var(--surface-inverse-2);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms ease-out;
+}
+
+.intro__skip--visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 @keyframes introLetter {

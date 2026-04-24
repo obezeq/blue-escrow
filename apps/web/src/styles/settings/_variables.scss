@@ -91,6 +91,16 @@ $bp-section: 900px;
   --ff-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --ff-mono: var(--font-mono), ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
+  // --- Invariant text/surface bridges — theme-independent tokens for
+  // surfaces that stay dark in BOTH themes (Preloader intro overlay,
+  // Compare inverted band, Receipts soul-card copy, Header mobile drawer,
+  // SkipLink focus pill). Use these instead of literal #fff so intent is
+  // explicit and future theme-variant surfaces don't inherit a raw value. ---
+  --text-inverse:        #fff;
+  --text-inverse-muted:  rgba(255, 255, 255, 0.85);
+  --surface-inverse-1:   rgba(255, 255, 255, 0.06); // subtle chip bg on dark
+  --surface-inverse-2:   rgba(255, 255, 255, 0.18); // chip border on dark
+
   // --- Easings (shared by CSS transitions and GSAP defaults so motion feels
   // coherent across tween-driven and CSS-driven animations) ---
   --ease-out-expo:     cubic-bezier(0.19, 1, 0.22, 1);

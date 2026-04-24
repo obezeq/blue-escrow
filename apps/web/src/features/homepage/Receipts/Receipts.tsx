@@ -19,12 +19,12 @@ export function Receipts() {
         <div className={styles.receipts__wrap}>
           <div className={styles.receipts__head}>
             <div>
-              <div
+              <p
                 className={styles.receipts__eyebrow}
                 data-animate="eyebrow"
               >
                 Receipts
-              </div>
+              </p>
               <h2 className={styles.receipts__heading} data-animate="heading">
                 Every deal mints{' '}
                 <em className={styles.receipts__emphasis}>three receipts.</em>
