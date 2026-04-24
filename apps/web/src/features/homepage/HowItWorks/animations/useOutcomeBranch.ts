@@ -36,6 +36,10 @@ interface OutcomeVars {
   '--hiw-vault-charge'?: number;
   /** Numeric flag consumed by CSS: 1 if fees are deducted, 0 if fee-free. */
   '--hiw-fee-applies'?: number;
+  /** Numeric flag consumed by CSS: 1 if any Safeguards branch is active. */
+  '--hiw-outcome-active'?: number;
+  /** 1 when a dispute resolution mints a soulbound NFT to the middleman. */
+  '--hiw-soulbound-mint'?: number;
 }
 
 /**
@@ -53,26 +57,36 @@ const OUTCOME_VARS: Record<OutcomeKey, OutcomeVars> = {
     '--hiw-judge-opacity': 0.3,
     '--hiw-vault-charge': 1,
     '--hiw-fee-applies': 1, // Delivery → fees apply
+    '--hiw-outcome-active': 0, // happy path = default scroll narrative
+    '--hiw-soulbound-mint': 0, // no middleman vote on happy path
   },
   refund: {
     '--hiw-judge-opacity': 0.3,
     '--hiw-vault-charge': 1,
     '--hiw-fee-applies': 0, // no fees — seller volunteered refund
+    '--hiw-outcome-active': 1,
+    '--hiw-soulbound-mint': 0,
   },
   disputeBuyer: {
     '--hiw-judge-opacity': 1,
     '--hiw-vault-charge': 1,
     '--hiw-fee-applies': 0, // buyer protection — no fees
+    '--hiw-outcome-active': 1,
+    '--hiw-soulbound-mint': 1, // middleman ruled → soulbound receipt
   },
   disputeSeller: {
     '--hiw-judge-opacity': 1,
     '--hiw-vault-charge': 1,
     '--hiw-fee-applies': 1, // same split as delivery
+    '--hiw-outcome-active': 1,
+    '--hiw-soulbound-mint': 1,
   },
   timeout: {
     '--hiw-judge-opacity': 0.3,
     '--hiw-vault-charge': 1,
     '--hiw-fee-applies': 0, // permissionless rescue — no fees
+    '--hiw-outcome-active': 1,
+    '--hiw-soulbound-mint': 0,
   },
 };
 
@@ -80,6 +94,8 @@ const TRACKED_VARS = [
   '--hiw-judge-opacity',
   '--hiw-vault-charge',
   '--hiw-fee-applies',
+  '--hiw-outcome-active',
+  '--hiw-soulbound-mint',
 ] as const;
 
 export interface UseOutcomeBranchParams {

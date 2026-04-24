@@ -210,7 +210,8 @@ export function VaultCore() {
 
       {/* Pull-based withdraw cue — footnote-scale reminder that every
           recipient has to call withdraw() themselves. Stays hidden until
-          the Settle → Payout tail of the master timeline. */}
+          the Settle → Payout tail of the master timeline, or any
+          Safeguards branch (outcome-active=1). */}
       <text
         data-hiw="vault-withdraw-cue"
         x="600"
@@ -220,6 +221,68 @@ export function VaultCore() {
       >
         EACH PARTY PULLS VIA withdraw()
       </text>
+
+      {/* Client-refund cue — single pill that replaces the 3-bucket
+          split on fee-free outcomes (refund / disputeBuyer / timeout).
+          Centered between the Client puck and the vault so the return-
+          direction reads left (matches the wire-C geometry in
+          WireNetwork.tsx). CSS handles the exclusive show/hide math via
+          --hiw-fee-applies. */}
+      <g
+        data-hiw="vault-refund-cue"
+        className={styles.hiw__diagVaultRefundCue}
+      >
+        <rect
+          x="500"
+          y="555"
+          width="200"
+          height="42"
+          rx="10"
+          className={styles.hiw__diagVaultRefundPill}
+        />
+        <text
+          x="600"
+          y="574"
+          textAnchor="middle"
+          className={styles.hiw__diagVaultRefundLabel}
+        >
+          CLIENT REFUND
+        </text>
+        <text
+          x="600"
+          y="590"
+          textAnchor="middle"
+          className={styles.hiw__diagVaultRefundAmount}
+        >
+          2,400.00
+        </text>
+      </g>
+
+      {/* Soulbound mint badge — appears only on dispute outcomes
+          (MiddlemanBuyer / MiddlemanSeller) per resolutionMintsSoulbound
+          in contract-map.ts. The tiny badge sits below the judge podium
+          area to visually attribute the mint to the middleman's vote. */}
+      <g
+        data-hiw="vault-soulbound-cue"
+        className={styles.hiw__diagSoulboundCue}
+        transform="translate(860 250)"
+      >
+        <rect
+          x="-60"
+          y="-14"
+          width="120"
+          height="28"
+          rx="14"
+          className={styles.hiw__diagSoulboundBadge}
+        />
+        <text
+          y="5"
+          textAnchor="middle"
+          className={styles.hiw__diagSoulboundLabel}
+        >
+          ⬡ SOULBOUND NFT
+        </text>
+      </g>
     </g>
   );
 }

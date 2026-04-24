@@ -64,6 +64,23 @@ describe('VaultCore — v8 hex chamber + pending-balance buckets', () => {
     expect(cue?.textContent).toMatch(/withdraw\(\)/);
   });
 
+  it('renders the client-refund cue (fee-free outcomes) at data-hiw="vault-refund-cue"', () => {
+    const { container } = renderInSvg();
+    const refund = container.querySelector('[data-hiw="vault-refund-cue"]');
+    expect(refund).not.toBeNull();
+    expect(refund?.textContent).toMatch(/CLIENT REFUND/);
+    expect(refund?.textContent).toMatch(/2,400/);
+  });
+
+  it('renders the soulbound mint badge at data-hiw="vault-soulbound-cue"', () => {
+    const { container } = renderInSvg();
+    const soulbound = container.querySelector(
+      '[data-hiw="vault-soulbound-cue"]',
+    );
+    expect(soulbound).not.toBeNull();
+    expect(soulbound?.textContent).toMatch(/SOULBOUND/);
+  });
+
   it('keeps the v7 "SMART CONTRACT / Escrow #4821" labels (no regression)', () => {
     const { container } = renderInSvg();
     const texts = Array.from(container.querySelectorAll('text')).map((t) =>
