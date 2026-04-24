@@ -56,7 +56,7 @@ import {
   CORE_POSITION,
   HIW_STEPS,
   type HiwStep,
-} from './steps';
+} from './data';
 import { HIW_EASE_NAMES, registerHiwEases } from './hiw-eases';
 
 // Ensure the eases are registered at module load time (once per JS bundle).

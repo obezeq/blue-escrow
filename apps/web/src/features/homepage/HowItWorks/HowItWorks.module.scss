@@ -156,6 +156,9 @@
   // Rail progress (0 → 1) is likewise written from scrub; inherited down
   // into .hiw__railProgress > i.
   --hiw-rail-progress: 0;
+  // Middleman judge-podium dimmer (0 happy-path standby, 1 dispute active).
+  // Dispute branch timelines overwrite this via the outcome context.
+  --hiw-judge-opacity: 0.3;
 
   // Deep navy radial well — color-mix against --blue-ink for theme cohesion.
   &::before {
@@ -652,6 +655,68 @@
   font-weight: 700;
 }
 
+// ---------------------------------------------------------------------------
+// JudgePodium — middleman elevated as a judge/referee.
+//
+// The inner `.hiw__diagJudgeBody` group multiplies its opacity against the
+// outer `data-hiw="actor-mid"` group's GSAP-driven opacity. GSAP owns
+// entrance (0 → 1 during the Meet phase); this CSS var owns dimming (0.30
+// on the happy path, 1.0 on Dispute branches). Dispute timelines write
+// the var directly so scrub + branch switching don't fight each other.
+// ---------------------------------------------------------------------------
+
+.hiw__diagJudgeBody {
+  opacity: var(--hiw-judge-opacity, 0.3);
+  transition: opacity var(--dur-default, 500ms) var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
+}
+
+.hiw__diagJudgePodium {
+  fill: color-mix(in oklch, var(--hiw-actor-bg) 65%, transparent);
+  stroke: var(--hiw-actor-border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.hiw__diagJudgeHex {
+  fill: var(--hiw-actor-bg);
+  stroke: var(--hiw-actor-border);
+}
+
+.hiw__diagJudgeGavel {
+  fill: var(--hiw-role-label);
+  stroke: none;
+}
+
+.hiw__diagJudgeGavelBlock {
+  fill: color-mix(in oklch, var(--hiw-role-label) 45%, transparent);
+}
+
+.hiw__diagJudgeScales {
+  fill: none;
+  stroke: var(--hiw-role-label);
+  stroke-width: 1.2;
+  stroke-opacity: 0.55;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.hiw__diagJudgeChip {
+  fill: color-mix(in oklch, var(--hiw-actor-bg) 80%, transparent);
+  stroke: var(--hiw-actor-border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.hiw__diagJudgeChipLabel {
+  fill: var(--hiw-role-label);
+  font-family: var(--ff-mono);
+  // Container-query sized so 320px mobile stays readable; ceiling 14 keeps
+  // the pill shorter than the 224px chip width at desktop scale.
+  font-size: clamp(11px, 1.7cqi, 14px);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
 // `prefers-contrast: more` — bump role label + wallet to the strongest
 // available tokens so low-vision users see the diagram without relying on
 // brand-blue tints. forced-colors is already handled at the token level
@@ -665,6 +730,23 @@
   }
   .hiw__diagWire {
     stroke: var(--text);
+  }
+  .hiw__diagJudgeChipLabel {
+    fill: var(--text);
+  }
+  .hiw__diagJudgeGavel {
+    fill: var(--text);
+  }
+  .hiw__diagJudgeScales {
+    stroke: var(--text);
+  }
+}
+
+// Reduced-motion — drop the dim transition so prefers-reduced-motion users
+// see the final outcome state instantly when Safeguards tabs toggle.
+@media (prefers-reduced-motion: reduce) {
+  .hiw__diagJudgeBody {
+    transition: none;
   }
 }
 

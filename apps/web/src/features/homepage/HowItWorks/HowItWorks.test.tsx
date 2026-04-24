@@ -22,7 +22,7 @@ vi.mock('./HowItWorksAnimations', () => ({
 }));
 
 import { HowItWorks } from './HowItWorks';
-import { HIW_STEPS } from './steps';
+import { HIW_STEPS } from './data';
 
 afterEach(cleanup);
 

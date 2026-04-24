@@ -1,10 +1,13 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { HowItWorksAnimations } from './HowItWorksAnimations';
 import { HiwDiagram } from './HiwDiagram';
 import { HiwPhaseDiagram } from './HiwPhaseDiagram';
-import { HIW_STEPS, LEDGER_LOGS } from './steps';
+import { HIW_STEPS, LEDGER_LOGS } from './data';
+import { HiwProvider, useHiw } from './context/HiwContext';
+import { useOutcomeBranch } from './animations/useOutcomeBranch';
+import { SafeguardsPanel } from './Safeguards/SafeguardsPanel';
 import styles from './HowItWorks.module.scss';
 
 const STATE_CLASS: Record<string, string | undefined> = {
@@ -16,14 +19,25 @@ const STATE_CLASS: Record<string, string | undefined> = {
 };
 
 export function HowItWorks() {
+  return (
+    <HiwProvider>
+      <HowItWorksContent />
+    </HiwProvider>
+  );
+}
+
+function HowItWorksContent() {
+  const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const [active, setActive] = useState(0);
+  const { phase: active, setPhase: setActive, outcome } = useHiw();
+  useOutcomeBranch({ targetRef: sectionRef, outcome });
   const step = HIW_STEPS[active]!;
   const stateClass = STATE_CLASS[step.ledger.state] ?? '';
   const progress = ((active + 1) / HIW_STEPS.length) * 100;
 
   return (
     <section
+      ref={sectionRef}
       className={`o-section ${styles.hiw}`}
       id="hiw"
       aria-label="How it works in five steps"
@@ -246,6 +260,7 @@ export function HowItWorks() {
           </nav>
         </div>
       </HowItWorksAnimations>
+      <SafeguardsPanel />
     </section>
   );
 }
