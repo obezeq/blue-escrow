@@ -574,16 +574,19 @@ export function HowItWorksAnimations({
             trigger: stage,
             start: () => `top ${headerPx}px`,
             end: () =>
-              // Awwwards-tier pin distance: 4 transitions × 0.5vh = 2.0vh
-              // total. The previous 0.9 multiplier (→ 3.6vh) held the stage
-              // pinned well past when the rail visibly settles, forcing the
-              // user to scroll through 3+ empty viewports before the
-              // Safeguards panel could appear. Snap ratios inside the
-              // timeline are unchanged — labelProgresses are proportional
-              // to timeline duration, not scroll distance, so the 5 phase
-              // targets compress cleanly in 44% less scroll.
+              // Pin distance: 4 transitions × 0.25vh = 1.0vh total. User
+              // feedback on the 2.0vh (0.5 multiplier) attempt was still
+              // "releases too far down" — the stage effectively stayed
+              // pinned for ~2 viewport heights of scroll, which at typical
+              // wheel speeds feels like 5-10 seconds frozen at the rail.
+              // At 1.0vh the rail appears, the timeline scrubs through in
+              // ~2-3 seconds of scroll, and the pin releases right where
+              // the rail was visible — Safeguards panel comes in cleanly.
+              // Snap ratios inside the timeline are unchanged (they're
+              // proportional to timeline.duration, not scroll distance),
+              // so the 5 phase targets still compress cleanly.
               '+=' +
-              Math.round(window.innerHeight * (PHASE_COUNT - 1) * 0.5),
+              Math.round(window.innerHeight * (PHASE_COUNT - 1) * 0.25),
             pin: true,
             pinType: 'transform',
             pinSpacing: true,

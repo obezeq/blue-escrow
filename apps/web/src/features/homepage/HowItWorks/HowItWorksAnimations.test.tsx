@@ -380,10 +380,11 @@ describe('HowItWorksAnimations — desktop pinned timeline shape', () => {
     expect(cfg.fastScrollEnd).toBe(true);
   });
 
-  it('uses an end function that returns a "+=X" string based on window.innerHeight * (PHASE_COUNT-1) * 0.5', () => {
-    // 0.5 multiplier = 2.0vh total pin distance across the 5 phases.
-    // Awwwards-tier range per 2026 research; anything above 2.5vh
-    // produces scroll fatigue (the prior 0.9 → 3.6vh fix-me).
+  it('uses an end function that returns a "+=X" string based on window.innerHeight * (PHASE_COUNT-1) * 0.25', () => {
+    // 0.25 multiplier = 1.0vh total pin distance across the 5 phases.
+    // User feedback on the 0.5 (2.0vh) and 0.9 (3.6vh) attempts both
+    // came back as "pin still locks scroll too far down". 1.0vh lets
+    // the rail appear, timeline scrub through in ~2-3s, and release.
     renderAnimationsWithFixture();
     runBranch(
       '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
@@ -393,7 +394,7 @@ describe('HowItWorksAnimations — desktop pinned timeline shape', () => {
     const endStr = (cfg.end as () => string)();
     expect(endStr.startsWith('+=')).toBe(true);
     const expected = Math.round(
-      window.innerHeight * (PHASE_COUNT - 1) * 0.5,
+      window.innerHeight * (PHASE_COUNT - 1) * 0.25,
     );
     expect(endStr).toBe(`+=${expected}`);
   });
@@ -519,7 +520,7 @@ describe('HowItWorksAnimations — pin anchor contract', () => {
     expect(cfg!.trigger).toBe(stage);
   });
 
-  it('end callback scales linearly with window.innerHeight and (PHASE_COUNT-1) * 0.5', () => {
+  it('end callback scales linearly with window.innerHeight and (PHASE_COUNT-1) * 0.25', () => {
     renderAnimationsWithFixture();
     runBranch(
       '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
@@ -532,7 +533,7 @@ describe('HowItWorksAnimations — pin anchor contract', () => {
         configurable: true,
       });
       const result800 = (cfg.end as () => string)();
-      expect(result800).toBe(`+=${Math.round(800 * (PHASE_COUNT - 1) * 0.5)}`);
+      expect(result800).toBe(`+=${Math.round(800 * (PHASE_COUNT - 1) * 0.25)}`);
 
       Object.defineProperty(window, 'innerHeight', {
         value: 1080,
@@ -540,7 +541,7 @@ describe('HowItWorksAnimations — pin anchor contract', () => {
       });
       const result1080 = (cfg.end as () => string)();
       expect(result1080).toBe(
-        `+=${Math.round(1080 * (PHASE_COUNT - 1) * 0.5)}`,
+        `+=${Math.round(1080 * (PHASE_COUNT - 1) * 0.25)}`,
       );
     } finally {
       Object.defineProperty(window, 'innerHeight', {
