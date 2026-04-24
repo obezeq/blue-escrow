@@ -126,9 +126,18 @@
     background 0.25s var(--ease-out-expo),
     transform 0.25s var(--ease-out-expo);
 
-  &:hover {
+  // Hover lift gated to pointer:fine; touch gets an instant border+scale
+  // press cue via :active so taps don't feel silent.
+  @media (hover: hover) {
+    &:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+  }
+
+  &:active {
     border-color: var(--accent);
-    transform: translateY(-2px);
+    transform: scale(0.98);
   }
 
   &:focus-visible {
@@ -138,7 +147,12 @@
 
   @media (prefers-reduced-motion: reduce) {
     transition: none;
-    &:hover {
+    @media (hover: hover) {
+      &:hover {
+        transform: none;
+      }
+    }
+    &:active {
       transform: none;
     }
   }

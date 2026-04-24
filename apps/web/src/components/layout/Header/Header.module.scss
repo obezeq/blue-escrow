@@ -115,7 +115,14 @@
   text-decoration: none;
   transition: opacity 0.2s;
 
-  &:hover {
+  @media (hover: hover) {
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  // Touch press cue — same opacity lift as hover so taps feel responsive.
+  &:active {
     opacity: 1;
   }
 
@@ -130,7 +137,14 @@
     transition: width 0.3s var(--ease-out-expo);
   }
 
-  &:hover::after {
+  @media (hover: hover) {
+    &:hover::after {
+      width: 100%;
+    }
+  }
+
+  &:active::after,
+  &:focus-visible::after {
     width: 100%;
   }
 
@@ -169,10 +183,19 @@
     border-color 0.2s,
     color 0.2s;
 
-  &:hover {
+  @media (hover: hover) {
+    &:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+  }
+
+  &:active {
     background: var(--accent);
     color: #fff;
     border-color: var(--accent);
+    transform: scale(0.97);
   }
 
   &:focus-visible {

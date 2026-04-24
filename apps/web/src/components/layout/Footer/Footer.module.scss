@@ -121,8 +121,20 @@
   transition:
     opacity 0.2s,
     color 0.2s;
+  // Inline-block padding raises the effective tap target from 18px to
+  // 26px+ (meets WCAG 2.2 SC 2.5.8 AA 24×24) without visually bulking
+  // the footer's text rhythm.
+  display: inline-block;
+  padding-block: 4px;
 
-  &:hover {
+  @media (hover: hover) {
+    &:hover {
+      opacity: 1;
+      color: var(--accent);
+    }
+  }
+
+  &:active {
     opacity: 1;
     color: var(--accent);
   }

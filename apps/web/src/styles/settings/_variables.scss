@@ -15,6 +15,15 @@
 // SCSS VARIABLES — Only for breakpoints (CSS vars cannot be used in @media)
 // ============================================================================
 
+// POLICY · breakpoint units (2026-04-24)
+// -------------------------------------
+// Existing breakpoints use `px` for historical consistency. NEW media queries
+// should prefer `em` so user font-size zoom (WCAG 1.4.4) shifts the layout
+// breakpoint alongside the text scale. Industry consensus 2024-2026 (Josh W.
+// Comeau, Vercel Geist, Linear) is `em` for media queries and `rem`/`px` for
+// content sizing. 1em in media queries = 16px at the default user preference,
+// but scales when a user chooses a larger root font.
+//   Example:  @media (max-width: 56.25em) { ... }  // ≈ 900px at default
 $bp-mobile: 375px;
 $bp-tablet: 768px;
 $bp-desktop: 1024px;

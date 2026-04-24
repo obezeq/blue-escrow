@@ -79,6 +79,11 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  // Chrome 108+ / Firefox 132+ shrink the layout viewport when the virtual
+  // keyboard appears so form fields stay visible without manual scroll.
+  // Safari still ignores this (falls back to default visual-viewport
+  // behavior); zero-risk addition for the supported browsers.
+  interactiveWidget: 'resizes-content',
   colorScheme: 'dark light',
   themeColor: [
     { media: '(prefers-color-scheme: dark)', color: '#0b1117' },

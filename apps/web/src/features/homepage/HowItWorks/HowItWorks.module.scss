@@ -247,7 +247,10 @@
   flex: 1 1 auto;
   min-block-size: 0;
 
-  @media (max-width: 900px) {
+  // Boundary 899 (max-inclusive) — matches the pinHost/deck toggle at the
+  // exact same breakpoint so at 900px the desktop pinned experience stays
+  // 2-column; below 900 the grid is stacked but pinHost is hidden anyway.
+  @media (max-width: 899px) {
     grid-template-columns: 1fr;
   }
 }
@@ -1104,9 +1107,9 @@
   position: relative;
 
   // 5 → 3 → 2 cols so each button stays wide enough for comfortable
-  // touch targets (3-col at 900px gives ~280px/btn, 2-col at 560px
-  // gives ~260px/btn). The old 2-col-at-900 collapsed too aggressively.
-  @media (max-width: 900px) {
+  // touch targets (3-col at 899px gives ~280px/btn, 2-col at 560px
+  // gives ~260px/btn). Same 899 boundary as pinHost/deck/grid.
+  @media (max-width: 899px) {
     grid-template-columns: repeat(3, 1fr);
   }
 
@@ -1167,9 +1170,19 @@
     border-inline-end: 0;
   }
 
-  &:hover {
+  // Hover gated to pointer:fine so touch devices don't "stick" a hover
+  // state between taps. Press feedback via :active fires on every device,
+  // keyboard users get :focus-visible (already below).
+  @media (hover: hover) {
+    &:hover {
+      color: var(--text);
+      background: var(--on-card);
+    }
+  }
+
+  &:active {
     color: var(--text);
-    background: var(--on-card);
+    background: color-mix(in srgb, var(--on-card) 70%, transparent);
   }
 
   &:focus-visible {
@@ -1202,7 +1215,7 @@
 
   // Strip the right-border on the rightmost button of each layout's row so
   // it doesn't sit against the rail's right edge as a dangling line.
-  @media (max-width: 900px) {
+  @media (max-width: 899px) {
     &:nth-child(3n) {
       border-inline-end: 0;
     }
@@ -1444,8 +1457,16 @@
     inset: -18px;
   }
 
-  &:hover {
+  // Hover gated to pointer:fine; :active fires on touch for tactile cue.
+  @media (hover: hover) {
+    &:hover {
+      background: var(--accent);
+    }
+  }
+
+  &:active {
     background: var(--accent);
+    transform: scale(1.2);
   }
 
   &:focus-visible {

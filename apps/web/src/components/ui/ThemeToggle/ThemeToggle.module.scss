@@ -15,8 +15,23 @@
     background 0.2s,
     border-color 0.2s;
 
-  &:hover {
+  // Invisible hit-area extension — visual 56×28 becomes effective 56×44
+  // touch target (WCAG 2.5.8). No layout shift because ::after is absolute.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -8px 0;
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      border-color: var(--accent);
+    }
+  }
+
+  &:active {
     border-color: var(--accent);
+    background: color-mix(in srgb, var(--on-card) 80%, var(--accent) 20%);
   }
 
   &:focus-visible {
