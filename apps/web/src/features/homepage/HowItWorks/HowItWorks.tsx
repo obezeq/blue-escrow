@@ -6,6 +6,7 @@ import { HiwDiagram } from './HiwDiagram';
 import { HiwPhaseDiagram } from './HiwPhaseDiagram';
 import { HIW_STEPS, LEDGER_LOGS } from './data';
 import { HiwProvider, useHiw } from './context/HiwContext';
+import { useOutcomeBranch } from './animations/useOutcomeBranch';
 import { SafeguardsPanel } from './Safeguards/SafeguardsPanel';
 import styles from './HowItWorks.module.scss';
 
@@ -26,14 +27,17 @@ export function HowItWorks() {
 }
 
 function HowItWorksContent() {
+  const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const { phase: active, setPhase: setActive } = useHiw();
+  const { phase: active, setPhase: setActive, outcome } = useHiw();
+  useOutcomeBranch({ targetRef: sectionRef, outcome });
   const step = HIW_STEPS[active]!;
   const stateClass = STATE_CLASS[step.ledger.state] ?? '';
   const progress = ((active + 1) / HIW_STEPS.length) * 100;
 
   return (
     <section
+      ref={sectionRef}
       className={`o-section ${styles.hiw}`}
       id="hiw"
       aria-label="How it works in five steps"
