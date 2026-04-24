@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { render, cleanup, fireEvent, within } from '@testing-library/react';
 import { HiwProvider } from '../context/HiwContext';
-import { SafeguardsPanel } from './SafeguardsPanel';
+import { SafeguardsPanel, announceOutcome } from './SafeguardsPanel';
 
 afterEach(cleanup);
 
@@ -99,6 +99,24 @@ describe('SafeguardsPanel — tablist contract', () => {
     expect(heading?.textContent).toMatch(/goes wrong/i);
   });
 
+  it('exposes a polite aria-live region that updates on outcome change', () => {
+    const { container } = renderWithProvider();
+    const live = container.querySelector('[data-hiw-outcome-announcer]');
+    expect(live).not.toBeNull();
+    expect(live?.getAttribute('aria-live')).toBe('polite');
+    expect(live?.getAttribute('aria-atomic')).toBe('true');
+    expect(live?.getAttribute('role')).toBe('status');
+    // happy-path announcement present at mount
+    expect(live?.textContent).toMatch(/happy path/i);
+
+    const refundTab = container.querySelector<HTMLButtonElement>(
+      '[data-hiw-outcome-chip="refund"]',
+    )!;
+    fireEvent.click(refundTab);
+    expect(live?.textContent).toMatch(/refund/i);
+    expect(live?.textContent).toMatch(/seller accepts/i);
+  });
+
   it('only the active tab is in the tab order (tabIndex=0); others get -1', () => {
     const { container } = renderWithProvider();
     // At rest every tab is non-active; the first tab still needs a keyboard
@@ -114,6 +132,25 @@ describe('SafeguardsPanel — tablist contract', () => {
     ).filter((el) => el !== refundTab);
     for (const t of others) {
       expect(t.tabIndex).toBe(-1);
+    }
+  });
+});
+
+describe('announceOutcome helper', () => {
+  it('returns happy-path phrase when outcome is null', () => {
+    expect(announceOutcome(null)).toMatch(/happy path/i);
+  });
+
+  it('reads out the chip label, title, and fee note for a named outcome', () => {
+    const msg = announceOutcome('disputeSeller');
+    expect(msg).toMatch(/Dispute/i);
+    expect(msg).toMatch(/Seller/i);
+    expect(msg).toMatch(/Fees apply/i);
+  });
+
+  it('includes chip label for every one of the four Safeguards outcomes', () => {
+    for (const id of ['refund', 'disputeBuyer', 'disputeSeller', 'timeout']) {
+      expect(announceOutcome(id)).toBeTruthy();
     }
   });
 });

@@ -249,6 +249,21 @@
   margin: 24px auto 0;
 }
 
+// Visually-hidden live region — standard WCAG-compliant clip pattern
+// (matches `tools/_a11y.scss .u-visually-hidden`). Screen readers get
+// the outcome announcement; sighted users see nothing.
+.safeguards__liveRegion {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 // prefers-contrast: more — flatten the color-mix treatments to solid
 // tokens so the chip status remains distinguishable under high contrast.
 @media (prefers-contrast: more) {

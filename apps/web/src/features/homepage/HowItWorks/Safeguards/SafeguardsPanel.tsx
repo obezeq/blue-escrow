@@ -27,9 +27,22 @@
  */
 
 import { useId } from 'react';
-import { HIW_OUTCOMES } from '../data/outcomes';
+import { HIW_OUTCOMES, getOutcome } from '../data/outcomes';
 import { useHiw } from '../context/HiwContext';
 import styles from './Safeguards.module.scss';
+
+/**
+ * Announcement string for a given outcome id — used by the visually-
+ * hidden aria-live region. Keeping it in a pure helper lets the unit
+ * test assert the exact phrasing without reaching into the JSX.
+ */
+export function announceOutcome(outcomeId: string | null): string {
+  if (!outcomeId) {
+    return 'Safeguards panel closed. Happy path active.';
+  }
+  const outcome = getOutcome(outcomeId as never);
+  return `${outcome.chipLabel} outcome selected. ${outcome.narrTitle} ${outcome.feeNote}.`;
+}
 
 export function SafeguardsPanel() {
   const { outcome, setOutcome } = useHiw();
@@ -121,10 +134,28 @@ export function SafeguardsPanel() {
       </div>
 
       {outcome === null ? (
-        <p className={styles.safeguards__hint} aria-live="polite">
+        <p className={styles.safeguards__hint}>
           Pick a branch above to preview its on-chain resolution.
         </p>
       ) : null}
+
+      {/*
+       * Dedicated, visually-hidden aria-live region. Placing the
+       * announcement on its own polite channel (separate from the
+       * hint paragraph) means screen readers announce *every*
+       * outcome change, not just the first transition away from
+       * happy path. aria-atomic="true" forces the full phrase to be
+       * read on each change instead of just the diff.
+       */}
+      <div
+        className={styles.safeguards__liveRegion}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        data-hiw-outcome-announcer
+      >
+        {announceOutcome(outcome)}
+      </div>
     </section>
   );
 }
