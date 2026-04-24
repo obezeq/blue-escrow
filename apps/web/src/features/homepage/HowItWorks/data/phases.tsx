@@ -117,7 +117,7 @@ export const HIW_STEPS: HiwStep[] = [
           Funds released. <em>Three receipts, one block.</em>
         </Fragment>
       ),
-      body: 'Funds to the seller. Fee to the protocol. Fee to the middleman. One soulbound NFT, two signed receipts — minted in the same block.',
+      body: 'Funds to the seller. Fees to protocol and middleman. Soulbound NFT plus two receipts — one block.',
     },
     ledger: {
       state: 'released',

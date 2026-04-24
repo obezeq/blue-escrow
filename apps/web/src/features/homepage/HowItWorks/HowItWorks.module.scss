@@ -551,6 +551,10 @@
   display: flex;
   flex-direction: column;
   min-block-size: clamp(300px, 45svh, 460px);
+  // Break the flex intrinsic min-content cascade: without min-height:0 here,
+  // children default to min-height:auto and narration's 3-line content at
+  // phase 4 leaks back into sceneBody's distributed height (W3C Flexbox §4.5).
+  min-height: 0;
 
   :root[data-theme='light'] & {
     background:
@@ -606,13 +610,24 @@
   // with the scene-card width, not the viewport, so the three role chips stay
   // legible from 320px mobile to 2560px ultra-wide. Refs #99.
   container-type: inline-size;
+  // Sizing contract — locks the SVG area to a constant block-size across all
+  // 5 phases. Without min-height:0 + overflow:hidden the parent flex cascade
+  // shrinks this body by 22px when narration grows to 3 lines (measured via
+  // Chrome DevTools MCP: 318→294px @ phase 4 pre-fix).
+  min-height: 0;
+  overflow: hidden;
 }
 
 .hiw__svg {
   width: 100%;
   height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   min-height: 280px;
   display: block;
+  // preserveAspectRatio=meet + object-fit:contain keeps the SVG's visual
+  // content at a stable size regardless of tiny parent jitter.
+  object-fit: contain;
 }
 
 // ---------------------------------------------------------------------------
@@ -967,12 +982,13 @@
   justify-content: space-between;
   align-items: flex-end;
   gap: 32px;
-  min-block-size: clamp(110px, 14svh, 140px);
-  // flex: 0 0 auto so narration does NOT grow into the .hiw__sceneBody
-  // area when the body text is long (e.g. phase 4 Release body is 3
-  // lines while phases 0-3 fit in 2). Previously the scene SVG visually
-  // shrank on Release because narration stole its flex allowance.
+  // Height cap — must stay constant across phases. Without this the
+  // narration's intrinsic content (3-line phase-4 body) leaks upwards and
+  // squeezes .hiw__sceneBody even with flex:0 0 auto. Fixed height +
+  // overflow:hidden + line-clamp:2 on body = SVG area stays at 302px.
+  block-size: clamp(110px, 14svh, 140px);
   flex: 0 0 auto;
+  overflow: hidden;
 }
 
 .hiw__narrationText {
@@ -1027,6 +1043,12 @@
   margin: 0;
   text-wrap: pretty;
   max-width: 40ch;
+  // Cap to 2 lines so phase 4 Release body (130 chars) can't expand the
+  // narration block and steal SVG height. Longer copy gets ellipsized.
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 // --- Rail -------------------------------------------------------------------
