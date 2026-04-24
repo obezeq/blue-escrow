@@ -126,6 +126,7 @@ vi.mock('@/animations/config/gsap-register', () => {
     }),
     refresh: vi.fn(),
     update: vi.fn(),
+    normalizeScroll: vi.fn(),
   };
   const ScrollToPlugin = {};
   const MotionPathPlugin = {};

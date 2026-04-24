@@ -186,7 +186,7 @@ export function HowItWorksAnimations({
       // The setTimeouts' return IDs aren't tracked — the refresh callbacks
       // themselves are safe to fire after component unmount (ScrollTrigger
       // dedupes / safely no-ops on killed triggers).
-      for (const ms of [0, 500, 1500, 3000]) {
+      for (const ms of [0, 500, 1500, 3000, 5000]) {
         window.setTimeout(() => ScrollTrigger.refresh(), ms);
       }
       if (document.readyState !== 'complete') {
@@ -194,6 +194,30 @@ export function HowItWorksAnimations({
           once: true,
         });
       }
+
+      // ---- Layer A · ResizeObserver on <html>
+      // Catches every layout shift above #hiw — Preloader unmount (~4020ms
+      // after mount), font-swap reflow (Geist display:swap), lazy-loaded
+      // images in Hero/TheProblem, etc. — and fires ScrollTrigger.refresh()
+      // AFTER the browser has recomputed layout, so trigger.top is accurate.
+      // Debounced via requestAnimationFrame so multiple back-to-back resize
+      // events within a single frame coalesce into one refresh.
+      let resizeRafId = 0;
+      const resizeObserver = new ResizeObserver(() => {
+        if (resizeRafId) cancelAnimationFrame(resizeRafId);
+        resizeRafId = requestAnimationFrame(() => ScrollTrigger.refresh());
+      });
+      resizeObserver.observe(document.documentElement);
+
+      // NOTE: ScrollTrigger.normalizeScroll(true) would be the obvious
+      // complement to the ResizeObserver above, but Lenis already owns
+      // wheel-event normalization (LenisProvider.tsx:54 wires
+      // `lenis.on('scroll', ScrollTrigger.update)` plus the gsap.ticker
+      // ↔ lenis.raf bridge). Enabling normalizeScroll on top of that
+      // double-binds wheel handling and breaks smooth scroll feel.
+      // ResizeObserver alone captures the preloader-unmount root cause,
+      // which is the one drift source not already caught by the existing
+      // document.fonts.ready + window.load + setTimeout refresh layers.
 
       const eyebrow = container.querySelector<HTMLElement>(
         '[data-animate="eyebrow"]',
@@ -934,6 +958,16 @@ export function HowItWorksAnimations({
         });
         return () => trigger.kill();
       });
+
+      // ---- Root useGSAP cleanup
+      // useGSAP/gsap.context auto-cleans tweens + ScrollTriggers + mm
+      // branches, but NOT the ResizeObserver we allocated at the root
+      // of the callback. Disconnect + cancel pending rAF so HMR and
+      // Next.js strict-mode double-mount don't stack observers.
+      return () => {
+        if (resizeRafId) cancelAnimationFrame(resizeRafId);
+        resizeObserver.disconnect();
+      };
     },
     { scope: containerRef, dependencies: [] },
   );
