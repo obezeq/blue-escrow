@@ -147,6 +147,14 @@
   // Same fluid rule as .hiw__wrap — 20px min matches the old mobile
   // fallback, 40px max matches desktop.
   padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+  // Flex column so the grid (ledger + scene) expands to fill the available
+  // vertical space and the rail sits at the exact bottom of the stage
+  // regardless of viewport height. Without this, the natural content
+  // (grid 723 + rail 54) stops short at 1920×1080 by ~170px, leaving
+  // dead space below the rail that reads as "the pin keeps going past
+  // the nav" from a user POV. Responsive-100% contract.
+  display: flex;
+  flex-direction: column;
 
   // --- Heat plumbing ---
   // Agent C (animations) writes --hiw-heat (0 → 1) to this element as the
@@ -219,7 +227,16 @@
   row-gap: clamp(0.75rem, 2vh, 1.5rem);
   align-items: stretch;
   max-width: 1440px;
+  inline-size: 100%;
   margin: 0 auto;
+  // Fill the vertical space between stage padding-top and the rail so the
+  // rail sticks to the bottom of the pinned viewport on every screen
+  // height (responsive contract). `min-height: 0` is the flex-item trick
+  // that lets the grid shrink BELOW its intrinsic content size if the
+  // viewport gets very short — without it, tall SVG diagrams would push
+  // the rail off-screen at height < ~800px.
+  flex: 1 1 auto;
+  min-block-size: 0;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
