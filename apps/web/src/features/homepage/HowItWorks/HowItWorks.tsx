@@ -6,6 +6,7 @@ import { HiwDiagram } from './HiwDiagram';
 import { HiwPhaseDiagram } from './HiwPhaseDiagram';
 import { HIW_STEPS, LEDGER_LOGS } from './data';
 import { HiwProvider, useHiw } from './context/HiwContext';
+import { SafeguardsPanel } from './Safeguards/SafeguardsPanel';
 import styles from './HowItWorks.module.scss';
 
 const STATE_CLASS: Record<string, string | undefined> = {
@@ -255,6 +256,7 @@ function HowItWorksContent() {
           </nav>
         </div>
       </HowItWorksAnimations>
+      <SafeguardsPanel />
     </section>
   );
 }
