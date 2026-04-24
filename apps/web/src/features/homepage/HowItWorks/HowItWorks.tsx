@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { HowItWorksAnimations } from './HowItWorksAnimations';
 import { HiwDiagram } from './HiwDiagram';
 import { HiwPhaseDiagram } from './HiwPhaseDiagram';
-import { HIW_STEPS, LEDGER_LOGS } from './steps';
+import { HIW_STEPS, LEDGER_LOGS } from './data';
 import styles from './HowItWorks.module.scss';
 
 const STATE_CLASS: Record<string, string | undefined> = {

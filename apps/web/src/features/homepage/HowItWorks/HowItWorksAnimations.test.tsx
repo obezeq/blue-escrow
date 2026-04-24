@@ -13,7 +13,7 @@ import { render, cleanup } from '@testing-library/react';
 import type { RefObject } from 'react';
 
 import { MATCH_MEDIA } from '@/animations/config/defaults';
-import { PHASE_COUNT } from './steps';
+import { PHASE_COUNT } from './data';
 // Type-only import so the mock factory can reference the module's shape
 // without resurrecting a runtime import (which would fight with vi.mock).
 // The @typescript-eslint/consistent-type-imports rule also forbids inline
