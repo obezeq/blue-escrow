@@ -380,7 +380,10 @@ describe('HowItWorksAnimations — desktop pinned timeline shape', () => {
     expect(cfg.fastScrollEnd).toBe(true);
   });
 
-  it('uses an end function that returns a "+=X" string based on window.innerHeight * (PHASE_COUNT-1) * 0.9', () => {
+  it('uses an end function that returns a "+=X" string based on window.innerHeight * (PHASE_COUNT-1) * 0.5', () => {
+    // 0.5 multiplier = 2.0vh total pin distance across the 5 phases.
+    // Awwwards-tier range per 2026 research; anything above 2.5vh
+    // produces scroll fatigue (the prior 0.9 → 3.6vh fix-me).
     renderAnimationsWithFixture();
     runBranch(
       '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
@@ -390,7 +393,7 @@ describe('HowItWorksAnimations — desktop pinned timeline shape', () => {
     const endStr = (cfg.end as () => string)();
     expect(endStr.startsWith('+=')).toBe(true);
     const expected = Math.round(
-      window.innerHeight * (PHASE_COUNT - 1) * 0.9,
+      window.innerHeight * (PHASE_COUNT - 1) * 0.5,
     );
     expect(endStr).toBe(`+=${expected}`);
   });
@@ -516,7 +519,7 @@ describe('HowItWorksAnimations — pin anchor contract', () => {
     expect(cfg!.trigger).toBe(stage);
   });
 
-  it('end callback scales linearly with window.innerHeight and (PHASE_COUNT-1) * 0.9', () => {
+  it('end callback scales linearly with window.innerHeight and (PHASE_COUNT-1) * 0.5', () => {
     renderAnimationsWithFixture();
     runBranch(
       '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
@@ -529,7 +532,7 @@ describe('HowItWorksAnimations — pin anchor contract', () => {
         configurable: true,
       });
       const result800 = (cfg.end as () => string)();
-      expect(result800).toBe(`+=${Math.round(800 * (PHASE_COUNT - 1) * 0.9)}`);
+      expect(result800).toBe(`+=${Math.round(800 * (PHASE_COUNT - 1) * 0.5)}`);
 
       Object.defineProperty(window, 'innerHeight', {
         value: 1080,
@@ -537,7 +540,7 @@ describe('HowItWorksAnimations — pin anchor contract', () => {
       });
       const result1080 = (cfg.end as () => string)();
       expect(result1080).toBe(
-        `+=${Math.round(1080 * (PHASE_COUNT - 1) * 0.9)}`,
+        `+=${Math.round(1080 * (PHASE_COUNT - 1) * 0.5)}`,
       );
     } finally {
       Object.defineProperty(window, 'innerHeight', {
