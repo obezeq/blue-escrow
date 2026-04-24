@@ -3,7 +3,7 @@ import {
   ActorGroup,
   CLIENT_GLYPH,
   HiwDefs,
-  MIDDLEMAN_GLYPH,
+  JudgePodium,
   MoneyPacket,
   SELLER_GLYPH,
   VaultCore,
@@ -50,15 +50,7 @@ export function HiwDiagram() {
         meta="0x7a2f…e91c"
         glyph={CLIENT_GLYPH}
       />
-      <ActorGroup
-        kind="mid"
-        x={600}
-        y={120}
-        role="MIDDLEMAN"
-        name="@archer"
-        meta="REP 4.98 · 214 deals"
-        glyph={MIDDLEMAN_GLYPH}
-      />
+      <JudgePodium />
       <ActorGroup
         kind="seller"
         x={1020}

@@ -8,4 +8,5 @@ export {
   SELLER_GLYPH,
   type ActorKind,
 } from './ActorGroup';
+export { JudgePodium } from './JudgePodium';
 export { MoneyPacket } from './MoneyPacket';
