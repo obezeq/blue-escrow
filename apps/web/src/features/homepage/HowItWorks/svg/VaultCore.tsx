@@ -37,14 +37,16 @@ export function VaultCore() {
         aria-hidden="true"
       />
 
-      {/* Decorative dashed ring preserved from v7 for continuity */}
+      {/* Decorative dashed ring preserved from v7 for continuity.
+          strokeOpacity .5 → .7 so the ring frames the hex without
+          fighting the chamber fill at high charge levels. */}
       <circle
         cx="600"
         cy="380"
         r="85"
         fill="none"
         stroke="#0091FF"
-        strokeOpacity=".5"
+        strokeOpacity=".7"
         strokeDasharray="4 5"
         vectorEffect="non-scaling-stroke"
         aria-hidden="true"

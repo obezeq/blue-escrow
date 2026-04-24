@@ -81,10 +81,11 @@
 
 .hiw__diagVaultChamber {
   // Inner fill intensity follows charge level: empty vault is translucent,
-  // fully charged vault saturates to brand-blue.
+  // fully charged vault saturates to brand-blue. Multiplier bumped
+  // 45% → 70% so the "funded" state reads vibrant, not pale.
   fill: color-mix(
     in oklch,
-    var(--blue-vivid, #0091ff) calc(var(--hiw-vault-charge, 0) * 45%),
+    var(--blue-vivid, #0091ff) calc(var(--hiw-vault-charge, 0) * 70%),
     transparent
   );
   transition:
@@ -104,7 +105,9 @@
   stroke-width: 1.25;
   stroke-dasharray: 3 4;
   fill: none;
-  opacity: 0.55;
+  // 0.55 → 0.75: dashed output channels readable at rest without
+  // competing with the active wires during the Settle cinematic.
+  opacity: 0.75;
   vector-effect: non-scaling-stroke;
 }
 
@@ -178,7 +181,9 @@
 // --- Client-refund cue — single pill shown on fee-free outcomes --------
 
 .hiw__diagVaultRefundPill {
-  fill: color-mix(in oklch, var(--status-success, #22cc66) 12%, transparent);
+  // 12% → 28%: refund pill now reads as a distinct green surface
+  // instead of a whisper. Stroke at full saturation stays the ring.
+  fill: color-mix(in oklch, var(--status-success, #22cc66) 28%, transparent);
   stroke: var(--status-success, #22cc66);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;

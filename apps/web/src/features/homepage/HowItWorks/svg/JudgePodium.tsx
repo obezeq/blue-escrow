@@ -101,15 +101,14 @@ export function JudgePodium() {
           REP 4.98 · 214 deals
         </text>
 
-        {/* Sticky role chip — the load-bearing signal for this whole
-            redesign. Short, monospaced, two-column with a · separator
-            so the negative claim ("cannot withdraw") gets equal read
-            weight to the positive ("can vote"). */}
-        <g transform="translate(0 170)">
-          {/* Chip rect widened 224→260 / 28→36 to accommodate the
-              bumped label clamp(12,2.0cqi,16). Keeps symmetric padding
-              around the text at 16px desktop without touching the pill
-              edges. */}
+        {/* Role qualifier chip — positioned ABOVE the MIDDLEMAN role
+            label as a short descriptor tag. The previous translate(0 170)
+            landed the chip on the smart-contract core (chip y-band
+            [332,368] vs core hex y-band [330,430] — confirmed collision
+            via Chrome DevTools MCP). This position clears the core by
+            ~282px and reads as "qualifier → ROLE → puck → name → meta",
+            the native annotation pattern (Vercel / Linear / Stripe). */}
+        <g transform="translate(0 -150)">
           <rect
             className={styles.hiw__diagJudgeChip}
             x="-130"

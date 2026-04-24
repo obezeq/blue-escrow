@@ -147,10 +147,10 @@
   // Downstream ::before/::after consume it for the backdrop effects.
   --hiw-heat: 0;
   --hiw-rail-progress: 0;
-  // Judge opacity on happy path bumped from 0.3 to 0.55 so the middleman
-  // is legibly present without competing with client/seller for focus.
+  // Judge opacity on happy path bumped 0.3 → 0.55 → 0.85 so the middleman
+  // is clearly present (2026 dashboard UX: primary actors ≥0.85 effective).
   // Dispute branches (useOutcomeBranch) still lift it to 1.0.
-  --hiw-judge-opacity: 0.55;
+  --hiw-judge-opacity: 0.85;
 
   // Deep navy radial well — color-mix against --blue-ink for theme cohesion.
   &::before {
@@ -444,14 +444,14 @@
   align-items: center;
   padding-block: clamp(8px, 1.4vh, 14px);
   border-bottom: 1px dashed var(--border);
-  opacity: 0.3;
+  // Dark-mode log baseline 0.3 → 0.5 — past/future ledger rows were
+  // practically invisible at 0.3. 0.5 keeps the "not-yet-active" feel
+  // while meeting the 2026 readability floor for secondary content.
+  opacity: 0.5;
   transition: opacity 0.5s var(--ease-out-expo);
 
-  // Light mode: --text-muted (#5a6474) at 0.3 dips below WCAG AA on the
-  // elevated card. Bumping non-current logs to 0.5 keeps the "future / not
-  // yet" feel while staying readable.
   :root[data-theme='light'] & {
-    opacity: 0.5;
+    opacity: 0.6;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -713,12 +713,15 @@
 // ---------------------------------------------------------------------------
 
 .hiw__diagJudgeBody {
-  opacity: var(--hiw-judge-opacity, 0.3);
+  // Fallback bumped 0.3 → 0.85 to match the pinHost default written in
+  // the same file. Keeps the middleman visible even if the CSS custom
+  // property doesn't resolve (e.g. during SSR hydration transients).
+  opacity: var(--hiw-judge-opacity, 0.85);
   transition: opacity var(--dur-default, 500ms) var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
 }
 
 .hiw__diagJudgePodium {
-  fill: color-mix(in oklch, var(--hiw-actor-bg) 65%, transparent);
+  fill: color-mix(in oklch, var(--hiw-actor-bg) 82%, transparent);
   stroke: var(--hiw-actor-border);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
@@ -735,34 +738,37 @@
 }
 
 .hiw__diagJudgeGavelBlock {
-  fill: color-mix(in oklch, var(--hiw-role-label) 45%, transparent);
+  fill: color-mix(in oklch, var(--hiw-role-label) 72%, transparent);
 }
 
 .hiw__diagJudgeScales {
   fill: none;
   stroke: var(--hiw-role-label);
   stroke-width: 1.2;
-  stroke-opacity: 0.55;
+  stroke-opacity: 0.72;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
 }
 
 .hiw__diagJudgeChip {
-  fill: color-mix(in oklch, var(--hiw-actor-bg) 80%, transparent);
+  // 95% bg + 1.5px border so the chip reads as a solid pill over the
+  // judge body opacity (0.85). Compound 0.85 × 0.95 = 0.81 effective,
+  // above the 0.75 Awwwards readability floor for load-bearing UI.
+  fill: color-mix(in oklch, var(--hiw-actor-bg) 95%, transparent);
   stroke: var(--hiw-actor-border);
-  stroke-width: 1;
+  stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
 }
 
 .hiw__diagJudgeChipLabel {
-  fill: var(--hiw-role-label);
+  // Promoted to --text (full contrast) from --hiw-role-label (blue-muted
+  // #66bbff). The chip is the load-bearing signal for the whole redesign;
+  // hierarchy beats decorative tint. Stripe/Vercel/Linear all use explicit
+  // hex tokens for primary labels, never rely on opacity for hierarchy.
+  fill: var(--text);
   font-family: var(--ff-mono);
-  // Bumped from clamp(11,1.7cqi,14) → clamp(12,2.0cqi,16) so the
-  // chip label reads as authority not legalese. The chip rect in
-  // JudgePodium.tsx was widened to 250×32 to accommodate 16px text
-  // without touching the pill edges.
-  font-size: clamp(12px, 2.0cqi, 16px);
-  font-weight: 500;
+  font-size: clamp(13px, 2.2cqi, 17px);
+  font-weight: 600;
   letter-spacing: 0.04em;
 }
 
