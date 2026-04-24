@@ -172,6 +172,29 @@ export function HowItWorksAnimations({
         .then(() => ScrollTrigger.refresh())
         .catch(() => {});
 
+      // Force ScrollTrigger to recompute start/end after the page's layout
+      // has fully settled. Without this, the pin_start gets cached at
+      // create-time when dev-mode UI (Next.js/Turbopack overlay, error
+      // banners) or lazy-loaded assets above the #hiw section are still
+      // affecting the flow. Users reported the pin engaging ~200px LATER
+      // than the pinHost's actual final position because the section was
+      // measured while something above was still tall.
+      //
+      // These extra refreshes are cheap (ScrollTrigger internally dedupes
+      // redundant refreshes) and guarantee start/end match the
+      // user-visible layout by the time they scroll into view.
+      // The setTimeouts' return IDs aren't tracked — the refresh callbacks
+      // themselves are safe to fire after component unmount (ScrollTrigger
+      // dedupes / safely no-ops on killed triggers).
+      for (const ms of [0, 500, 1500, 3000]) {
+        window.setTimeout(() => ScrollTrigger.refresh(), ms);
+      }
+      if (document.readyState !== 'complete') {
+        window.addEventListener('load', () => ScrollTrigger.refresh(), {
+          once: true,
+        });
+      }
+
       const eyebrow = container.querySelector<HTMLElement>(
         '[data-animate="eyebrow"]',
       );
