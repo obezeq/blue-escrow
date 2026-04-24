@@ -142,7 +142,10 @@
 .hiw__diagVaultBucketLabel {
   fill: var(--hiw-role-label);
   font-family: var(--ff-mono);
-  font-size: clamp(10px, 1.4cqi, 13px);
+  // Bumped 10-13 → 14-18 so the bucket label doesn't invert hierarchy
+  // (actor names at 28px, body text 15-16px, these should match body
+  // floor, not dip below it).
+  font-size: clamp(14px, 2.0cqi, 18px);
   font-weight: 500;
   letter-spacing: 0.06em;
 }
@@ -150,7 +153,9 @@
 .hiw__diagVaultBucketAmount {
   fill: var(--text);
   font-family: var(--ff-mono);
-  font-size: clamp(12px, 1.8cqi, 16px);
+  // Bumped 12-16 → 14-20 so the fee-split numbers (2,344.08 / 48.00 /
+  // 7.92) are as readable as the core title (22) and actor names (28).
+  font-size: clamp(14px, 2.2cqi, 20px);
   font-weight: 600;
   letter-spacing: -0.01em;
 }
@@ -158,8 +163,10 @@
 .hiw__diagVaultWithdrawCue {
   fill: var(--muted-2, var(--text-muted));
   font-family: var(--ff-mono);
-  // Smaller-than-core-title so this reads as footnote, not headline.
-  font-size: clamp(11px, 1.55cqi, 14px);
+  // Bumped 11-14 → 12-16. The pull-based withdraw cue is the
+  // load-bearing "money is NEVER pushed" signal — it deserves body
+  // scale, not legalese scale.
+  font-size: clamp(12px, 1.8cqi, 16px);
   letter-spacing: 0.08em;
   // Reveal the pull-based withdraw footnote on any Safeguards outcome —
   // this is the "cannot-be-missed" signal that money is NEVER pushed.
@@ -180,7 +187,9 @@
 .hiw__diagVaultRefundLabel {
   fill: var(--status-success, #22cc66);
   font-family: var(--ff-mono);
-  font-size: clamp(10px, 1.4cqi, 13px);
+  // Match the bucket label scale bumped above (14-18) so the fee-free
+  // refund pill has the same visual weight as the seller-win split.
+  font-size: clamp(14px, 2.0cqi, 18px);
   font-weight: 500;
   letter-spacing: 0.06em;
 }
@@ -188,7 +197,8 @@
 .hiw__diagVaultRefundAmount {
   fill: var(--text);
   font-family: var(--ff-mono);
-  font-size: clamp(12px, 1.8cqi, 16px);
+  // Match bucket amount scale (14-20).
+  font-size: clamp(14px, 2.2cqi, 20px);
   font-weight: 600;
   letter-spacing: -0.01em;
 }

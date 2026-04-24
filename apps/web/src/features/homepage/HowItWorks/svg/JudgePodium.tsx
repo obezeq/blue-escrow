@@ -105,17 +105,21 @@ export function JudgePodium() {
             redesign. Short, monospaced, two-column with a · separator
             so the negative claim ("cannot withdraw") gets equal read
             weight to the positive ("can vote"). */}
-        <g transform="translate(0 160)">
+        <g transform="translate(0 170)">
+          {/* Chip rect widened 224→260 / 28→36 to accommodate the
+              bumped label clamp(12,2.0cqi,16). Keeps symmetric padding
+              around the text at 16px desktop without touching the pill
+              edges. */}
           <rect
             className={styles.hiw__diagJudgeChip}
-            x="-112"
-            y="-14"
-            width="224"
-            height="28"
-            rx="14"
+            x="-130"
+            y="-18"
+            width="260"
+            height="36"
+            rx="18"
           />
           <text
-            y="5"
+            y="6"
             textAnchor="middle"
             className={styles.hiw__diagJudgeChipLabel}
           >

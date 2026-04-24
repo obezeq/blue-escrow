@@ -383,7 +383,10 @@
 
 .hiw__amountUnit {
   font-family: var(--ff-mono);
-  font-size: 18px;
+  // Flex with viewport — the ledger amount "2,400" is clamp(40,7vw,98)
+  // so USDC static 18px looked dwarfed next to the big number at
+  // desktop. Bumps it into awwwards-tier balance.
+  font-size: clamp(16px, 2.4vw, 32px);
   color: var(--accent);
   font-weight: 500;
   letter-spacing: 0.05em;
@@ -401,7 +404,10 @@
 }
 
 .hiw__progress {
-  height: 3px;
+  // 3px was rendering as a faint hairline — barely visible as a
+  // progress indicator. Clamp 3-6 gives it substance without going
+  // bold, and scales with vh so it feels proportional on tall screens.
+  height: clamp(3px, 0.5vh, 6px);
   background: var(--border);
   border-radius: var(--radius-full);
   overflow: hidden;
@@ -736,9 +742,11 @@
 .hiw__diagJudgeChipLabel {
   fill: var(--hiw-role-label);
   font-family: var(--ff-mono);
-  // Container-query sized so 320px mobile stays readable; ceiling 14 keeps
-  // the pill shorter than the 224px chip width at desktop scale.
-  font-size: clamp(11px, 1.7cqi, 14px);
+  // Bumped from clamp(11,1.7cqi,14) → clamp(12,2.0cqi,16) so the
+  // chip label reads as authority not legalese. The chip rect in
+  // JudgePodium.tsx was widened to 250×32 to accommodate 16px text
+  // without touching the pill edges.
+  font-size: clamp(12px, 2.0cqi, 16px);
   font-weight: 500;
   letter-spacing: 0.04em;
 }
@@ -960,6 +968,11 @@
   align-items: flex-end;
   gap: 32px;
   min-block-size: clamp(110px, 14svh, 140px);
+  // flex: 0 0 auto so narration does NOT grow into the .hiw__sceneBody
+  // area when the body text is long (e.g. phase 4 Release body is 3
+  // lines while phases 0-3 fit in 2). Previously the scene SVG visually
+  // shrank on Release because narration stole its flex allowance.
+  flex: 0 0 auto;
 }
 
 .hiw__narrationText {
