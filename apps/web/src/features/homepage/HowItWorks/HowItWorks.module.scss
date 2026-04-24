@@ -178,8 +178,16 @@
     }
   }
 
-  // Mobile step-deck replaces the pinHost; skip the expensive overlays.
-  @media (max-width: 899px), (max-height: 771px) {
+  // Mobile step-deck replaces the pinHost. Keyed on WIDTH ONLY — the old
+  // `(max-height: 771px)` rule was meant to protect against the pin being
+  // cramped on short screens, but it also fires for desktop users who dock
+  // DevTools at the bottom (viewport collapses to ~500-700px tall even at
+  // 1920 wide). That was silently swapping the pinned experience for the
+  // .hiw__deck scroll-snap cards, which reads as "the lock goes very far
+  // down" from a user POV. `min-block-size: calc(640px - header)` on this
+  // element already prevents the pin from collapsing when height is very
+  // short (it just overflows slightly, which is fine in practice).
+  @media (max-width: 899px) {
     display: none;
   }
 }
@@ -1020,7 +1028,8 @@
   }
 
   // Desktop only — mobile uses .hiw__phaseNav instead.
-  @media (max-width: 899px), (max-height: 771px) {
+  // Width-only gate to match the pinHost mobile switch.
+  @media (max-width: 899px) {
     display: none;
   }
 }
@@ -1180,7 +1189,10 @@
 .hiw__deck {
   display: none;
 
-  @media (max-width: 899px), (max-height: 771px) {
+  // Show mobile deck strictly by viewport WIDTH (matches pinHost swap).
+  // Previously also fired on max-height: 771, which stole the pinned
+  // experience from desktop users with DevTools docked at the bottom.
+  @media (max-width: 899px) {
     display: block;
     position: relative;
     scroll-snap-type: y mandatory;

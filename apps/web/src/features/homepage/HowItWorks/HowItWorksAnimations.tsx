@@ -217,10 +217,15 @@ export function HowItWorksAnimations({
       });
 
       // ----------------------------------------------------------------
-      // Desktop / tablet (>= 900px, no reduced-motion): pinned master timeline
+      // Desktop / tablet (>= 900px wide, no reduced-motion): pinned master timeline
       // ----------------------------------------------------------------
+      // Width-only gate to match the pinHost CSS switch. The old
+      // `(min-height: 700px)` requirement excluded desktop users with
+      // DevTools docked at the bottom (height collapses below 700), who
+      // then fell into the mobile branch and silently lost the pin.
+      // `min-block-size` on the pinHost covers the short-viewport case.
       mm.add(
-        '(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)',
+        '(min-width: 900px) and (prefers-reduced-motion: no-preference)',
         () => {
           const pinHost = pinHostRefRef.current.current;
           if (!pinHost) return;
@@ -799,10 +804,13 @@ export function HowItWorksAnimations({
       );
 
       // ----------------------------------------------------------------
-      // Mobile (< 900px, no reduced-motion): per-card reveals, no pin
+      // Mobile (< 900px wide, no reduced-motion): per-card reveals, no pin
       // ----------------------------------------------------------------
+      // Width-only gate to mirror the desktop branch. Previously this also
+      // matched `(max-height: 699px)`, which caused DevTools-docked desktop
+      // users to silently fall through to the mobile branch.
       mm.add(
-        '((max-width: 899px) or (max-height: 699px)) and (prefers-reduced-motion: no-preference)',
+        '(max-width: 899px) and (prefers-reduced-motion: no-preference)',
         () => {
           const triggers: ScrollTrigger[] = [];
           const cleanups: Array<() => void> = [];
