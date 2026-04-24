@@ -1,0 +1,42 @@
+# Environment — never bake secrets or dev-only config into images
+**/.env
+**/.env.*
+!**/.env.example
+
+# Build outputs (regenerated inside the container)
+**/node_modules
+**/.next
+**/.turbo
+**/dist
+**/build
+**/out
+
+# VCS & editor
+.git
+.gitignore
+.vscode
+.idea
+**/*.swp
+**/*.swo
+
+# Tests / CI
+**/coverage
+**/test-results
+**/playwright-report
+**/blob-report
+**/.playwright
+
+# OS
+**/.DS_Store
+**/Thumbs.db
+
+# Docs — not needed in runtime images
+README.md
+docs/
+ARCHITECTURE.md
+CLAUDE.md
+
+# Foundry / Solidity workspace (not needed in the web image)
+apps/contracts/cache
+apps/contracts/out
+apps/contracts/broadcast

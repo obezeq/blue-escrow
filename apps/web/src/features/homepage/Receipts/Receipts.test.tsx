@@ -55,4 +55,149 @@ describe('Receipts (v6)', () => {
       'On-chain receipts minted per deal',
     );
   });
+
+  it('renders the SoulVisual SVG with its 3 concentric circles in the soul card', () => {
+    const { container } = render(<Receipts />);
+    const soulSvg = container.querySelector(
+      '.receipts__card--soul svg[aria-hidden="true"]',
+    );
+    expect(soulSvg).not.toBeNull();
+    expect(soulSvg?.querySelector('circle[r="72"]')).not.toBeNull();
+    expect(soulSvg?.querySelector('circle[r="56"]')).not.toBeNull();
+    expect(soulSvg?.querySelector('circle[r="36"]')).not.toBeNull();
+  });
+
+  it('renders the ClientVisual checkmark path inside the client card', () => {
+    const { container } = render(<Receipts />);
+    const clientSvg = container.querySelector(
+      '.receipts__card--client svg[aria-hidden="true"]',
+    );
+    expect(clientSvg).not.toBeNull();
+    expect(clientSvg?.querySelector('path[d^="M 68 108"]')).not.toBeNull();
+  });
+
+  it('renders the SellerVisual hexagon polygon inside the seller card', () => {
+    const { container } = render(<Receipts />);
+    const sellerSvg = container.querySelector(
+      '.receipts__card--seller svg[aria-hidden="true"]',
+    );
+    expect(sellerSvg).not.toBeNull();
+    expect(sellerSvg?.querySelectorAll('polygon').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('preserves all 3 variant class hooks for SCSS theme overrides', () => {
+    const { container } = render(<Receipts />);
+    expect(container.querySelector('.receipts__card--soul')).not.toBeNull();
+    expect(container.querySelector('.receipts__card--client')).not.toBeNull();
+    expect(container.querySelector('.receipts__card--seller')).not.toBeNull();
+  });
+
+  it('keeps the SoulVisual SVG strokes wired through currentColor', () => {
+    // The migration to currentColor lets the soul card colour propagate down
+    // automatically. If anyone reverts to literal hex / rgba, this guards it.
+    const { container } = render(<Receipts />);
+    const soulSvg = container.querySelector('.receipts__card--soul svg');
+    const dashedRing = soulSvg?.querySelector('circle[stroke-dasharray="2 5"]');
+    expect(dashedRing?.getAttribute('stroke')).toBe('currentColor');
+  });
+
+  it('uses aria-labelledby pointing to the h3 id on each article', () => {
+    const { container } = render(<Receipts />);
+    const articles = Array.from(container.querySelectorAll('article'));
+    expect(articles.length).toBe(3);
+    articles.forEach((article) => {
+      const labelId = article.getAttribute('aria-labelledby');
+      expect(labelId).toMatch(/^receipt-(soul|client|seller)-title$/);
+      const h3 = article.querySelector('h3');
+      expect(h3?.id).toBe(labelId);
+    });
+  });
+
+  it('wraps every card with <header>, <figure>, and <footer>', () => {
+    const { container } = render(<Receipts />);
+    const articles = container.querySelectorAll('article');
+    articles.forEach((article) => {
+      expect(article.querySelector('header')).not.toBeNull();
+      expect(article.querySelector('figure')).not.toBeNull();
+      expect(article.querySelector('footer')).not.toBeNull();
+    });
+  });
+
+  it('exposes a non-empty <figcaption> for screen readers inside each <figure>', () => {
+    const { container } = render(<Receipts />);
+    const figcaptions = container.querySelectorAll('figure figcaption');
+    expect(figcaptions.length).toBe(3);
+    figcaptions.forEach((fc) => {
+      expect(fc.textContent?.trim().length ?? 0).toBeGreaterThan(10);
+      expect(fc.className).toContain('u-visually-hidden');
+    });
+  });
+
+  it('structures receipt meta as a <dl> with two <dd> rows (details + hash)', () => {
+    const { container } = render(<Receipts />);
+    const dls = container.querySelectorAll('article dl');
+    expect(dls.length).toBe(3);
+    dls.forEach((dl) => {
+      const dds = dl.querySelectorAll('dd');
+      expect(dds.length).toBe(2);
+    });
+  });
+
+  it('tags the SoulVisual outer dashed ring with data-animate="soul-ring"', () => {
+    const { container } = render(<Receipts />);
+    const ring = container.querySelector(
+      '.receipts__card--soul svg [data-animate="soul-ring"]',
+    );
+    expect(ring).not.toBeNull();
+    expect(ring?.getAttribute('stroke-dasharray')).toBe('2 5');
+  });
+
+  it('SellerVisual center circle uses var(--receipt-center-dot) so light mode is visible', () => {
+    const { container } = render(<Receipts />);
+    const center = container.querySelector(
+      '.receipts__card--seller svg circle[r="8"]',
+    );
+    expect(center).not.toBeNull();
+    expect(center?.getAttribute('fill')).toBe('var(--receipt-center-dot)');
+  });
+
+  it('ClientVisual checkmark uses var(--receipt-accent) token', () => {
+    const { container } = render(<Receipts />);
+    const check = container.querySelector(
+      '.receipts__card--client svg path[d^="M 68 108"]',
+    );
+    expect(check).not.toBeNull();
+    expect(check?.getAttribute('stroke')).toBe('var(--receipt-accent)');
+  });
+});
+
+describe('Receipts v6 — Soulbound theme-flip regression', () => {
+  it('SoulVisual radial stops consume var(--receipt-soul-core) via inline style', () => {
+    const { container } = render(<Receipts />);
+    const stops = container.querySelectorAll('#receipt-soul-gradient stop');
+    expect(stops.length).toBe(2);
+    stops.forEach((stop) => {
+      const style = stop.getAttribute('style') ?? '';
+      expect(style).toMatch(/stop-color:\s*var\(--receipt-soul-core\)/);
+    });
+  });
+
+  it('SoulVisual rings + crosshairs still use stroke="currentColor"', () => {
+    const { container } = render(<Receipts />);
+    const soulGradient = container.querySelector('#receipt-soul-gradient');
+    expect(soulGradient).toBeTruthy();
+    const soulSvg = soulGradient!.closest('svg');
+    expect(soulSvg).toBeTruthy();
+    // 3 elements carry the `stroke` attribute: the 2 concentric <circle>
+    // rings (r=72 dashed, r=56 solid) and the <g> wrapping the 4 crosshair
+    // <line>s. The lines inherit stroke via the <g>, not their own attr.
+    const strokedChildren = soulSvg!.querySelectorAll('[stroke]');
+    expect(strokedChildren.length).toBeGreaterThanOrEqual(3);
+    strokedChildren.forEach((el) => {
+      expect(el.getAttribute('stroke')).toBe('currentColor');
+    });
+    const crosshairGroup = soulSvg!.querySelector('g[stroke="currentColor"]');
+    expect(crosshairGroup).toBeTruthy();
+    expect(crosshairGroup!.querySelectorAll('line').length).toBe(4);
+  });
 });

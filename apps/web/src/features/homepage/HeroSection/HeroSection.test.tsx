@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
+import { mockMatchMedia } from '@/test/setup';
 
 vi.mock('./HeroAnimations', () => ({
   HeroAnimations: ({ children }: { children: React.ReactNode }) => (
@@ -75,5 +76,30 @@ describe('HeroSection (v6)', () => {
     expect(section?.getAttribute('aria-label')).toBe(
       'Decentralized escrow protocol',
     );
+  });
+
+  it('keeps the JSX tree intact at the (max-width: 720px) breakpoint', () => {
+    // v6 mobile overrides live in the SCSS @media (max-width: 720px) block.
+    // We mock matchMedia to simulate that breakpoint matching TRUE so any
+    // future JS-side media-query branch can't silently break the tree.
+    const restore = mockMatchMedia((q) => q.includes('max-width: 720px'));
+    try {
+      const { container } = render(<HeroSection />);
+      const section = container.querySelector('section#hero');
+      expect(section).not.toBeNull();
+      expect(section?.getAttribute('aria-label')).toBe(
+        'Decentralized escrow protocol',
+      );
+      const h1 = screen.getByRole('heading', { level: 1 });
+      // Existing test file asserts these three slices (line-split SSR markup)
+      // rather than an exact string — we mirror that convention here.
+      expect(h1.textContent).toContain('The middleman');
+      expect(h1.textContent).toContain('that cannot');
+      expect(h1.textContent).toContain('run.');
+      const primary = screen.getByRole('link', { name: /start a deal/i });
+      expect(primary.getAttribute('href')).toBe('#closing');
+    } finally {
+      restore();
+    }
   });
 });

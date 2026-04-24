@@ -6,52 +6,89 @@ export function TheProblem() {
     <section
       className={`o-section ${styles.problem}`}
       id="problem"
-      aria-label="The problem with middlemen"
+      aria-labelledby="problem-heading"
     >
+      <h2 id="problem-heading" className="u-visually-hidden">
+        The problem with middlemen
+      </h2>
       <TheProblemAnimations>
         <div className={styles.problem__wrap}>
-          <div className={styles.problem__eyebrow} data-animate="eyebrow">
+          <p className={styles.problem__eyebrow} data-animate="eyebrow">
             The problem
-          </div>
+          </p>
 
-          <div className={styles.problem__lines}>
+          <div
+            className={styles.problem__lines}
+            role="group"
+            aria-label="Problem statement"
+          >
             <p className={styles.problem__line} data-animate="line">
               Two strangers online agree on a trade.
             </p>
             <p className={styles.problem__line} data-animate="line">
               <span className={styles.problem__highlight}>
-                They use a middleman to hold the money.
+                They use a{' '}
+                <span data-animate="middleman-emphasis">middleman</span> to hold
+                the money.
               </span>
             </p>
-            <p className={styles.problem__line} data-animate="line">
-              The middleman is{' '}
-              <span className={styles.problem__red}>a stranger too</span>.
-            </p>
+            <div className={styles.problem__stage} data-stage="line-3">
+              <p className={styles.problem__line} data-animate="line">
+                The middleman is{' '}
+                <s className={styles.problem__struck} data-animate="stranger">
+                  <span className={styles.problem__red}>a stranger too</span>
+                  <svg
+                    className={styles.problem__strike}
+                    aria-hidden="true"
+                    viewBox="0 0 100 6"
+                    preserveAspectRatio="none"
+                    focusable="false"
+                  >
+                    <path
+                      d="M1 3 Q 30 1.6 50 3.1 T 99 3"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      fill="none"
+                      pathLength="100"
+                    />
+                  </svg>
+                </s>
+                .
+              </p>
+            </div>
             <p className={styles.problem__line} data-animate="line">
               <span className={styles.problem__highlight}>
                 Nothing stops them from{' '}
-                <span className={styles.problem__italic}>just leaving.</span>
+                <em className={styles.problem__italic}>just leaving.</em>
               </span>
             </p>
           </div>
 
           <div className={styles.problem__answer}>
-            <div className={styles.problem__label} data-animate="fix">
+            <h3 className={styles.problem__label} data-animate="fix">
               The fix
-            </div>
-            <div className={styles.problem__body} data-animate="fix">
+            </h3>
+            <p className={styles.problem__body} data-animate="fix">
               Keep the middleman — they&apos;re useful for judging deals.{' '}
-              <b>Take the money out of their hands.</b> A smart contract holds
-              it. The middleman only casts a vote.
-            </div>
-            <div className={styles.problem__note} data-animate="fix">
-              <span>Middleman can:</span> verify the deal, break ties, resolve
-              disputes.
-              <br />
-              <br />
-              <span>Middleman cannot:</span> send funds to their own wallet.
-              The smart contract simply doesn&apos;t have that function.
-            </div>
+              <strong>Take the money out of their hands.</strong> A smart
+              contract holds it. The middleman only casts a vote.
+            </p>
+            <dl className={styles.problem__capabilities} data-animate="fix">
+              <div className={styles.problem__capability}>
+                <dt>Middleman can</dt>
+                <dd>verify the deal, break ties, resolve disputes.</dd>
+              </div>
+              <div
+                className={`${styles.problem__capability} ${styles['problem__capability--negative']}`}
+              >
+                <dt>Middleman cannot</dt>
+                <dd>
+                  send funds to their own wallet. The smart contract simply
+                  doesn&apos;t have that function.
+                </dd>
+              </div>
+            </dl>
           </div>
         </div>
       </TheProblemAnimations>

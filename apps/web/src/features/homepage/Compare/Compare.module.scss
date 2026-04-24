@@ -18,8 +18,8 @@
       rgba(0, 27, 77, 0.9),
       transparent 60%
     ),
-    linear-gradient(135deg, #0066ff 0%, #001b4d 100%);
-  color: #fff;
+    linear-gradient(135deg, var(--blue-primary) 0%, var(--blue-ink) 100%);
+  color: var(--text-inverse); // theme-invariant band copy
   padding-block-start: clamp(100px, 9vw, 160px);
   padding-block-end: clamp(80px, 8vw, 140px);
   position: relative;
@@ -39,7 +39,7 @@
         rgba(0, 30, 100, 0.85),
         transparent 60%
       ),
-      linear-gradient(135deg, #0055e0 0%, #001b4d 100%);
+      linear-gradient(135deg, var(--blue-deep-warm) 0%, var(--blue-ink) 100%);
   }
 
 }
@@ -79,7 +79,7 @@
   line-height: 1;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #c5dcff;
+  color: var(--compare-accent);
 
   &::before {
     content: '';
@@ -97,13 +97,17 @@
   font-weight: 600;
   margin: 18px 0 0;
   text-wrap: balance;
-  color: #fff;
+  color: var(--text-inverse); // theme-invariant band copy
 }
 
 .compare__emphasis {
   font-style: italic;
   font-weight: 400;
-  color: #c5dcff;
+  color: var(--compare-accent);
+  // S14 — cqi-based emphasis sizing, wired to `.compare__wrap` container.
+  // Keeps the italic phrase proportional to the Compare band, not the
+  // viewport, so it reads consistently across breakpoints.
+  font-size: clamp(1em, 1em + 0.6cqi, 1.08em);
 }
 
 @container (min-width: 640px) {
@@ -141,6 +145,16 @@
   @media (max-width: 820px) {
     grid-template-columns: 1fr;
   }
+
+  // 3D context for the M11 rotateX card-flip reveal. Guarded with
+  // `@supports` so legacy engines without CSS perspective support (none
+  // in practice, but future-proof) fall back to the flat paint pipeline.
+  // Lives ONLY on the table — child cells pick up perspective via the
+  // CSS stacking context, and gsap animates their `rotateX` in JS.
+  @supports (perspective: 1px) {
+    transform-style: preserve-3d;
+    perspective: 1200px;
+  }
 }
 
 .compare__table thead,
@@ -155,9 +169,9 @@
 }
 
 .compare__headerCell {
-  padding: 30px 22px;
+  padding: var(--space-30) var(--space-22);
   font-family: var(--ff-mono);
-  font-size: 11px;
+  font-size: var(--t-caption-sm);
   // <th> defaults to bold + center — reassert the v6 design.
   font-weight: 500;
   text-align: start;
@@ -174,7 +188,7 @@
 }
 
 .compare__headerCell--be {
-  color: #fff;
+  color: var(--text-inverse); // theme-invariant band copy
   background: rgba(255, 255, 255, 0.1);
   font-weight: 500;
   border-radius: 16px 16px 0 0;
@@ -186,10 +200,10 @@
 }
 
 .compare__criterion {
-  padding: 24px 22px;
+  padding: var(--space-24) var(--space-22);
   font-weight: 500;
   font-size: 15px;
-  color: #fff;
+  color: var(--text-inverse); // theme-invariant band copy
   // <th scope="row"> defaults to bold + center — reassert v6 design.
   text-align: start;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
@@ -203,7 +217,7 @@
 }
 
 .compare__cell {
-  padding: 24px 22px;
+  padding: var(--space-24) var(--space-22);
   font-size: 15px;
   color: rgba(255, 255, 255, 0.6);
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
@@ -222,12 +236,12 @@
 }
 
 .compare__cell--ok::before {
-  background: #7fffa7;
-  box-shadow: 0 0 8px #7fffa7;
+  background: var(--status-success-glow);
+  box-shadow: 0 0 8px var(--status-success-glow);
 }
 
 .compare__cell--no::before {
-  background: #ff96a5;
+  background: var(--status-error-soft);
 }
 
 .compare__cell--mid::before {
@@ -236,10 +250,32 @@
 
 .compare__cell--be {
   background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  color: var(--text-inverse); // theme-invariant band copy
   font-weight: 500;
 }
 
 .compare__table > .compare__rowGroup:last-child .compare__cell--be {
   border-radius: 0 0 16px 16px;
+}
+
+// ============================================================================
+// S15 — Subgrid for row alignment (progressive enhancement)
+// ----------------------------------------------------------------------------
+// Fallback above uses `display: contents` on <tr>-equivalent row groups to
+// flatten them into the 4-col parent grid. Subgrid is the cleaner modern
+// approach: the row group becomes a grid itself that INHERITS the parent's
+// column tracks, so `align-items: stretch` plus individual row styling stay
+// scoped to the row without flattening the tree.
+//
+// Chromium 117+ (Sept 2023), Safari 16+ (Sept 2022), Firefox 71+ (2019) —
+// Baseline widely available since late 2023. Legacy engines keep the
+// `display: contents` fallback and render identically.
+// ============================================================================
+@supports (grid-template-columns: subgrid) {
+  .compare__rowGroup {
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: 1 / -1;
+    align-items: stretch;
+  }
 }

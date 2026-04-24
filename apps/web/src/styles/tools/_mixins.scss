@@ -121,3 +121,87 @@
   scrollbar-width: thin;
   scrollbar-color: $thumb $track;
 }
+
+// ============================================================================
+// CARDS / RECEIPTS — Card-floating + holographic edge (see _variables.scss
+// @property --halo-angle and sub-issue #87).
+// ============================================================================
+
+// Theme-aware card container with subtle rest shadow and stronger hover
+// elevation. Consumers: .receipts__card (sub-issue #87), future feature
+// cards. Honors prefers-reduced-motion by disabling transitions + hover
+// translate.
+@mixin card-floating {
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  transition:
+    transform 0.6s var(--ease-out-expo),
+    box-shadow 0.4s var(--ease-out-expo);
+
+  @media (hover: hover) {
+    &:hover {
+      box-shadow: var(--shadow-elev);
+      transform: translateZ(0) translateY(-2px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+// Holographic conic-gradient edge drawn as a 1px stroke via mask-composite.
+// Pairs with the `@property --halo-angle` registration in
+// `settings/_variables.scss` and a `gsap.to(card, { '--halo-angle': '360deg'
+// })` tween driven from ReceiptsAnimations.tsx. Safari < 15.4 (no
+// mask-composite: exclude) drops the pseudo gracefully so the card still
+// renders fine.
+//
+// $alpha controls the brightness of the blue peaks; keep it subtle
+// (0.25 dark, 0.4 light) so the edge reads as a hint, not a ring.
+@mixin holographic-edge($alpha: 0.35) {
+  position: relative;
+  isolation: isolate;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(
+      from var(--halo-angle, 0deg) at 50% 50%,
+      rgba(0, 145, 255, 0) 0deg,
+      rgba(120, 180, 255, $alpha) 90deg,
+      rgba(0, 145, 255, $alpha) 180deg,
+      rgba(120, 180, 255, $alpha) 270deg,
+      rgba(0, 145, 255, 0) 360deg
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+
+    @supports not (mask-composite: exclude) {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::before {
+      // Freeze at 0deg; GSAP tween is skipped by its own matchMedia guard,
+      // this is belt-and-braces for pure-CSS consumers.
+      --halo-angle: 0deg;
+    }
+  }
+}

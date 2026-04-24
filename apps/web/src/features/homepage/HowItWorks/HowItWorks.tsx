@@ -1,9 +1,13 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, type CSSProperties } from 'react';
 import { HowItWorksAnimations } from './HowItWorksAnimations';
 import { HiwDiagram } from './HiwDiagram';
-import { HIW_STEPS, LEDGER_LOGS } from './steps';
+import { HiwPhaseDiagram } from './HiwPhaseDiagram';
+import { HIW_STEPS, LEDGER_LOGS } from './data';
+import { HiwProvider, useHiw } from './context/HiwContext';
+import { useOutcomeBranch } from './animations/useOutcomeBranch';
+import { SafeguardsPanel } from './Safeguards/SafeguardsPanel';
 import styles from './HowItWorks.module.scss';
 
 const STATE_CLASS: Record<string, string | undefined> = {
@@ -15,41 +19,43 @@ const STATE_CLASS: Record<string, string | undefined> = {
 };
 
 export function HowItWorks() {
-  const stageRef = useRef<HTMLDivElement>(null);
-  const [active, setActive] = useState(0);
+  return (
+    <HiwProvider>
+      <HowItWorksContent />
+    </HiwProvider>
+  );
+}
+
+function HowItWorksContent() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const pinHostRef = useRef<HTMLDivElement>(null);
+  const { phase: active, setPhase: setActive, outcome } = useHiw();
+  useOutcomeBranch({ targetRef: sectionRef, outcome });
   const step = HIW_STEPS[active]!;
   const stateClass = STATE_CLASS[step.ledger.state] ?? '';
   const progress = ((active + 1) / HIW_STEPS.length) * 100;
 
   return (
     <section
+      ref={sectionRef}
       className={`o-section ${styles.hiw}`}
       id="hiw"
       aria-label="How it works in five steps"
     >
-      <HowItWorksAnimations onPhaseChange={setActive} stageRef={stageRef}>
-        <div className={styles.hiw__intro}>
-          <div className={styles.hiw__wrap}>
-            <div className={styles.hiw__head}>
-              <div>
-                <div className={styles.hiw__eyebrow} data-animate="eyebrow">
-                  How it works
-                </div>
-                <h2 className={styles.hiw__heading} data-animate="heading">
-                  Three people. One{' '}
-                  <em className={styles.hiw__emphasis}>smart contract.</em>{' '}
-                  Zero trust.
-                </h2>
-              </div>
-              <p className={styles.hiw__subtitle} data-animate="subtitle">
-                Scroll to watch one deal unfold, step by step. Nobody holds
-                the money — the code does.
-              </p>
-            </div>
-          </div>
-        </div>
+      <HowItWorksAnimations onPhaseChange={setActive} pinHostRef={pinHostRef}>
+        <div ref={pinHostRef} className={styles.hiw__pinHost}>
+          <header className={styles.hiw__intro}>
+            <p className={styles.hiw__eyebrow} data-animate="eyebrow">
+              How it works
+            </p>
+            <h2 className={styles.hiw__heading} data-animate="heading">
+              Three people. One{' '}
+              <em className={styles.hiw__emphasis}>smart contract.</em>{' '}
+              Zero trust.
+            </h2>
+          </header>
 
-        <div ref={stageRef} className={styles.hiw__stage}>
+          <div className={styles.hiw__stage}>
           <div className={styles.hiw__grid}>
             <aside
               className={styles.hiw__ledger}
@@ -80,7 +86,7 @@ export function HowItWorks() {
               </div>
 
               <div className={styles.hiw__progress} aria-hidden="true">
-                <i style={{ width: `${progress}%` }} />
+                <i style={{ '--hiw-progress': `${progress}%` } as CSSProperties} />
               </div>
 
               <ul className={styles.hiw__logs}>
@@ -97,7 +103,9 @@ export function HowItWorks() {
                       key={log.time}
                       className={`${styles.hiw__log} ${stateCls}`}
                     >
-                      <span className={styles.hiw__logTime}>{log.time}</span>
+                      <time className={styles.hiw__logTime} dateTime={log.time}>
+                        {log.time}
+                      </time>
                       <span className={styles.hiw__logLabel}>
                         <span className={styles.hiw__logDot} aria-hidden="true" />
                         {log.label}
@@ -119,15 +127,23 @@ export function HowItWorks() {
                 <HiwDiagram />
               </div>
 
-              <div className={styles.hiw__narration} aria-live="polite">
+              <div className={styles.hiw__narration}>
                 <div className={styles.hiw__narrationText}>
                   <div className={styles.hiw__narrationStep}>
                     {step.narr.step}
                   </div>
-                  <h3 className={styles.hiw__narrationTitle}>
+                  <h3
+                    className={styles.hiw__narrationTitle}
+                    data-animate="narr-title"
+                  >
                     {step.narr.title}
                   </h3>
-                  <p className={styles.hiw__narrationBody}>{step.narr.body}</p>
+                  <p
+                    className={styles.hiw__narrationBody}
+                    data-animate="narr-body"
+                  >
+                    {step.narr.body}
+                  </p>
                 </div>
               </div>
             </div>
@@ -152,7 +168,116 @@ export function HowItWorks() {
             ))}
           </nav>
         </div>
+        </div>
+
+        {/*
+          Mobile-only intro — the desktop intro lives INSIDE .hiw__pinHost
+          (so the pinned experience opens with the heading visible), but
+          pinHost is display:none at <900px width. This duplicate renders
+          the heading above the step deck for mobile users. The modifier
+          .hiw__intro--mobile is display:none at ≥900px (see
+          HowItWorks.module.scss — .hiw__intro--mobile), which removes it
+          from the a11y tree at desktop; the desktop intro becomes the
+          sole heading there, and this copy becomes the sole heading
+          below 900px. No aria-hidden needed — the CSS handles the
+          duplicate via display:none.
+        */}
+        <header
+          className={`${styles.hiw__intro} ${styles['hiw__intro--mobile']}`}
+        >
+          <p className={styles.hiw__eyebrow}>How it works</p>
+          <h2 className={styles.hiw__heading}>
+            Three people. One{' '}
+            <em className={styles.hiw__emphasis}>smart contract.</em>{' '}
+            Zero trust.
+          </h2>
+        </header>
+
+        <div
+          className={styles.hiw__deck}
+          aria-label="How it works — step deck"
+        >
+          {HIW_STEPS.map((s) => {
+            const stateCls = STATE_CLASS[s.ledger.state] ?? '';
+            return (
+              <section
+                key={s.index}
+                className={styles.hiw__phaseCard}
+                data-hiw-phase-card={s.index}
+                aria-labelledby={`hiw-card-${s.index}-title`}
+              >
+                <header className={styles.hiw__phaseCardHead}>
+                  <div
+                    className={styles.hiw__phaseCounter}
+                    data-animate
+                  >
+                    {s.narr.step}
+                  </div>
+                  <h3
+                    id={`hiw-card-${s.index}-title`}
+                    className={styles.hiw__phaseCardTitle}
+                    data-animate
+                  >
+                    {s.narr.title}
+                  </h3>
+                  <p
+                    className={styles.hiw__phaseCardBody}
+                    data-animate
+                  >
+                    {s.narr.body}
+                  </p>
+                </header>
+
+                <div
+                  className={styles.hiw__phaseCardDiagram}
+                  data-animate
+                >
+                  <HiwPhaseDiagram phase={s.index} />
+                </div>
+
+                <dl
+                  className={styles.hiw__phaseCardLedger}
+                  data-animate
+                >
+                  <div>
+                    <dt>Contract</dt>
+                    <dd>Escrow #4821</dd>
+                  </div>
+                  <div>
+                    <dt>State</dt>
+                    <dd className={`${styles.hiw__state} ${stateCls}`}>
+                      {s.ledger.stateLabel}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Amount</dt>
+                    <dd>
+                      {s.ledger.amount.toLocaleString()}{' '}
+                      <small>USDC</small>
+                    </dd>
+                  </div>
+                </dl>
+              </section>
+            );
+          })}
+          <nav
+            className={styles.hiw__phaseNav}
+            aria-label="Phase navigation"
+          >
+            {HIW_STEPS.map((s) => (
+              <a
+                key={s.index}
+                href={`#hiw-card-${s.index}-title`}
+                className={styles.hiw__phasePip}
+                aria-label={`Go to ${s.rail.label}`}
+              >
+                <span aria-hidden="true">●</span>
+              </a>
+            ))}
+          </nav>
+        </div>
       </HowItWorksAnimations>
+      <SafeguardsPanel />
     </section>
   );
 }

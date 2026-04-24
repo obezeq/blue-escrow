@@ -1,10 +1,15 @@
 @use '../../../styles/settings/variables' as *;
+@use '../../../styles/tools/mixins' as *;
 
 // ============================================================================
 // RECEIPTS — v6 .receipts (Blue Escrow v6.html:1643-1717, CSS 1061-1118).
 // Three tilting 3D cards (Middleman Soulbound / Client / Seller), each with
-// an inline SVG visual. The client and seller variants re-theme in light
-// mode; soul stays dark to read as a premium NFT card regardless.
+// an inline SVG visual. All three variants re-theme in light mode. The soul
+// card keeps a distinctive identity via stronger brand-blue radial overlays
+// (--surface-soul-overlay) and a tuned holographic edge; SVG strokes inherit
+// currentColor so they flip white→dark via the card's `color` property, and
+// the radial core consumes --receipt-soul-core via the SoulVisual <stop>
+// inline style so the inner glow flips white→brand-blue per theme.
 // ============================================================================
 
 .receipts {
@@ -44,7 +49,7 @@
   align-items: center;
   gap: 10px;
   font-family: var(--ff-mono);
-  font-size: 12px;
+  font-size: var(--t-caption);
   line-height: 1;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -87,7 +92,7 @@
 }
 
 .receipts__subtitle {
-  font-size: 17px;
+  font-size: clamp(16px, 1.6vw, 18px);
   color: var(--text-muted);
   max-width: 46ch;
   margin: 0;
@@ -97,7 +102,7 @@
 .receipts__grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 24px;
+  gap: var(--space-24);
   margin-top: 60px;
   perspective: 1400px;
 
@@ -107,34 +112,47 @@
 }
 
 .receipts__card {
+  @include card-floating;
+
   aspect-ratio: 3/4;
-  border-radius: 24px;
   padding: 28px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--on-border);
-  transition: transform 0.6s var(--ease-out-expo);
   transform-style: preserve-3d;
   will-change: transform;
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
 }
 
 .receipts__card--soul {
-  background:
-    radial-gradient(
-      circle at 20% 0%,
-      rgba(120, 180, 255, 0.55),
-      transparent 60%
-    ),
-    radial-gradient(circle at 80% 100%, rgba(0, 20, 60, 1), transparent 60%),
-    linear-gradient(135deg, #0066ff 0%, #001b4d 100%);
-  color: #fff;
+  @include holographic-edge(0.25);
+
+  // Tokenized — same gradient stack as before, now reusable as
+  // --surface-premium-dark (also future Compare/CTA premium cards).
+  background: var(--surface-premium-dark);
+  color: var(--text-inverse);
+
+  // Light mode: flip to a light pastel surface with Soulbound-specific
+  // brand-blue radial overlays (--surface-soul-overlay, stronger than
+  // client/seller so the "premium soulbound" identity survives the flip).
+  // `color: var(--text)` propagates to SVG strokes via currentColor;
+  // the core glow flips via --receipt-soul-core. Box-shadow uses the
+  // theme-aware elevation + a full-strength inset highlight + a brand-blue
+  // tinted outline ring so the card anchors against the light page.
+  :root[data-theme='light'] & {
+    @include holographic-edge(0.35);
+
+    background:
+      var(--surface-soul-overlay),
+      linear-gradient(180deg, #fff, var(--bg-tint));
+    color: var(--text);
+    border-color: var(--border);
+    box-shadow:
+      var(--shadow-elev),
+      0 1px 0 rgba(255, 255, 255, 1) inset,
+      0 0 0 1px color-mix(in oklab, var(--blue-primary) 8%, transparent);
+  }
 }
 
 .receipts__card--client {
@@ -149,6 +167,7 @@
 
   :root[data-theme='light'] & {
     background:
+      var(--surface-client-overlay),
       radial-gradient(
         circle at 80% 0%,
         rgba(0, 145, 255, 0.15),
@@ -156,6 +175,9 @@
       ),
       linear-gradient(180deg, #fff, var(--bg-tint));
     border-color: var(--border);
+    box-shadow:
+      var(--shadow-elev),
+      0 1px 0 rgba(255, 255, 255, 0.9) inset;
   }
 }
 
@@ -167,10 +189,11 @@
       transparent 60%
     ),
     linear-gradient(135deg, #0a1b44, #071230);
-  color: #fff;
+  color: var(--text-inverse);
 
   :root[data-theme='light'] & {
     background:
+      var(--surface-seller-overlay),
       radial-gradient(
         circle at 0% 100%,
         rgba(0, 85, 224, 0.18),
@@ -179,6 +202,9 @@
       linear-gradient(135deg, var(--bg-tint), #fff);
     color: var(--text);
     border-color: var(--border);
+    box-shadow:
+      var(--shadow-elev),
+      0 1px 0 rgba(255, 255, 255, 0.9) inset;
   }
 }
 
@@ -187,28 +213,36 @@
   justify-content: space-between;
   align-items: flex-start;
   font-family: var(--ff-mono);
-  font-size: 11px;
+  font-size: var(--t-caption-sm);
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  opacity: 0.78;
+  color: color-mix(in oklab, currentColor 78%, transparent);
 
   strong {
-    opacity: 1;
     font-weight: 500;
+    color: currentColor;
   }
 }
 
 .receipts__visual {
+  margin: 0;
+  padding: 20px 0;
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px 0;
 
   svg {
     width: 75%;
     max-width: 240px;
   }
+}
+
+.receipts__footer {
+  display: contents;
+  // Semantic <footer> wrapper; "display: contents" keeps the flex layout
+  // of the <article> unchanged. If visual grouping is ever needed, swap
+  // to a block layout.
 }
 
 .receipts__title {
@@ -221,15 +255,28 @@
 }
 
 .receipts__meta {
+  margin: 0;
+  padding: 0;
   font-family: var(--ff-mono);
-  font-size: 11px;
-  opacity: 0.82;
+  font-size: var(--t-caption-sm);
+  color: color-mix(in oklab, currentColor 82%, transparent);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-4);
+
+  dt {
+    // dt rows are visually-hidden (label); reset browser defaults.
+    margin: 0;
+    padding: 0;
+  }
+
+  dd {
+    margin: 0;
+    padding: 0;
+  }
 }
 
 .receipts__hash {
-  font-size: 10px;
-  opacity: 0.6;
+  font-size: var(--t-caption-sm); // 11px — was 10px, WCAG margin
+  color: color-mix(in oklab, currentColor 64%, transparent);
 }

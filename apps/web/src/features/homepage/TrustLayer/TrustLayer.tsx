@@ -63,9 +63,9 @@ export function TrustLayer() {
         <div className={styles.proof__wrap}>
           <div className={styles.proof__head}>
             <div>
-              <div className={styles.proof__eyebrow} data-animate="eyebrow">
+              <p className={styles.proof__eyebrow} data-animate="eyebrow">
                 Proof
-              </div>
+              </p>
               <h2 className={styles.proof__heading} data-animate="heading">
                 The numbers{' '}
                 <em className={styles.proof__emphasis}>aren&apos;t a pitch.</em>{' '}

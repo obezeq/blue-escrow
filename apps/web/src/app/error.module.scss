@@ -1,0 +1,19 @@
+// Error boundary layout. Shared between root /error.tsx (full viewport)
+// and (marketing)/error.tsx (partial, nested in marketing layout). The
+// --partial modifier trims min-height so the marketing chrome stays visible.
+
+.error {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-32);
+}
+
+.error--partial {
+  min-height: 60dvh;
+}
+
+.error__well {
+  max-width: 36rem;
+  text-align: center;
+}

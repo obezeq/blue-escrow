@@ -68,18 +68,30 @@ function LenisGSAPBridge({
     };
   }, [lenis, scrollProgressRef]);
 
-  // Handle prefers-reduced-motion changes
+  // Handle prefers-reduced-motion changes.
+  //
+  // Lenis exposes `.options` as a public, documented mutable property (see
+  // https://github.com/darkroomengineering/lenis#lenis-instance-properties)
+  // that can be updated at runtime to flip feature flags like smoothWheel
+  // without re-instantiating. This is the Lenis-idiomatic pattern and is
+  // preferred here over stop()/start() because the Preloader toggles
+  // stop()/start() for scroll-locking — coupling both to the same API would
+  // create a race where completing the preloader would re-enable smooth
+  // wheel scrolling even when the user prefers reduced motion.
+  //
+  // The react-hooks/immutability rule is over-zealous for this third-party
+  // API surface; the lenis instance is a long-lived external object, not a
+  // React-managed value. We disable only this specific mutation site with a
+  // narrow justification.
   useEffect(() => {
     if (!lenis) return;
 
     const mql = window.matchMedia(MATCH_MEDIA.reducedMotion);
 
     const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      if (e.matches) {
-        lenis.options.smoothWheel = false;
-      } else {
-        lenis.options.smoothWheel = true;
-      }
+      // Mutating a documented public field on an external instance — safe.
+      // eslint-disable-next-line react-hooks/immutability
+      lenis.options.smoothWheel = !e.matches;
     };
 
     // Apply initial state

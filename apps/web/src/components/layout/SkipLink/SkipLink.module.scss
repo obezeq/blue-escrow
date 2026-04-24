@@ -5,7 +5,7 @@
 // from the URL bar lets a keyboard user jump past the nav into the page body.
 .skip {
   @include visually-hidden;
-  color: #fff;
+  color: var(--text-inverse);
   background: var(--accent);
   padding: 12px 20px;
   border-radius: var(--radius-md);

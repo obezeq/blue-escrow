@@ -1,0 +1,60 @@
+// ============================================================================
+// VIEW TRANSITIONS — cross-document root crossfade for theme toggle
+// ----------------------------------------------------------------------------
+// ThemeProvider wraps `setThemeState` in document.startViewTransition(...)
+// when supported; this stylesheet supplies the visual animation. Without
+// these rules the browser still uses its default crossfade (250ms ease),
+// but tuning animation-duration + timing to match our --ease-out-expo
+// keeps the theme swap visually consistent with the rest of the UI.
+//
+// Progressive enhancement: the @supports guard means legacy browsers (no
+// View Transitions API) get an instant theme swap — exactly what they
+// got before this feature. No visual regression.
+//
+// Reduced motion: honored explicitly via prefers-reduced-motion so users
+// who disable animation still get the instant swap.
+//
+// Safari quirk note: WebKit's ::view-transition-old/new default
+// mix-blend-mode can cause faint flashes on opaque backgrounds. Setting
+// explicit animation-name + keyframes avoids that by giving WebKit a
+// deterministic fade curve.
+// ============================================================================
+
+@supports (view-transition-name: root) {
+  :root {
+    view-transition-name: root;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 300ms;
+    animation-timing-function: var(--ease-out-expo);
+  }
+
+  ::view-transition-old(root) {
+    animation-name: be-vt-fade-out;
+  }
+
+  ::view-transition-new(root) {
+    animation-name: be-vt-fade-in;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation: none;
+    }
+  }
+}
+
+@keyframes be-vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes be-vt-fade-in {
+  from {
+    opacity: 0;
+  }
+}

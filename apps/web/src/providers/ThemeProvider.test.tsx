@@ -1,21 +1,32 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, act, cleanup, renderHook } from '@testing-library/react';
 import { ThemeProvider, useTheme } from './ThemeProvider';
 import {
   DEFAULT_THEME,
+  THEME_COOKIE_MAX_AGE,
+  THEME_COOKIE_NAME,
   THEME_INIT_SCRIPT,
   THEME_STORAGE_KEY,
   isTheme,
+  parseThemeCookie,
 } from './theme-bootstrap';
 
 function wrapper({ children }: { children: React.ReactNode }) {
-  return <ThemeProvider>{children}</ThemeProvider>;
+  return <ThemeProvider initialTheme="dark">{children}</ThemeProvider>;
+}
+
+function lightWrapper({ children }: { children: React.ReactNode }) {
+  return <ThemeProvider initialTheme="light">{children}</ThemeProvider>;
 }
 
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
   delete document.documentElement.dataset.theme;
+  // Clear the be-theme cookie so setTheme() writes in one test don't leak
+  // into other test files sharing the same jsdom document (vitest runs
+  // multiple test files against a single environment per pool).
+  document.cookie = `${THEME_COOKIE_NAME}=; Max-Age=0; Path=/; SameSite=Lax`;
 });
 
 describe('theme-bootstrap constants', () => {
@@ -27,6 +38,11 @@ describe('theme-bootstrap constants', () => {
     expect(THEME_STORAGE_KEY).toBe('be-theme');
   });
 
+  it('names the cookie + exposes a 1y max-age', () => {
+    expect(THEME_COOKIE_NAME).toBe('be-theme');
+    expect(THEME_COOKIE_MAX_AGE).toBe(60 * 60 * 24 * 365);
+  });
+
   it('isTheme accepts only dark and light', () => {
     expect(isTheme('dark')).toBe(true);
     expect(isTheme('light')).toBe(true);
@@ -36,19 +52,46 @@ describe('theme-bootstrap constants', () => {
     expect(isTheme(42)).toBe(false);
   });
 
+  it('parseThemeCookie returns the Theme for valid values, null otherwise', () => {
+    expect(parseThemeCookie('dark')).toBe('dark');
+    expect(parseThemeCookie('light')).toBe('light');
+    expect(parseThemeCookie('hack')).toBeNull();
+    expect(parseThemeCookie('')).toBeNull();
+    expect(parseThemeCookie(undefined)).toBeNull();
+    expect(parseThemeCookie(null)).toBeNull();
+  });
+
   // The init script is a hardcoded string literal served in <head>. We can't
   // execute it in jsdom without tripping security heuristics, so instead we
-  // assert the observable contract: precedence + storage key + fallback.
-  it('init script reads be-theme from localStorage before anything else', () => {
+  // assert the observable contract: precedence + cookie write + fallback.
+  it('init script reads the be-theme cookie first (SSR-aligned precedence)', () => {
+    // Cookie regex must appear before any localStorage access so the script
+    // exits early when the server already knew the theme — keeps returning
+    // visits mismatch-free without paying the localStorage read.
+    const cookieIdx = THEME_INIT_SCRIPT.indexOf('document.cookie');
+    const storageIdx = THEME_INIT_SCRIPT.indexOf('localStorage.getItem');
+    expect(cookieIdx).toBeGreaterThan(-1);
+    expect(storageIdx).toBeGreaterThan(-1);
+    expect(cookieIdx).toBeLessThan(storageIdx);
+  });
+
+  it('init script falls back to localStorage for pre-cookie visitors', () => {
     expect(THEME_INIT_SCRIPT).toContain("localStorage.getItem('be-theme')");
   });
 
-  it('init script checks prefers-color-scheme as the fallback', () => {
+  it('init script checks prefers-color-scheme as the last dynamic fallback', () => {
     expect(THEME_INIT_SCRIPT).toContain('prefers-color-scheme: light');
   });
 
-  it('init script writes document.documentElement.dataset.theme', () => {
-    expect(THEME_INIT_SCRIPT).toContain('document.documentElement.dataset.theme');
+  it('init script captures documentElement and writes dataset.theme', () => {
+    expect(THEME_INIT_SCRIPT).toContain('var d=document.documentElement');
+    expect(THEME_INIT_SCRIPT).toContain('d.dataset.theme');
+  });
+
+  it('init script persists the resolved theme to a SameSite=Lax cookie', () => {
+    expect(THEME_INIT_SCRIPT).toContain('SameSite=Lax');
+    expect(THEME_INIT_SCRIPT).toContain('Max-Age=31536000');
+    expect(THEME_INIT_SCRIPT).toContain('Path=/');
   });
 
   it('init script defaults to dark when nothing else matches', () => {
@@ -79,6 +122,25 @@ describe('ThemeProvider', () => {
     expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe('light');
   });
 
+  it('setTheme persists a SameSite=Lax cookie for SSR-aligned return visits', async () => {
+    // The cookie is the server-readable source of truth: without it, SSR
+    // ships DEFAULT_THEME and re-introduces the hydration mismatch on
+    // return visits. Assert the full attribute string so a regression in
+    // Path/Max-Age/SameSite surfaces in unit tests, not in e2e.
+    const cookieSetter = vi.spyOn(document, 'cookie', 'set');
+    const { result } = renderHook(() => useTheme(), { wrapper });
+    await act(async () => {});
+    act(() => {
+      result.current.setTheme('light');
+    });
+    const written = cookieSetter.mock.calls.map((c) => c[0]).join('\n');
+    expect(written).toContain(`${THEME_COOKIE_NAME}=light`);
+    expect(written).toContain('Max-Age=');
+    expect(written).toContain('Path=/');
+    expect(written).toContain('SameSite=Lax');
+    cookieSetter.mockRestore();
+  });
+
   it('toggle flips between dark and light', async () => {
     const { result } = renderHook(() => useTheme(), { wrapper });
     await act(async () => {});
@@ -94,7 +156,17 @@ describe('ThemeProvider', () => {
     expect(document.documentElement.dataset.theme).toBe('dark');
   });
 
-  it('syncs initial state from html[data-theme] set by pre-hydration script', async () => {
+  it('syncs initial state from initialTheme prop (SSR-aligned first render)', async () => {
+    // Simulate the production flow: SSR shipped <html data-theme="light">
+    // and ThemeProvider received initialTheme="light". The reconcile effect
+    // should see matching state, leaving theme at 'light'.
+    document.documentElement.dataset.theme = 'light';
+    const { result } = renderHook(() => useTheme(), { wrapper: lightWrapper });
+    await act(async () => {});
+    expect(result.current.theme).toBe('light');
+  });
+
+  it('reconciles state on mount when dataset.theme was set by pre-hydration script', async () => {
     document.documentElement.dataset.theme = 'light';
     const { result } = renderHook(() => useTheme(), { wrapper });
     await act(async () => {});
@@ -117,7 +189,7 @@ describe('ThemeProvider', () => {
 
   it('renders children inside the provider', () => {
     const { getByText } = render(
-      <ThemeProvider>
+      <ThemeProvider initialTheme="dark">
         <span>child content</span>
       </ThemeProvider>,
     );

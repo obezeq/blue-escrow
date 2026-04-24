@@ -19,9 +19,9 @@ export function Compare() {
         <div className={styles.compare__wrap}>
           <div className={styles.compare__head}>
             <div>
-              <div className={styles.compare__eyebrow} data-animate="eyebrow">
+              <p className={styles.compare__eyebrow} data-animate="eyebrow">
                 Compared
-              </div>
+              </p>
               <h2 className={styles.compare__heading} data-animate="heading">
                 Old escrow held your money.{' '}
                 <em className={styles.compare__emphasis}>We hold nothing.</em>

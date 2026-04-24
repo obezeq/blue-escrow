@@ -1,4 +1,5 @@
 @use '../../../styles/settings/variables' as *;
+@use '../../../styles/tools/scroll' as scroll;
 
 // ============================================================================
 // TRUST LAYER / PROOF — v6 .proof (Blue Escrow v6.html:1599-1640, CSS 1020-1056).
@@ -176,8 +177,25 @@
   -webkit-text-stroke: 1px var(--accent);
   opacity: 0.5;
 
+  // S13 — Demo: single-element scroll-driven reveal via the new mixin.
+  // Opacity eases from 0 -> 0.5 as the marquee enters the viewport
+  // (range: entry 0% -> entry 50%). Keeps the same visual endpoint the
+  // marquee always had (opacity: 0.5), only adds an entrance cue.
+  // Fallback (no `animation-timeline: view()`): the marquee is opacity 0.5
+  // from the start — identical to pre-S13 behaviour.
+  @include scroll.scroll-reveal(beProofMarqueeReveal);
+
   @media (max-width: 720px) {
     margin-top: 80px;
+  }
+}
+
+@keyframes beProofMarqueeReveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.5;
   }
 }
 

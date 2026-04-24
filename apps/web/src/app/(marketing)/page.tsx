@@ -9,12 +9,25 @@ import { CtaSection } from '@/features/homepage/CtaSection/CtaSection';
 import { Faq } from '@/features/homepage/Faq';
 import { Compare } from '@/features/homepage/Compare';
 import { Receipts } from '@/features/homepage/Receipts';
+import { buildFaqJsonLd } from '@/features/homepage/Faq/faq-jsonld';
+import { buildOrganizationJsonLd } from '@/features/homepage/organization-jsonld';
+
+// Escape `<` so a malicious string inside the payload can't terminate the
+// <script> element via `</script>`. This matches the recommendation in
+// https://nextjs.org/docs/app/guides/json-ld#security.
+const toLdJson = (payload: unknown): string =>
+  JSON.stringify(payload).replace(/</g, '\\u003c');
 
 export const metadata: Metadata = {
   title: 'Blue Escrow — Decentralized Escrow on Arbitrum',
   description:
     "Your money in a smart contract. Not in someone's pocket. On-chain reputation. 0.33% flat fee.",
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
+    type: 'website',
+    siteName: 'Blue Escrow',
     title: 'Blue Escrow — Decentralized Escrow on Arbitrum',
     description:
       "Your money in a smart contract. Not in someone's pocket. On-chain reputation. 0.33% flat fee.",
@@ -25,12 +38,31 @@ export const metadata: Metadata = {
     title: 'Blue Escrow — Decentralized Escrow on Arbitrum',
     description:
       "Your money in a smart contract. Not in someone's pocket. On-chain reputation. 0.33% flat fee.",
+    images: ['/og-image.png'],
+    creator: '@blueescrow',
   },
 };
 
 export default function HomePage() {
+  // Build payloads at render time — getSiteUrl() reads NEXT_PUBLIC_SITE_URL
+  // at request/build time, so these inherit the canonical host automatically.
+  const faqJsonLd = buildFaqJsonLd();
+  const organizationJsonLd = buildOrganizationJsonLd();
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        data-ld="faq"
+        // Payload is escaped by toLdJson() per https://nextjs.org/docs/app/guides/json-ld#security.
+        dangerouslySetInnerHTML={{ __html: toLdJson(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        data-ld="organization"
+        // Payload is escaped by toLdJson() per https://nextjs.org/docs/app/guides/json-ld#security.
+        dangerouslySetInnerHTML={{ __html: toLdJson(organizationJsonLd) }}
+      />
       <ClientShell />
       <HeroSection />
       <TheProblem />

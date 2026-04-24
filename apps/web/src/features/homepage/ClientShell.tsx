@@ -3,10 +3,7 @@
 import dynamic from 'next/dynamic';
 
 const Preloader = dynamic(
-  () =>
-    import('@/features/homepage/Preloader/Preloader').then(
-      (m) => m.Preloader,
-    ),
+  () => import('@/features/homepage/Preloader').then((m) => m.Preloader),
   { ssr: false },
 );
 

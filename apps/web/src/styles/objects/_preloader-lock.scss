@@ -1,0 +1,16 @@
+// Preloader scroll / interaction lock. Applied via a data attribute on
+// <html> so it survives hydration races, touch-device momentum, and any
+// Lenis provider failure. Intentionally NOT `inert` on <main> — that would
+// hide it from assistive tech and clash with the overlay's `role=progressbar`.
+
+@layer objects {
+  :root[data-preloader='active'] body {
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: none;
+  }
+
+  :root[data-preloader='active'] main {
+    pointer-events: none;
+  }
+}

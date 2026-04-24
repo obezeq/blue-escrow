@@ -1,0 +1,35 @@
+// ============================================================================
+// A11Y MIXINS — Shared accessibility patterns (no CSS output on load)
+// ============================================================================
+// Collapses 11+ hand-written `@media (prefers-reduced-motion: reduce)` blocks
+// across component modules into a single semantic mixin. Also adds hooks for
+// motion-safe, forced-colors, and a reusable skip-target focus ring.
+
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
+@mixin motion-safe {
+  @media (prefers-reduced-motion: no-preference) {
+    @content;
+  }
+}
+
+@mixin forced-colors-aware {
+  @media (forced-colors: active) {
+    @content;
+  }
+}
+
+// Focus styling for skip-link targets (elements with tabindex="-1" that
+// receive focus on SkipLink activation). Pairs with the `focus-ring` mixin
+// in _mixins.scss for regular interactive focus.
+@mixin skip-target {
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+    border-radius: var(--radius-md);
+  }
+}

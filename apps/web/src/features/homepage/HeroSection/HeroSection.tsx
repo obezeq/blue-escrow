@@ -146,13 +146,13 @@ export function HeroSection() {
       <div className={styles.hero__fade} aria-hidden="true" />
 
       <HeroAnimations>
-        <div className={styles.hero__eyebrow} data-animate="eyebrow">
+        <p className={styles.hero__eyebrow} data-animate="eyebrow">
           <span className={styles.hero__chipDot}>Escrow Protocol v1.0</span>
           <span className={styles.hero__chipSep}>/</span>
           <span>Live on Arbitrum</span>
           <span className={styles.hero__chipSep}>/</span>
           <span>214 deals this month</span>
-        </div>
+        </p>
 
         <div className={styles.hero__center}>
           <h1 className={styles.hero__title}>

@@ -13,22 +13,37 @@ export interface ReceiptCard {
   metaLine: string;
   hash: string;
   visual: ReactNode;
+  figCaption: string; // NEW — screen-reader description for <figure><figcaption>
 }
 
+// All strokes/fills inherit `currentColor` from the parent
+// .receipts__card--soul, which flips per theme (white on dark surface,
+// dark text on light surface). The radial gradient core consumes
+// `var(--receipt-soul-core)` via inline CSS style (SVG attributes don't
+// accept `var()`; the `stop-color` CSS property does), so the inner
+// glow flips in lockstep: white on dark, brand-blue on light.
 const SoulVisual = (
   <svg viewBox="0 0 200 200" aria-hidden="true">
     <defs>
       <radialGradient id="receipt-soul-gradient" cx="50%" cy="50%">
-        <stop offset="0" stopColor="#fff" stopOpacity=".9" />
-        <stop offset="1" stopColor="#fff" stopOpacity="0" />
+        <stop
+          offset="0"
+          style={{ stopColor: 'var(--receipt-soul-core)', stopOpacity: 0.9 }}
+        />
+        <stop
+          offset="1"
+          style={{ stopColor: 'var(--receipt-soul-core)', stopOpacity: 0 }}
+        />
       </radialGradient>
     </defs>
     <circle
+      data-animate="soul-ring"
       cx="100"
       cy="100"
       r="72"
       fill="none"
-      stroke="rgba(255,255,255,.28)"
+      stroke="currentColor"
+      strokeOpacity=".4"
       strokeWidth="1"
       strokeDasharray="2 5"
     />
@@ -37,11 +52,12 @@ const SoulVisual = (
       cy="100"
       r="56"
       fill="none"
-      stroke="rgba(255,255,255,.5)"
+      stroke="currentColor"
+      strokeOpacity=".5"
       strokeWidth="1"
     />
     <circle cx="100" cy="100" r="36" fill="url(#receipt-soul-gradient)" />
-    <g stroke="#fff" strokeWidth="1.2" fill="none" strokeLinecap="round">
+    <g stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round">
       <line x1="100" y1="28" x2="100" y2="42" />
       <line x1="100" y1="158" x2="100" y2="172" />
       <line x1="28" y1="100" x2="42" y2="100" />
@@ -75,7 +91,7 @@ const ClientVisual = (
     />
     <path
       d="M 68 108 L 92 130 L 140 76"
-      stroke="#0091FF"
+      stroke="var(--receipt-accent)"
       strokeWidth="3.2"
       fill="none"
       strokeLinecap="round"
@@ -110,16 +126,16 @@ const SellerVisual = (
       <polygon
         points="0,-52 45,-26 45,26 0,52 -45,26 -45,-26"
         fill="none"
-        stroke="#33AAFF"
+        stroke="var(--receipt-accent-soft)"
         strokeWidth="1.5"
       />
       <polygon
         points="0,-32 28,-16 28,16 0,32 -28,16 -28,-16"
-        fill="rgba(0,145,255,.25)"
-        stroke="#0091FF"
+        fill="color-mix(in srgb, var(--receipt-accent) 25%, transparent)"
+        stroke="var(--receipt-accent)"
         strokeWidth="1.5"
       />
-      <circle cx="0" cy="0" r="8" fill="#fff" />
+      <circle cx="0" cy="0" r="8" fill="var(--receipt-center-dot)" />
     </g>
     <text
       x="100"
@@ -150,6 +166,8 @@ export const RECEIPTS_CARDS: ReceiptCard[] = [
     metaLine: 'Non-transferable · 214 deals',
     hash: '0xbe…id4 21c',
     visual: SoulVisual,
+    figCaption:
+      'Soulbound middleman reputation badge — three concentric rings with a radiant inner core and four crosshair marks, representing a non-transferable on-chain identity.',
   },
   {
     variant: 'client',
@@ -165,6 +183,8 @@ export const RECEIPTS_CARDS: ReceiptCard[] = [
     metaLine: 'Client · 2,400 USDC · Arbitrum',
     hash: '0x7a2f…e91c',
     visual: ClientVisual,
+    figCaption:
+      'Client payment receipt illustration — a rounded frame with a checkmark confirming the release of 2,400 USDC on Arbitrum.',
   },
   {
     variant: 'seller',
@@ -180,5 +200,7 @@ export const RECEIPTS_CARDS: ReceiptCard[] = [
     metaLine: 'Seller · Streak 8 · REP 4.96',
     hash: '0xd20e…77ab',
     visual: SellerVisual,
+    figCaption:
+      'Seller completion receipt illustration — a hexagonal medallion with a central dot and +12 reputation indicator, marking a delivered deal.',
   },
 ];

@@ -1,4 +1,5 @@
 @use '../../../styles/settings/variables' as *;
+@use '../../../styles/settings/typography' as *;
 
 // ============================================================================
 // HOW IT WORKS — v6 (Blue Escrow v6.html:1374-1524, CSS 517-911).
@@ -10,6 +11,10 @@
 // names but accidentally didn't include this SCSS update, so develop was
 // rendering HIW unstyled. This file is the delivery of the intended Phase 2
 // styles — full pin+scrub choreography remains deferred to Phase 4 polish.
+//
+// Phase 4+: Pin-stage polish. --hiw-heat token plumbs a deep-navy well +
+// edge vignette across scrub; rail gets a progress bar + pips; mobile
+// collapses into a native scroll-snap step deck (.hiw__deck).
 // ============================================================================
 
 .hiw {
@@ -17,35 +22,40 @@
   background: var(--bg-surface);
   border-top: 1px solid var(--border);
   overflow: hidden;
+  scroll-margin-block-start: calc(var(--header-height, 72px) + 0.5rem);
 }
 
 .hiw__intro {
-  // Fluid vertical rhythm — no 720px step. Floor = 100/60 (matches
-  // the old mobile fallback), ceiling = 140/80 (matches old desktop).
-  padding-block-start: clamp(100px, 10vw, 140px);
-  padding-block-end: clamp(60px, 6vw, 80px);
-}
-
-.hiw__wrap {
+  // Intro now lives INSIDE the pinHost (flex column), so it sizes to
+  // its natural content height instead of dictating the scroll gap
+  // before the pin. Padding tightened to 20-36 / 12-20 (from 100-140 /
+  // 60-80) — caps intro height at ~120-180px across 1024→1920 viewports
+  // so the pinHost has plenty of room for stage (grid+rail).
+  flex: 0 0 auto;
+  padding-block: clamp(20px, 3vh, 36px) clamp(12px, 1.5vh, 20px);
+  padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+  // Container-type for the emphasis cqi scaling (was on the now-removed
+  // .hiw__wrap). Preserves the italic "smart contract." responsive read.
+  container-type: inline-size;
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
-  // Mirror --container-padding (clamp(1.5rem, 4vw, 2.5rem)) — same tokens
-  // used by .o-container, eliminating the 720px step.
-  padding-inline: clamp(1.5rem, 4vw, 2.5rem);
-  // Size-query context for italic cohesion at desktop.
-  container-type: inline-size;
 }
 
-.hiw__head {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 80px;
-  align-items: end;
+// Mobile-only intro (rendered outside pinHost). The desktop intro is
+// inside pinHost which is display:none at <900px, so without this copy
+// mobile users would see the step deck with zero narrative context.
+.hiw__intro--mobile {
+  display: none;
 
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-    gap: 28px;
+  @media (max-width: 899px) {
+    display: block;
+    padding-block: clamp(48px, 10vw, 80px) clamp(24px, 5vw, 36px);
+    // Mobile gets a chunkier heading (we can afford the vertical space
+    // before the scroll-snap cards start).
+    .hiw__heading {
+      font-size: clamp(32px, 7vw, 54px);
+    }
   }
 }
 
@@ -70,11 +80,15 @@
 }
 
 .hiw__heading {
-  font-size: clamp(42px, 6.4vw, 92px);
-  line-height: 0.96;
-  letter-spacing: -0.04em;
+  // Compact heading scale so the intro caps at ~180px and the stage
+  // underneath keeps the majority of the pinned viewport for the live
+  // contract view. Previous clamp (42→92) made the heading 3 lines ×
+  // 92px at 1440+, dominating the viewport before the pin even engaged.
+  font-size: clamp(28px, 4.2vw, 52px);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
   font-weight: 600;
-  margin: 18px 0 0;
+  margin: 10px 0 0;
   text-wrap: balance;
   color: var(--text);
 }
@@ -83,6 +97,12 @@
   font-style: italic;
   font-weight: 400;
   color: var(--accent);
+  // S14 — Container-query-unit sizing: emphasis grows ~8% when the wrapping
+  // section has inline room. cqi reacts to `.hiw__wrap` (container-type:
+  // inline-size) instead of the viewport, so emphasis scales proportionally
+  // to the section width, not the window width — cleaner behaviour in
+  // sidebars, modals, or future embedded contexts.
+  font-size: clamp(1em, 1em + 0.6cqi, 1.08em);
 }
 
 // Desktop container widths: keep italic emphasis cohesive on one line.
@@ -92,23 +112,119 @@
   }
 }
 
+// Narrow containers (~ tablet down): force the <em>smart contract.</em>
+// onto its own logical line via an inline-block block flow, so the heading
+// doesn't break awkwardly mid-phrase at 768px.
+@container (max-width: 640px) {
+  .hiw__emphasis {
+    display: inline-block;
+  }
+}
+
 .hiw__emphasis > div {
   padding-inline: 0.15em;
   margin-inline: -0.15em;
 }
 
-.hiw__subtitle {
-  font-size: 17px;
-  color: var(--text-muted);
-  max-width: 48ch;
-  margin: 0;
-  text-wrap: pretty;
+// --- PinHost (ScrollTrigger pin target) ------------------------------------
+// NEW container that wraps intro + stage so the pin engages at #hiw top
+// (pre-pin scroll = 0) instead of after the user has scrolled past the
+// intro heading. Responsive 100%: block-size = 100svh - header across
+// every viewport.
+
+.hiw__pinHost {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  // svh (small viewport height) avoids iOS URL-bar jitter that 100vh triggers.
+  block-size: calc(100svh - var(--header-height));
+  max-block-size: calc(100svh - var(--header-height));
+  min-block-size: calc(640px - var(--header-height));
+  padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+
+  // --- Heat plumbing ---
+  // GSAP writes --hiw-heat (0 → 1) onto this element now (was stage).
+  // Downstream ::before/::after consume it for the backdrop effects.
+  --hiw-heat: 0;
+  --hiw-rail-progress: 0;
+  // Judge opacity on happy path bumped 0.3 → 0.55 → 0.85 so the middleman
+  // is clearly present (2026 dashboard UX: primary actors ≥0.85 effective).
+  // Dispute branches (useOutcomeBranch) still lift it to 1.0.
+  --hiw-judge-opacity: 0.85;
+
+  // Deep navy radial well — color-mix against --blue-ink for theme cohesion.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(
+      ellipse 80% 70% at 50% 55%,
+      color-mix(in srgb, var(--blue-ink) calc(var(--hiw-heat) * 55%), transparent),
+      transparent 70%
+    );
+    transition: background 0.4s var(--ease-out-expo);
+  }
+
+  // Edge vignette — subtle darkening at the frame.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(
+      ellipse 100% 100% at 50% 50%,
+      transparent 55%,
+      color-mix(in srgb, #000 calc(var(--hiw-heat) * 18%), transparent) 100%
+    );
+    transition: background 0.4s var(--ease-out-expo);
+  }
+
+  // Children (intro, stage) sit above the heat overlays.
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  // Reduced motion: kill the heat pseudos entirely.
+  @media (prefers-reduced-motion: reduce) {
+    &::before,
+    &::after {
+      content: none;
+    }
+  }
+
+  // Mobile step-deck replaces the pinHost. Keyed on WIDTH ONLY — the old
+  // `(max-height: 771px)` rule was meant to protect against the pin being
+  // cramped on short screens, but it also fires for desktop users who dock
+  // DevTools at the bottom (viewport collapses to ~500-700px tall even at
+  // 1920 wide). That was silently swapping the pinned experience for the
+  // .hiw__deck scroll-snap cards, which reads as "the lock goes very far
+  // down" from a user POV. `min-block-size: calc(640px - header)` on this
+  // element already prevents the pin from collapsing when height is very
+  // short (it just overflows slightly, which is fine in practice).
+  @media (max-width: 899px) {
+    display: none;
+  }
 }
 
+// --- Stage (flex: 1 inside pinHost) ----------------------------------------
+// Stage is no longer the pin target — it's the stretching middle row of
+// the pinHost (intro above, rail inside). Block-size/padding-inline moved
+// up to .hiw__pinHost; the stage just flexes to fill the remaining height.
+
 .hiw__stage {
-  // Same fluid rule as .hiw__wrap — 20px min matches the old mobile
-  // fallback, 40px max matches desktop.
-  padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+  position: relative;
+  flex: 1 1 auto;
+  min-block-size: 0;
+  padding-block: clamp(12px, 2vh, 24px);
+  display: flex;
+  flex-direction: column;
+  // NOTE: heat plumbing + backdrop pseudos + display:none on mobile
+  // moved UP to .hiw__pinHost (the new pin target). This block stays
+  // lean: stage is now just the flex child that holds grid + rail.
 }
 
 .hiw__grid {
@@ -116,12 +232,25 @@
   grid-template-columns: 1fr 1.1fr;
   // Fluid gap — shrinks from 32px desktop down to 16px at narrow widths,
   // freeing horizontal space for the ledger + diagram cards on mobile.
-  gap: clamp(1rem, 3vw, 2rem);
+  gap: clamp(0.75rem, 2.5vw, 2rem);
+  row-gap: clamp(0.75rem, 2vh, 1.5rem);
   align-items: stretch;
   max-width: 1440px;
+  inline-size: 100%;
   margin: 0 auto;
+  // Fill the vertical space between stage padding-top and the rail so the
+  // rail sticks to the bottom of the pinned viewport on every screen
+  // height (responsive contract). `min-height: 0` is the flex-item trick
+  // that lets the grid shrink BELOW its intrinsic content size if the
+  // viewport gets very short — without it, tall SVG diagrams would push
+  // the rail off-screen at height < ~800px.
+  flex: 1 1 auto;
+  min-block-size: 0;
 
-  @media (max-width: 900px) {
+  // Boundary 899 (max-inclusive) — matches the pinHost/deck toggle at the
+  // exact same breakpoint so at 900px the desktop pinned experience stays
+  // 2-column; below 900 the grid is stacked but pinHost is hidden anyway.
+  @media (max-width: 899px) {
     grid-template-columns: 1fr;
   }
 }
@@ -133,17 +262,18 @@
   border: 1px solid var(--border);
   border-radius: 20px;
   background:
-    linear-gradient(135deg, rgba(0, 145, 255, 0.08), transparent 60%),
+    linear-gradient(135deg, var(--accent-soft), transparent 60%),
     var(--bg-surface);
-  padding: 28px 32px;
+  padding: clamp(18px, 3vh, 28px) clamp(20px, 3vw, 32px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 
   :root[data-theme='light'] & {
     background:
-      linear-gradient(135deg, rgba(0, 85, 224, 0.05), transparent 60%),
-      #fff;
+      linear-gradient(135deg, var(--accent-soft), transparent 60%),
+      var(--bg-elevated);
+    box-shadow: var(--shadow-card);
   }
 }
 
@@ -203,6 +333,14 @@
       background 0.4s,
       box-shadow 0.4s;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &::before {
+      transition: none;
+    }
+  }
 }
 
 .hiw__state--locked {
@@ -226,8 +364,8 @@
 }
 
 .hiw__amount {
-  padding: 28px 0 24px;
-  font-size: clamp(56px, 7vw, 98px);
+  padding: clamp(14px, 2.5vh, 28px) 0 clamp(12px, 2vh, 24px);
+  font-size: clamp(40px, 7vw, 98px);
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.04em;
@@ -240,11 +378,18 @@
 
 .hiw__amountNumber {
   transition: color 0.3s;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
 .hiw__amountUnit {
   font-family: var(--ff-mono);
-  font-size: 18px;
+  // Flex with viewport — the ledger amount "2,400" is clamp(40,7vw,98)
+  // so USDC static 18px looked dwarfed next to the big number at
+  // desktop. Bumps it into awwwards-tier balance.
+  font-size: clamp(16px, 2.4vw, 32px);
   color: var(--accent);
   font-weight: 500;
   letter-spacing: 0.05em;
@@ -262,7 +407,10 @@
 }
 
 .hiw__progress {
-  height: 3px;
+  // 3px was rendering as a faint hairline — barely visible as a
+  // progress indicator. Clamp 3-6 gives it substance without going
+  // bold, and scales with vh so it feels proportional on tall screens.
+  height: clamp(3px, 0.5vh, 6px);
   background: var(--border);
   border-radius: var(--radius-full);
   overflow: hidden;
@@ -270,15 +418,23 @@
   i {
     display: block;
     height: 100%;
-    width: 0%;
+    // Progress % flows in from HowItWorks.tsx via --hiw-progress (CSS
+    // variable bridge, mirrors the Card.tsx --card-accent pattern).
+    width: var(--hiw-progress, 0%);
     background: linear-gradient(90deg, var(--blue-primary), var(--blue-vivid));
     transition: width 0.6s var(--ease-out-expo);
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
   }
 }
 
 .hiw__logs {
   list-style: none;
-  padding: 24px 0 0;
+  padding-block-start: clamp(14px, 2vh, 24px);
+  padding-inline: 0;
+  padding-block-end: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -291,15 +447,30 @@
   grid-template-columns: 64px 1fr auto;
   gap: 16px;
   align-items: center;
-  padding: 14px 0;
+  padding-block: clamp(8px, 1.4vh, 14px);
   border-bottom: 1px dashed var(--border);
-  opacity: 0.3;
+  // Dark-mode log baseline 0.3 → 0.5 — past/future ledger rows were
+  // practically invisible at 0.3. 0.5 keeps the "not-yet-active" feel
+  // while meeting the 2026 readability floor for secondary content.
+  opacity: 0.5;
   transition: opacity 0.5s var(--ease-out-expo);
+
+  :root[data-theme='light'] & {
+    opacity: 0.6;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
 .hiw__log--done,
 .hiw__log--current {
   opacity: 1;
+
+  :root[data-theme='light'] & {
+    opacity: 1;
+  }
 }
 
 .hiw__logDot {
@@ -321,6 +492,10 @@
   .hiw__log--current & {
     background: var(--accent);
     box-shadow: 0 0 10px var(--accent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 }
 
@@ -346,6 +521,10 @@
 
   .hiw__log--current & {
     color: var(--accent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 }
 
@@ -376,52 +555,259 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: 460px;
+  min-block-size: clamp(300px, 45svh, 460px);
+  // Break the flex intrinsic min-content cascade: without min-height:0 here,
+  // children default to min-height:auto and narration's 3-line content at
+  // phase 4 leaks back into sceneBody's distributed height (W3C Flexbox §4.5).
+  min-height: 0;
 
   :root[data-theme='light'] & {
     background:
       radial-gradient(
         ellipse 80% 60% at 50% 50%,
-        rgba(0, 85, 224, 0.06),
+        var(--accent-soft),
         transparent 70%
       ),
-      #fff;
+      var(--bg-elevated);
+    box-shadow: var(--shadow-card);
   }
 }
 
 .hiw__sceneHead {
-  padding: 24px 28px;
+  padding: clamp(18px, 2.4vh, 28px) clamp(22px, 3vw, 32px);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
   border-bottom: 1px solid var(--border);
   font-family: var(--ff-mono);
-  font-size: 11px;
-  letter-spacing: 0.14em;
+  // Awwwards-tier banner weight — the "LIVE CONTRACT VIEW" eyebrow has to
+  // read as the card's title, not a footnote. Floor 15 / ceiling 20 with
+  // 0.22em tracking gives it Spotify/Stripe dashboard gravity at 1440+.
+  font-size: clamp(15px, 2.2cqi, 20px);
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  // Scene header is the card banner, not footnote — promote from --text-muted
+  // to --text for a stronger read in both themes (#98).
+  color: var(--text);
+  font-weight: 600;
 }
 
 .hiw__sceneStep {
   color: var(--accent);
   font-weight: 500;
+  // Mono counter cohesion (STEP 01 — LABEL).
+  font-family: var(--ff-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 .hiw__sceneBody {
   position: relative;
   flex: 1 1 auto;
-  min-height: 300px;
+  min-block-size: clamp(200px, 28svh, 300px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 8px;
+  // Containment context for SVG text (cqi) — lets the diagram scale labels
+  // with the scene-card width, not the viewport, so the three role chips stay
+  // legible from 320px mobile to 2560px ultra-wide. Refs #99.
+  container-type: inline-size;
+  // Sizing contract — locks the SVG area to a constant block-size across all
+  // 5 phases. Without min-height:0 + overflow:hidden the parent flex cascade
+  // shrinks this body by 22px when narration grows to 3 lines (measured via
+  // Chrome DevTools MCP: 318→294px @ phase 4 pre-fix).
+  min-height: 0;
+  overflow: hidden;
 }
 
 .hiw__svg {
   width: 100%;
   height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   min-height: 280px;
   display: block;
+  // preserveAspectRatio=meet + object-fit:contain keeps the SVG's visual
+  // content at a stable size regardless of tiny parent jitter.
+  object-fit: contain;
+}
+
+// ---------------------------------------------------------------------------
+// Diagram SVG fills (HiwDiagram.tsx) — refs #99.
+//
+// Prior to this block HiwDiagram.tsx referenced `.hiw__diagActorPuck/Role/
+// Text/Muted` + `.hiw__diagWire` on every SVG element, but the module had
+// no rules for any of them — so `<text>` fell back to `fill: black` on the
+// dark navy surface and the CLIENT / MIDDLEMAN / SELLER trio was invisible.
+// The selectors live here (not inline in HiwDiagram) so theme tokens drive
+// the palette and container queries can size text fluidly with the scene.
+// ---------------------------------------------------------------------------
+
+.hiw__diagActorPuck {
+  fill: var(--hiw-actor-bg);
+  stroke: var(--hiw-actor-border);
+}
+
+.hiw__diagActorRole {
+  fill: var(--hiw-role-label);
+  font-family: var(--ff-mono);
+  // Awwwards-tier label read — cqi on .hiw__sceneBody keeps the text
+  // legible at 320px mobile without steamrolling the 1440+ desktop cap.
+  // Floor 15 / ceiling 24 lifts the role chips to first-class banner
+  // typography; multiplier 3.0cqi reaches ceiling on 800px+ scene cards.
+  font-size: clamp(15px, 3.0cqi, 24px);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+}
+
+.hiw__diagActorText {
+  fill: var(--hiw-actor-name);
+  font-family: var(--ff-sans);
+  // Primary name gets the strongest read in the trio — 18/28 sans 500.
+  font-size: clamp(18px, 3.4cqi, 28px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.hiw__diagActorMuted {
+  fill: var(--hiw-actor-wallet);
+  font-family: var(--ff-mono);
+  // 14 floor keeps the 10-char wallet hash legible; ceiling 18 so the
+  // muted line never overshadows the actor name.
+  font-size: clamp(14px, 2.2cqi, 18px);
+  letter-spacing: 0.02em;
+}
+
+.hiw__diagCoreLabel {
+  fill: var(--muted-2);
+  font-family: var(--ff-mono);
+  font-size: clamp(13px, 2.0cqi, 18px);
+  font-weight: 500;
+  letter-spacing: 0.24em;
+}
+
+.hiw__diagCoreTitle {
+  fill: var(--text);
+  font-family: var(--ff-sans);
+  font-size: clamp(16px, 2.5cqi, 22px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.hiw__diagWire {
+  stroke: var(--hiw-wire-base);
+}
+
+.hiw__diagPacket {
+  font-family: var(--ff-mono);
+  font-size: clamp(14px, 2.2cqi, 18px);
+  font-weight: 700;
+}
+
+// ---------------------------------------------------------------------------
+// JudgePodium — middleman elevated as a judge/referee.
+//
+// The inner `.hiw__diagJudgeBody` group multiplies its opacity against the
+// outer `data-hiw="actor-mid"` group's GSAP-driven opacity. GSAP owns
+// entrance (0 → 1 during the Meet phase); this CSS var owns dimming (0.30
+// on the happy path, 1.0 on Dispute branches). Dispute timelines write
+// the var directly so scrub + branch switching don't fight each other.
+// ---------------------------------------------------------------------------
+
+.hiw__diagJudgeBody {
+  // Fallback bumped 0.3 → 0.85 to match the pinHost default written in
+  // the same file. Keeps the middleman visible even if the CSS custom
+  // property doesn't resolve (e.g. during SSR hydration transients).
+  opacity: var(--hiw-judge-opacity, 0.85);
+  transition: opacity var(--dur-default, 500ms) var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
+}
+
+.hiw__diagJudgePodium {
+  fill: color-mix(in oklch, var(--hiw-actor-bg) 82%, transparent);
+  stroke: var(--hiw-actor-border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.hiw__diagJudgeHex {
+  fill: var(--hiw-actor-bg);
+  stroke: var(--hiw-actor-border);
+}
+
+.hiw__diagJudgeGavel {
+  fill: var(--hiw-role-label);
+  stroke: none;
+}
+
+.hiw__diagJudgeGavelBlock {
+  fill: color-mix(in oklch, var(--hiw-role-label) 72%, transparent);
+}
+
+.hiw__diagJudgeScales {
+  fill: none;
+  stroke: var(--hiw-role-label);
+  stroke-width: 1.2;
+  stroke-opacity: 0.72;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.hiw__diagJudgeChip {
+  // 95% bg + 1.5px border so the chip reads as a solid pill over the
+  // judge body opacity (0.85). Compound 0.85 × 0.95 = 0.81 effective,
+  // above the 0.75 Awwwards readability floor for load-bearing UI.
+  fill: color-mix(in oklch, var(--hiw-actor-bg) 95%, transparent);
+  stroke: var(--hiw-actor-border);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.hiw__diagJudgeChipLabel {
+  // Promoted to --text (full contrast) from --hiw-role-label (blue-muted
+  // #66bbff). The chip is the load-bearing signal for the whole redesign;
+  // hierarchy beats decorative tint. Stripe/Vercel/Linear all use explicit
+  // hex tokens for primary labels, never rely on opacity for hierarchy.
+  fill: var(--text);
+  font-family: var(--ff-mono);
+  font-size: clamp(13px, 2.2cqi, 17px);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+// `prefers-contrast: more` — bump role label + wallet to the strongest
+// available tokens so low-vision users see the diagram without relying on
+// brand-blue tints. forced-colors is already handled at the token level
+// (`_variables.scss`).
+@media (prefers-contrast: more) {
+  .hiw__diagActorRole {
+    fill: var(--text);
+  }
+  .hiw__diagActorMuted {
+    fill: var(--text);
+  }
+  .hiw__diagWire {
+    stroke: var(--text);
+  }
+  .hiw__diagJudgeChipLabel {
+    fill: var(--text);
+  }
+  .hiw__diagJudgeGavel {
+    fill: var(--text);
+  }
+  .hiw__diagJudgeScales {
+    stroke: var(--text);
+  }
+}
+
+// Reduced-motion — drop the dim transition so prefers-reduced-motion users
+// see the final outcome state instantly when Safeguards tabs toggle.
+@media (prefers-reduced-motion: reduce) {
+  .hiw__diagJudgeBody {
+    transition: none;
+  }
 }
 
 .hiw__actors {
@@ -443,6 +829,10 @@
   text-align: center;
   width: 120px;
   opacity: 0.4;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
 .hiw__actor--active {
@@ -465,16 +855,18 @@
 }
 
 .hiw__actorPuck {
-  width: 72px;
-  height: 72px;
+  // Bumped from 72→88 so the puck trio reads against the 168px core without
+  // feeling like a footnote (#98). 88/168 ≈ 0.52 — balanced orbital hierarchy.
+  width: 88px;
+  height: 88px;
   border-radius: 50%;
-  background: var(--bg-page);
-  border: 1px solid var(--border-strong);
+  background: var(--hiw-actor-bg);
+  border: 1px solid var(--hiw-actor-border);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-family: var(--ff-mono);
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
   color: var(--text-muted);
   transition:
@@ -491,13 +883,19 @@
       0 10px 32px -12px var(--accent);
     transform: scale(1.06);
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
 .hiw__actorRole {
   font-family: var(--ff-mono);
-  font-size: 11px;
+  // 13px (was 11) — readable at viewing distance; letter-spacing tightened
+  // to 0.16em for the uppercase mono cohesion (#98).
+  font-size: 13px;
   color: var(--accent);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   font-weight: 500;
 }
@@ -508,8 +906,10 @@
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 1;
-  width: 140px;
-  height: 140px;
+  // Bumped 140→168 (+20%) to strengthen the focal hierarchy against the
+  // 88px actor pucks (#98). Fits comfortably in sceneBody at all viewports.
+  width: 168px;
+  height: 168px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -522,32 +922,41 @@
   background:
     radial-gradient(
       circle at 50% 30%,
-      rgba(0, 145, 255, 0.35),
+      var(--core-glow-halo),
       transparent 70%
     ),
     linear-gradient(135deg, var(--blue-primary), var(--blue-deep));
   box-shadow:
-    0 0 0 1px rgba(0, 145, 255, 0.3),
-    0 20px 60px -10px rgba(0, 145, 255, 0.4),
+    0 0 0 1px var(--core-glow-ring),
+    0 20px 60px -10px var(--core-glow-halo),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--text-inverse);
   gap: 6px;
   padding: 10px;
 
   svg {
-    width: 28px;
-    height: 28px;
+    // 32px (was 28) — proportional bump with the 168px core (#98).
+    width: 32px;
+    height: 32px;
+  }
+
+  :root[data-theme='light'] & {
+    background:
+      radial-gradient(circle at 50% 30%, var(--core-glow-halo), transparent 70%),
+      linear-gradient(135deg, var(--blue-primary), var(--blue-deep-warm));
   }
 }
 
 .hiw__coreLabel {
   font-family: var(--ff-mono);
-  font-size: 9px;
-  letter-spacing: 0.18em;
+  // 11px (was 9) — 9px falls below the readable floor. 11px with wider
+  // letter-spacing keeps the compact mono feel while staying legible (#98).
+  font-size: 11px;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
 }
 
@@ -563,14 +972,14 @@
   0%,
   100% {
     box-shadow:
-      0 0 0 1px rgba(0, 145, 255, 0.3),
-      0 20px 60px -10px rgba(0, 145, 255, 0.4),
+      0 0 0 1px var(--core-glow-ring),
+      0 20px 60px -10px var(--core-glow-halo),
       inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
   50% {
     box-shadow:
-      0 0 0 1px rgba(0, 145, 255, 0.6),
-      0 20px 80px -4px rgba(0, 145, 255, 0.7),
+      0 0 0 1px var(--core-glow-ring-strong),
+      0 20px 80px -4px var(--core-glow-halo-strong),
       inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 }
@@ -578,13 +987,19 @@
 // --- Narration --------------------------------------------------------------
 
 .hiw__narration {
-  padding: 28px;
+  padding: clamp(16px, 3vh, 28px);
   border-top: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
   gap: 32px;
-  min-height: 140px;
+  // Height cap — must stay constant across phases. Without this the
+  // narration's intrinsic content (3-line phase-4 body) leaks upwards and
+  // squeezes .hiw__sceneBody even with flex:0 0 auto. Fixed height +
+  // overflow:hidden + line-clamp:2 on body = SVG area stays at 302px.
+  block-size: clamp(110px, 14svh, 140px);
+  flex: 0 0 auto;
+  overflow: hidden;
 }
 
 .hiw__narrationText {
@@ -593,30 +1008,33 @@
 
 .hiw__narrationStep {
   font-family: var(--ff-mono);
-  font-size: 11px;
-  letter-spacing: 0.16em;
+  // 12px (was 11) matches the sceneHead banner's new size (#98).
+  font-size: 12px;
+  letter-spacing: 0.18em;
   color: var(--accent);
   text-transform: uppercase;
   font-weight: 500;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 
   &::before {
     content: '';
-    width: 22px;
+    width: 26px;
     height: 1px;
     background: currentColor;
   }
 }
 
 .hiw__narrationTitle {
-  font-size: clamp(20px, 2.2vw, 28px);
-  line-height: 1.15;
+  // Clamp floor/ceiling bumped (20→22 / 28→34) for tighter hierarchy
+  // against the 168px core + 88px actor pucks (#98).
+  font-size: clamp(22px, 2.4vw, 34px);
+  line-height: 1.12;
   letter-spacing: -0.02em;
   font-weight: 500;
-  margin: 0 0 8px;
+  margin: 0 0 10px;
   text-wrap: balance;
   color: var(--text);
 
@@ -628,15 +1046,57 @@
 }
 
 .hiw__narrationBody {
-  font-size: 14px;
-  line-height: 1.55;
+  // 15px + 1.6 line-height (was 14 / 1.55) — Awwwards-tier reading density
+  // without losing the "muted body below bright title" hierarchy (#98).
+  font-size: 15px;
+  line-height: 1.6;
   color: var(--text-muted);
   margin: 0;
   text-wrap: pretty;
   max-width: 40ch;
+  // Cap to 2 lines so phase 4 Release body (130 chars) can't expand the
+  // narration block and steal SVG height. Longer copy gets ellipsized.
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 // --- Rail -------------------------------------------------------------------
+
+// Rail progress bar — a 2px horizontal rule above the rail. The fill (<i>)
+// scales via --hiw-rail-progress (0 → 1), written by the animations agent
+// on the stage element. Inherited down from .hiw__stage.
+.hiw__railProgress {
+  position: relative;
+  block-size: 2px;
+  inline-size: 100%;
+  max-width: 1440px;
+  margin: clamp(10px, 2vh, 24px) auto 0;
+  background: var(--border);
+  overflow: hidden;
+
+  > i {
+    display: block;
+    block-size: 100%;
+    inline-size: 100%;
+    transform: scaleX(var(--hiw-rail-progress, 0));
+    transform-origin: left center;
+    background: linear-gradient(90deg, var(--blue-primary), var(--blue-vivid));
+    transition: transform 0.4s var(--ease-out-expo);
+    will-change: transform;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+
+  // Desktop only — mobile uses .hiw__phaseNav instead.
+  // Width-only gate to match the pinHost mobile switch.
+  @media (max-width: 899px) {
+    display: none;
+  }
+}
 
 .hiw__rail {
   display: grid;
@@ -644,12 +1104,14 @@
   border-top: 1px solid var(--border);
   background: var(--bg-surface);
   max-width: 1440px;
-  margin: 32px auto 0;
+  margin: clamp(12px, 2.5vh, 32px) auto 0;
+  // Lift the rail above the heat pseudo-elements.
+  position: relative;
 
   // 5 → 3 → 2 cols so each button stays wide enough for comfortable
-  // touch targets (3-col at 900px gives ~280px/btn, 2-col at 560px
-  // gives ~260px/btn). The old 2-col-at-900 collapsed too aggressively.
-  @media (max-width: 900px) {
+  // touch targets (3-col at 899px gives ~280px/btn, 2-col at 560px
+  // gives ~260px/btn). Same 899 boundary as pinHost/deck/grid.
+  @media (max-width: 899px) {
     grid-template-columns: repeat(3, 1fr);
   }
 
@@ -679,16 +1141,57 @@
   cursor: pointer;
   font-weight: inherit;
 
+  // Pip decoration — 6×6 circle sitting above the rail's top border,
+  // centered-left over the button's padding. Desktop-only.
+  &::before {
+    content: '';
+    position: absolute;
+    inline-size: 6px;
+    block-size: 6px;
+    border-radius: 50%;
+    // Nudge above the rail's top border (which is -1px above this button).
+    inset-block-start: -4px;
+    inset-inline-start: clamp(0.75rem, 2vw, 1.5rem);
+    background: var(--border-strong);
+    transition:
+      background 0.3s,
+      box-shadow 0.3s;
+    z-index: 1;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+
+    // Mobile: pips live in .hiw__phaseNav instead.
+    @media (max-width: 899px) {
+      content: none;
+    }
+  }
+
   &:last-child {
     border-inline-end: 0;
   }
 
-  &:hover {
+  // Hover gated to pointer:fine so touch devices don't "stick" a hover
+  // state between taps. Press feedback via :active fires on every device,
+  // keyboard users get :focus-visible (already below).
+  @media (hover: hover) {
+    &:hover {
+      color: var(--text);
+      background: var(--on-card);
+    }
+  }
+
+  &:active {
     color: var(--text);
-    background: var(--on-card);
+    background: color-mix(in srgb, var(--on-card) 70%, transparent);
   }
 
   &:focus-visible {
+    // --accent is --blue-vivid (#0091ff) in dark and --blue-primary (#0066ff)
+    // in light. Both clear 3:1 contrast on their respective surfaces for
+    // non-text UI components (WCAG 1.4.11), so the token works in both
+    // themes without an override.
     outline: 2px solid var(--accent);
     outline-offset: -2px;
   }
@@ -702,11 +1205,19 @@
     width: 0;
     background: var(--accent);
     transition: width 0.5s var(--ease-out-expo);
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 
   // Strip the right-border on the rightmost button of each layout's row so
   // it doesn't sit against the rail's right edge as a dangling line.
-  @media (max-width: 900px) {
+  @media (max-width: 899px) {
     &:nth-child(3n) {
       border-inline-end: 0;
     }
@@ -730,9 +1241,248 @@
   &::after {
     width: 100%;
   }
+
+  // Active pip: accent with accent halo.
+  &::before {
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft), 0 0 10px var(--accent);
+  }
 }
 
 .hiw__railNum {
   color: var(--accent);
   margin-inline-end: 10px;
+}
+
+// --- Mobile step deck (≤ 899px) --------------------------------------------
+// Native vertical scroll-snap replaces the pin-stage on mobile. Five
+// .hiw__phaseCard children snap one-per-viewport; a right-aligned sticky
+// .hiw__phaseNav column of pips stays visible as the user scrolls.
+// Agent D renders this deck only under the mobile breakpoint.
+
+.hiw__deck {
+  display: none;
+
+  // Show mobile deck strictly by viewport WIDTH (matches pinHost swap).
+  // Previously also fired on max-height: 771, which stole the pinned
+  // experience from desktop users with DevTools docked at the bottom.
+  @media (max-width: 899px) {
+    display: block;
+    position: relative;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+
+    @media (prefers-reduced-motion: reduce) {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+.hiw__phaseCard {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  min-height: 100svh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: clamp(1rem, 3vw, 1.5rem);
+  padding: clamp(1.25rem, 5vw, 2rem);
+  border-block-end: 1px solid var(--border);
+  position: relative;
+
+  &:last-child {
+    border-block-end: 0;
+  }
+
+  h3 {
+    @include type-h3;
+    margin: 0;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+
+    em {
+      font-style: italic;
+      font-weight: 400;
+      color: var(--accent);
+    }
+  }
+}
+
+// Phase counter — mono, uppercase, accent-tinted. Agent D emits strings
+// like "STEP 01 — MEET". Mirrors .hiw__narrationStep styling.
+.hiw__phaseCounter {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+  text-transform: uppercase;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  &::before {
+    content: '';
+    width: 22px;
+    height: 1px;
+    background: currentColor;
+  }
+}
+
+// Mobile mini SVG itself — `HiwPhaseDiagram` renders into this and was
+// orphan-classed prior to #99. Fill width of its containing diagram slot;
+// auto height preserves the viewBox 2:1 ratio at every breakpoint.
+.hiw__miniDiagram {
+  inline-size: 100%;
+  block-size: auto;
+  max-block-size: 260px;
+  display: block;
+}
+
+// Mini-diagram slot (Agent C emits HiwPhaseDiagram inside this). Reuses
+// the scene's accent-soft glow without the full desktop card chrome.
+.hiw__phaseDiagram {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 50% 50%,
+      var(--accent-soft),
+      transparent 70%
+    ),
+    var(--bg-surface);
+  overflow: hidden;
+
+  :root[data-theme='light'] & {
+    background:
+      radial-gradient(
+        ellipse 80% 60% at 50% 50%,
+        var(--accent-soft),
+        transparent 70%
+      ),
+      var(--bg-elevated);
+    box-shadow: var(--shadow-card);
+  }
+}
+
+// Compact ledger row — contract id + state chip + amount on one line.
+// Simpler than desktop's full .hiw__ledger (no logs, no progress bar).
+.hiw__phaseLedger {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--on-card);
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+
+  b {
+    font-family: var(--ff-sans);
+    font-size: 13px;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    text-transform: none;
+    font-weight: 500;
+  }
+}
+
+.hiw__phaseAmount {
+  font-family: var(--ff-sans);
+  font-size: 18px;
+  color: var(--text);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+
+  // "USDC" tail suffix — small accent.
+  small {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--accent);
+    margin-inline-start: 6px;
+    letter-spacing: 0.08em;
+  }
+}
+
+// Sticky vertical pip column at the right edge of the deck. Each pip
+// anchors a card; tapping one scrolls to that phase.
+.hiw__phaseNav {
+  position: sticky;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-inline-start: auto;
+  width: max-content;
+  padding: 10px 8px;
+  border-radius: var(--radius-full);
+  background: var(--on-card);
+  border: 1px solid var(--border);
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.hiw__phasePip {
+  display: block;
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  background: var(--border-strong);
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  transition:
+    background 0.3s,
+    box-shadow 0.3s,
+    transform 0.3s var(--ease-out-expo);
+  position: relative;
+
+  // Extend the hit area to a 44px touch target (WCAG 2.5.8) without
+  // bloating the visible dot.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -18px;
+  }
+
+  // Hover gated to pointer:fine; :active fires on touch for tactile cue.
+  @media (hover: hover) {
+    &:hover {
+      background: var(--accent);
+    }
+  }
+
+  &:active {
+    background: var(--accent);
+    transform: scale(1.2);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.hiw__phasePip--active {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft), 0 0 10px var(--accent);
+  transform: scale(1.15);
 }

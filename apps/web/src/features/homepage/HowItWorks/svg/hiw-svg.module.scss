@@ -1,0 +1,262 @@
+@use '../../../../styles/settings/variables' as *;
+
+// ---------------------------------------------------------------------------
+// SVG-scoped styles for the Live Contract View.
+//
+// Colocated next to the SVG subcomponents so HowItWorks.module.scss stays
+// lean. Every class uses BEM `.hiw__diag<...>` naming, matching the
+// existing tokens in HowItWorks.module.scss (--hiw-actor-bg,
+// --hiw-actor-border, --hiw-role-label) so dark/light theme cascade from
+// the cookie-driven SSR provider still applies.
+//
+// CSS custom properties (fallbacks in `var()` so the module works without
+// an ancestor setting them):
+//   --hiw-judge-opacity  · 0.3 happy-path standby, 1 dispute active
+//   --hiw-vault-charge   · 0 empty vault, 1 fully charged (post-Fund)
+//   --hiw-vault-split    · 0 monolithic balance, 1 split into buckets
+// ---------------------------------------------------------------------------
+
+// --- JudgePodium ------------------------------------------------------------
+
+.hiw__diagJudgeBody {
+  opacity: var(--hiw-judge-opacity, 0.3);
+  transition: opacity var(--dur-default, 500ms) var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
+}
+
+.hiw__diagJudgePodium {
+  fill: color-mix(in oklch, var(--hiw-actor-bg) 65%, transparent);
+  stroke: var(--hiw-actor-border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.hiw__diagJudgeHex {
+  fill: var(--hiw-actor-bg);
+  stroke: var(--hiw-actor-border);
+}
+
+.hiw__diagJudgeGavel {
+  fill: var(--hiw-role-label);
+  stroke: none;
+}
+
+.hiw__diagJudgeGavelBlock {
+  fill: color-mix(in oklch, var(--hiw-role-label) 45%, transparent);
+}
+
+.hiw__diagJudgeScales {
+  fill: none;
+  stroke: var(--hiw-role-label);
+  stroke-width: 1.2;
+  stroke-opacity: 0.55;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.hiw__diagJudgeChip {
+  fill: color-mix(in oklch, var(--hiw-actor-bg) 80%, transparent);
+  stroke: var(--hiw-actor-border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.hiw__diagJudgeChipLabel {
+  fill: var(--hiw-role-label);
+  font-family: var(--ff-mono);
+  // Container-query sized so 320px mobile stays readable; ceiling 14 keeps
+  // the pill shorter than the 224px chip width at desktop scale.
+  font-size: clamp(11px, 1.7cqi, 14px);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+// --- VaultCore (commit 6) ---------------------------------------------------
+
+.hiw__diagVaultHex {
+  fill: var(--hiw-actor-bg);
+  stroke: var(--hiw-actor-border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.hiw__diagVaultChamber {
+  // Inner fill intensity follows charge level: empty vault is translucent,
+  // fully charged vault saturates to brand-blue. Multiplier bumped
+  // 45% → 70% so the "funded" state reads vibrant, not pale.
+  fill: color-mix(
+    in oklch,
+    var(--blue-vivid, #0091ff) calc(var(--hiw-vault-charge, 0) * 70%),
+    transparent
+  );
+  transition:
+    fill var(--dur-cinematic, 900ms) var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
+}
+
+.hiw__diagVaultPadlock {
+  fill: none;
+  stroke: var(--muted-2, var(--text-muted));
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hiw__diagVaultSpout {
+  stroke: var(--hiw-wire-base);
+  stroke-width: 1.25;
+  stroke-dasharray: 3 4;
+  fill: none;
+  // 0.55 → 0.75: dashed output channels readable at rest without
+  // competing with the active wires during the Settle cinematic.
+  opacity: 0.75;
+  vector-effect: non-scaling-stroke;
+}
+
+.hiw__diagVaultBucket {
+  // Pending-balance slot for seller-win payouts. Visible when BOTH an
+  // outcome is active AND fees apply (Delivery / MiddlemanSeller via
+  // Safeguards or scroll). The multiplication acts as logical AND:
+  // happy-path scroll (outcome-active=0) hides the buckets; refund /
+  // disputeBuyer / timeout (fee-applies=0) hides them too.
+  opacity: calc(
+    var(--hiw-outcome-active, 0) * var(--hiw-fee-applies, 0)
+  );
+  transition:
+    opacity var(--dur-cinematic, 900ms) var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
+}
+
+.hiw__diagVaultRefundCue {
+  // Single-bucket refund pill for client-win payouts. Visible when an
+  // outcome is active AND fees DON'T apply — refund / disputeBuyer /
+  // timeout. `1 - fee-applies` inverts the Solidity rule cleanly.
+  opacity: calc(
+    var(--hiw-outcome-active, 0) * (1 - var(--hiw-fee-applies, 0))
+  );
+  transition:
+    opacity var(--dur-cinematic, 900ms) var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
+}
+
+.hiw__diagVaultBucketPill {
+  fill: color-mix(in oklch, var(--hiw-actor-bg) 85%, transparent);
+  stroke: var(--hiw-actor-border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.hiw__diagVaultBucketLabel {
+  fill: var(--hiw-role-label);
+  font-family: var(--ff-mono);
+  // Bumped 10-13 → 14-18 so the bucket label doesn't invert hierarchy
+  // (actor names at 28px, body text 15-16px, these should match body
+  // floor, not dip below it).
+  font-size: clamp(14px, 2.0cqi, 18px);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+.hiw__diagVaultBucketAmount {
+  fill: var(--text);
+  font-family: var(--ff-mono);
+  // Bumped 12-16 → 14-20 so the fee-split numbers (2,344.08 / 48.00 /
+  // 7.92) are as readable as the core title (22) and actor names (28).
+  font-size: clamp(14px, 2.2cqi, 20px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.hiw__diagVaultWithdrawCue {
+  fill: var(--muted-2, var(--text-muted));
+  font-family: var(--ff-mono);
+  // Bumped 11-14 → 12-16. The pull-based withdraw cue is the
+  // load-bearing "money is NEVER pushed" signal — it deserves body
+  // scale, not legalese scale.
+  font-size: clamp(12px, 1.8cqi, 16px);
+  letter-spacing: 0.08em;
+  // Reveal the pull-based withdraw footnote on any Safeguards outcome —
+  // this is the "cannot-be-missed" signal that money is NEVER pushed.
+  opacity: var(--hiw-outcome-active, 0);
+  transition:
+    opacity var(--dur-default, 500ms) var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
+}
+
+// --- Client-refund cue — single pill shown on fee-free outcomes --------
+
+.hiw__diagVaultRefundPill {
+  // 12% → 28%: refund pill now reads as a distinct green surface
+  // instead of a whisper. Stroke at full saturation stays the ring.
+  fill: color-mix(in oklch, var(--status-success, #22cc66) 28%, transparent);
+  stroke: var(--status-success, #22cc66);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.hiw__diagVaultRefundLabel {
+  fill: var(--status-success, #22cc66);
+  font-family: var(--ff-mono);
+  // Match the bucket label scale bumped above (14-18) so the fee-free
+  // refund pill has the same visual weight as the seller-win split.
+  font-size: clamp(14px, 2.0cqi, 18px);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+.hiw__diagVaultRefundAmount {
+  fill: var(--text);
+  font-family: var(--ff-mono);
+  // Match bucket amount scale (14-20).
+  font-size: clamp(14px, 2.2cqi, 20px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+// --- Soulbound-mint cue — appears on dispute outcomes ------------------
+
+.hiw__diagSoulboundCue {
+  opacity: var(--hiw-soulbound-mint, 0);
+  transition:
+    opacity var(--dur-default, 500ms) var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
+}
+
+.hiw__diagSoulboundBadge {
+  fill: color-mix(in oklch, var(--accent, #0091ff) 18%, transparent);
+  stroke: var(--accent, #0091ff);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.hiw__diagSoulboundLabel {
+  fill: var(--accent, #0091ff);
+  font-family: var(--ff-mono);
+  font-size: clamp(9px, 1.2cqi, 11px);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+// --- prefers-contrast: more -------------------------------------------------
+
+@media (prefers-contrast: more) {
+  .hiw__diagJudgeChipLabel,
+  .hiw__diagJudgeGavel,
+  .hiw__diagVaultBucketLabel,
+  .hiw__diagVaultWithdrawCue,
+  .hiw__diagVaultRefundAmount,
+  .hiw__diagVaultRefundLabel,
+  .hiw__diagSoulboundLabel {
+    fill: var(--text);
+  }
+  .hiw__diagJudgeScales {
+    stroke: var(--text);
+  }
+}
+
+// --- prefers-reduced-motion -------------------------------------------------
+
+@media (prefers-reduced-motion: reduce) {
+  .hiw__diagJudgeBody,
+  .hiw__diagVaultChamber,
+  .hiw__diagVaultBucket,
+  .hiw__diagVaultRefundCue,
+  .hiw__diagVaultWithdrawCue,
+  .hiw__diagSoulboundCue {
+    transition: none;
+  }
+}

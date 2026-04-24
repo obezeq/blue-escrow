@@ -30,6 +30,16 @@
   transition: background 0.6s var(--ease-out-expo);
 }
 
+// S9 — Upgrade the hero backdrop to an oklch-interpolated gradient where
+// supported. Blue transitions look noticeably cleaner in oklch space (no
+// mid-fade desaturation to grey/lavender). Legacy engines keep --hero-grad.
+// Baseline: Chromium 111+, Safari 16.4+, Firefox 128+ (mid-2024).
+@supports (background: linear-gradient(in oklch, red, blue)) {
+  .hero__bg {
+    background: var(--hero-grad-oklch);
+  }
+}
+
 .hero__orbit {
   position: absolute;
   top: 50%;
@@ -120,14 +130,21 @@
   z-index: 3;
   display: flex;
   justify-content: center;
-  gap: 22px;
+  gap: var(--space-22);
   font-family: var(--ff-mono);
-  font-size: 11px;
+  font-size: var(--t-caption-sm);
   text-transform: uppercase;
   letter-spacing: 0.18em;
   color: var(--text-muted);
   padding-top: 6px;
   flex-wrap: wrap;
+  // Chip row, not prose: opt out of the reset's 75ch inline-size cap
+  // (generic/_reset.scss `p, li, figcaption { max-inline-size: 75ch }`)
+  // so this flex container can span the hero's full width and
+  // `justify-content: center` actually centers the chips in the viewport
+  // rather than inside a 75ch box pinned to the start.
+  max-inline-size: none;
+  inline-size: 100%;
 }
 
 .hero__chipDot {
@@ -247,7 +264,7 @@
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 26px;
+  padding: 16px 28px;
   font-family: var(--ff-mono);
   font-size: 14px;
   border-radius: var(--radius-full);
@@ -256,7 +273,8 @@
     transform 0.25s var(--ease-out-expo),
     background 0.25s,
     color 0.25s,
-    border-color 0.25s;
+    border-color 0.25s,
+    box-shadow 0.25s;
 
   &:focus-visible {
     outline: 2px solid var(--accent);
@@ -266,16 +284,17 @@
 
 .hero__btn--primary {
   background: var(--blue-primary);
-  color: #fff;
+  color: var(--text-inverse);
   box-shadow:
-    0 10px 30px -10px color-mix(in srgb, var(--blue-primary) 60%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 10px 36px -12px rgba(0, 102, 255, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 
   &:hover {
     background: var(--blue-hover);
     box-shadow:
-      0 14px 40px -10px color-mix(in srgb, var(--blue-primary) 80%, transparent),
-      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      0 18px 48px -12px rgba(0, 102, 255, 0.9),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
   }
 }
 
@@ -312,12 +331,12 @@
 
   @media (max-width: 960px) {
     grid-template-columns: 1fr 1fr;
-    gap: 24px;
+    gap: var(--space-24);
   }
 
   @media (max-width: 560px) {
     grid-template-columns: 1fr;
-    gap: 18px;
+    gap: var(--space-18);
   }
 }
 
@@ -330,7 +349,7 @@
   margin-bottom: 10px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-8);
 
   &::before {
     content: '';
@@ -401,5 +420,91 @@
 @keyframes tickScroll {
   to {
     transform: translateX(-50%);
+  }
+}
+
+// v6 mobile overrides (Blue Escrow v6.html:464-468): tighter padding and
+// a fresh clamp so the title fits on two short lines on narrow viewports.
+@media (max-width: 720px) {
+  .hero {
+    padding-top: 92px;
+  }
+
+  .hero__center {
+    padding: 40px 0 24px;
+  }
+
+  .hero__title {
+    font-size: clamp(44px, 13vw, 80px);
+  }
+}
+
+// ============================================================================
+// SSR-SAFE INITIAL HIDDEN STATE — dead-frame elimination (#91).
+//
+// GSAP animates these elements in when the preloader fires `exit-start`.
+// Until then we must NOT render them in their final visible state: the
+// preloader's 1.1s clip-path exit would otherwise reveal a static hero
+// underneath. We also can't rely on a JS `gsap.set()` alone — that fires
+// after render and "snaps" the elements from visible → hidden, producing
+// a perceptible flicker.
+//
+// Strategy: hide via CSS gated by BOTH conditions
+//   1. `html.js-loaded` is present  (added synchronously in RootLayout,
+//      never present without JS → no-JS users see content unmolested).
+//   2. `html[data-preloader]` is NOT yet `'done'` (preloader is still
+//      active/exiting; once done, GSAP owns the state and the CSS rule
+//      deactivates, allowing any stray element to fall back to its
+//      default visible styling).
+//
+// The transform/opacity values MUST match the initial state in
+// HeroAnimations.tsx's `fromTo()` tweens so there is no snap at the
+// CSS→JS handoff.
+// ============================================================================
+:root.js-loaded:not([data-preloader='done']) {
+  .hero__word {
+    transform: translateY(115%);
+    will-change: transform;
+  }
+
+  // Scope to .hero — the [data-animate="..."] attribute names are reused
+  // by sibling features (CtaSection, HowItWorks, etc.). Without the
+  // .hero qualifier, this gate would apply opacity:0 to every matching
+  // element in the document while the preloader is active, which is
+  // what trapped CtaSection's gsap.from() tweens: they read opacity:0
+  // at tween-creation time and captured it as the "to" target, leaving
+  // the CTAs stuck invisible. Scoping keeps the FOUC protection local
+  // to the pinned hero intro.
+  .hero {
+    [data-animate='eyebrow'],
+    [data-animate='sub'],
+    [data-animate='ctas'],
+    [data-animate='bottom'],
+    [data-animate='ticker'] {
+      opacity: 0;
+      transform: translateY(16px);
+      will-change: transform, opacity;
+    }
+  }
+}
+
+// prefers-reduced-motion: the preloader unmounts immediately and HeroAnimations
+// clears the hidden state via gsap.set clearProps — but defend against a
+// flash if JS is still catching up, by neutralising the gate under reduce.
+@media (prefers-reduced-motion: reduce) {
+  :root.js-loaded:not([data-preloader='done']) {
+    .hero__word {
+      transform: none;
+    }
+    .hero {
+      [data-animate='eyebrow'],
+      [data-animate='sub'],
+      [data-animate='ctas'],
+      [data-animate='bottom'],
+      [data-animate='ticker'] {
+        opacity: 1;
+        transform: none;
+      }
+    }
   }
 }

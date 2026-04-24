@@ -7,9 +7,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "analyze": "ANALYZE=true next build --webpack",
     "clean": "rm -rf .next .turbo node_modules"
   },
   "dependencies": {
@@ -31,6 +32,7 @@
   "devDependencies": {
     "@blue-escrow/eslint-config": "workspace:*",
     "@blue-escrow/tsconfig": "workspace:*",
+    "@next/bundle-analyzer": "^16.2.4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^22.0.0",
@@ -39,6 +41,9 @@
     "@types/three": "^0.183.0",
     "jsdom": "^29.0.1",
     "typescript": "^5.8.0",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "vitest-axe": "1.0.0-pre.5",
+    "eslint": "^9",
+    "eslint-config-next": "^16.2.1"
   }
 }

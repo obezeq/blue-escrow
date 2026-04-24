@@ -70,6 +70,32 @@ export function ReceiptsAnimations({
             scrollTrigger: { trigger: cards[0], start: 'top 85%', once: true },
           });
         }
+
+        // Idle rotation — soul card outer dashed ring. 60s/rev at ease:'none'
+        // keeps it barely perceptible; useGSAP scope auto-kills on unmount.
+        const soulRing = container.querySelector('[data-animate="soul-ring"]');
+        if (soulRing) {
+          gsap.to(soulRing, {
+            rotation: 360,
+            transformOrigin: '100px 100px', // SoulVisual viewBox center
+            duration: 60,
+            repeat: -1,
+            ease: 'none',
+          });
+        }
+
+        // Holographic shimmer — drives --halo-angle on the soul card; the
+        // conic-gradient rendered by @mixin holographic-edge consumes it.
+        // 12s rotation cycle — noticeable but never distracting.
+        // `cards[0]` is the soul card (first in RECEIPTS_CARDS).
+        if (cards.length > 0 && cards[0]) {
+          gsap.to(cards[0], {
+            '--halo-angle': '360deg',
+            duration: 12,
+            repeat: -1,
+            ease: 'none',
+          });
+        }
       });
 
       mm.add(MATCH_MEDIA.reducedMotion, () => {
