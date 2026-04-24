@@ -79,19 +79,7 @@ test.describe('HIW · fee-split bucket vs refund cue reveal', () => {
     });
   }
 
-  test('SOULBOUND NFT cue reveals on every Safeguards outcome (_resolveDeal always mints)', async ({
-    page,
-  }) => {
-    for (const id of [
-      'refund',
-      'disputeBuyer',
-      'disputeSeller',
-      'timeout',
-    ] as const) {
-      await page.locator(`[data-hiw-outcome-chip="${id}"]`).click();
-      await expectOpacity(page, '[data-hiw="vault-soulbound-cue"]', 1);
-      // Toggle off before the next iteration
-      await page.locator(`[data-hiw-outcome-chip="${id}"]`).click();
-    }
-  });
+  // SOULBOUND NFT cue was removed as visual noise. Mint attribution
+  // is implicit via the ledger event log ("Released · 3 receipts
+  // minted") — no dedicated SVG element left to assert.
 });

@@ -43,7 +43,7 @@ afterEach(cleanup);
 
 type OutcomeCase = {
   id: 'refund' | 'disputeBuyer' | 'disputeSeller' | 'timeout';
-  judgeOpacity: '0.3' | '1';
+  judgeOpacity: '0.55' | '1';
   feeApplies: '0' | '1';
   soulboundMint: '0' | '1';
   announcement: RegExp;
@@ -52,7 +52,7 @@ type OutcomeCase = {
 const CASES: OutcomeCase[] = [
   {
     id: 'refund',
-    judgeOpacity: '0.3',
+    judgeOpacity: '0.55',
     feeApplies: '0',
     soulboundMint: '1', // _resolveDeal always mints soulbound (Escrow.sol:601)
     announcement: /Refund outcome selected/i,
@@ -73,7 +73,7 @@ const CASES: OutcomeCase[] = [
   },
   {
     id: 'timeout',
-    judgeOpacity: '0.3',
+    judgeOpacity: '0.55',
     feeApplies: '0',
     soulboundMint: '1',
     announcement: /Timeout outcome selected/i,
@@ -147,7 +147,7 @@ describe('HowItWorks integration · Safeguards → section state chain', () => {
     fireEvent.click(chip); // toggle back to happy
     expect(section.getAttribute('data-hiw-outcome')).toBe('happy');
     expect(section.style.getPropertyValue('--hiw-outcome-active')).toBe('0');
-    expect(section.style.getPropertyValue('--hiw-judge-opacity')).toBe('0.3');
+    expect(section.style.getPropertyValue('--hiw-judge-opacity')).toBe('0.55');
     // All panels hidden again
     for (const panel of container.querySelectorAll('[data-hiw-outcome-panel]')) {
       expect(panel.hasAttribute('hidden')).toBe(true);

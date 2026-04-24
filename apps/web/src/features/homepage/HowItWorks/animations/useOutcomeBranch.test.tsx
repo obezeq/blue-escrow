@@ -35,12 +35,12 @@ describe('useOutcomeBranch', () => {
     expect(el.style.getPropertyValue('--hiw-judge-opacity')).toBe('1');
   });
 
-  it('keeps --hiw-judge-opacity at 0.3 on fee-free / non-dispute outcomes', () => {
+  it('keeps --hiw-judge-opacity at 0.55 on fee-free / non-dispute outcomes', () => {
     const outcomes: Array<OutcomeId | null> = [null, 'refund', 'timeout'];
     for (const outcome of outcomes) {
       const { getByTestId, unmount } = render(<Harness outcome={outcome} />);
       const el = getByTestId('target');
-      expect(el.style.getPropertyValue('--hiw-judge-opacity')).toBe('0.3');
+      expect(el.style.getPropertyValue('--hiw-judge-opacity')).toBe('0.55');
       unmount();
     }
   });

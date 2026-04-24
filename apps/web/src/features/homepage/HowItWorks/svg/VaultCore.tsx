@@ -258,31 +258,13 @@ export function VaultCore() {
         </text>
       </g>
 
-      {/* Soulbound mint badge — appears only on dispute outcomes
-          (MiddlemanBuyer / MiddlemanSeller) per resolutionMintsSoulbound
-          in contract-map.ts. The tiny badge sits below the judge podium
-          area to visually attribute the mint to the middleman's vote. */}
-      <g
-        data-hiw="vault-soulbound-cue"
-        className={styles.hiw__diagSoulboundCue}
-        transform="translate(860 250)"
-      >
-        <rect
-          x="-60"
-          y="-14"
-          width="120"
-          height="28"
-          rx="14"
-          className={styles.hiw__diagSoulboundBadge}
-        />
-        <text
-          y="5"
-          textAnchor="middle"
-          className={styles.hiw__diagSoulboundLabel}
-        >
-          ⬡ SOULBOUND NFT
-        </text>
-      </g>
+      {/*
+        NFT mint surfacing removed per UX feedback — the "SOULBOUND NFT"
+        pill added visual noise near the middleman without earning a
+        load-bearing role in the narrative. Mint receipts stay implicit;
+        the event log line "Released · 3 receipts minted" in the ledger
+        already communicates it.
+      */}
     </g>
   );
 }

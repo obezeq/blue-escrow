@@ -72,13 +72,12 @@ describe('VaultCore — v8 hex chamber + pending-balance buckets', () => {
     expect(refund?.textContent).toMatch(/2,400/);
   });
 
-  it('renders the soulbound mint badge at data-hiw="vault-soulbound-cue"', () => {
+  it('does NOT render the soulbound mint badge (removed as visual noise)', () => {
     const { container } = renderInSvg();
     const soulbound = container.querySelector(
       '[data-hiw="vault-soulbound-cue"]',
     );
-    expect(soulbound).not.toBeNull();
-    expect(soulbound?.textContent).toMatch(/SOULBOUND/);
+    expect(soulbound).toBeNull();
   });
 
   it('keeps the v7 "SMART CONTRACT / Escrow #4821" labels (no regression)', () => {

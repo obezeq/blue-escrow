@@ -13,7 +13,8 @@
  *
  * CSS vars written:
  *   --hiw-judge-opacity   · 1 on dispute outcomes (middleman activates),
- *                           0.3 otherwise (happy-path standby)
+ *                           0.55 otherwise (happy-path standby, legible
+ *                           presence without competing for focus)
  *   --hiw-vault-charge    · 0 pre-Fund / refund / timeout,
  *                           1 post-Fund / Settle paths (kept at 0 for
  *                           now — commit 9-11 ramps it per branch)
@@ -54,14 +55,14 @@ interface OutcomeVars {
  */
 const OUTCOME_VARS: Record<OutcomeKey, OutcomeVars> = {
   happy: {
-    '--hiw-judge-opacity': 0.3,
+    '--hiw-judge-opacity': 0.55,
     '--hiw-vault-charge': 1,
     '--hiw-fee-applies': 1, // Delivery → fees apply
     '--hiw-outcome-active': 0, // happy path = default scroll narrative
     '--hiw-soulbound-mint': 1, // _resolveDeal always mints (Escrow.sol:601)
   },
   refund: {
-    '--hiw-judge-opacity': 0.3,
+    '--hiw-judge-opacity': 0.55,
     '--hiw-vault-charge': 1,
     '--hiw-fee-applies': 0, // no fees — seller volunteered refund
     '--hiw-outcome-active': 1,
@@ -82,7 +83,7 @@ const OUTCOME_VARS: Record<OutcomeKey, OutcomeVars> = {
     '--hiw-soulbound-mint': 1,
   },
   timeout: {
-    '--hiw-judge-opacity': 0.3,
+    '--hiw-judge-opacity': 0.55,
     '--hiw-vault-charge': 1,
     '--hiw-fee-applies': 0, // permissionless rescue — no fees
     '--hiw-outcome-active': 1,

@@ -494,6 +494,22 @@ export function HowItWorksAnimations({
               PHASE_LABELS[4]!,
             );
           }
+          // Restore the dimmed actors (client + middleman) back to full
+          // opacity on Release. Phase-3 (Deliver) dropped them to 0.45 to
+          // highlight the seller; by the time the contract PAYS OUT, all
+          // three parties are settled and should be visible at full weight.
+          // Without this restore, the user perceives the stage as "shrinking"
+          // into just the seller area by the end.
+          const restoreActors = [actors.client, actors.mid].filter(
+            (a): a is SVGGraphicsElement => a !== null,
+          );
+          if (restoreActors.length) {
+            masterTl.to(
+              restoreActors,
+              { opacity: 1, duration: 0.4 },
+              PHASE_LABELS[4]!,
+            );
+          }
           if (packet && wireBases.S) {
             // Reposition to core before the flight, then fly along wire-base-S.
             masterTl.set(
@@ -516,11 +532,13 @@ export function HowItWorksAnimations({
                   align: wireBases.S as unknown as SVGPathElement,
                   alignOrigin: [0.5, 0.5],
                   autoRotate: false,
-                  // wire-base-S is authored seller->core (940->660) but we
-                  // want core->seller; MotionPath reads the path as-is so we
-                  // let the tween play forward along that direction. If the
-                  // visual reads backwards after QA, Agent C can flip the
-                  // path's d attribute.
+                  // wire-base-S is authored seller->core (940->660) but the
+                  // narrative demands core->seller on Release (contract pays
+                  // out to the seller). Reverse playback along the path via
+                  // start:1, end:0 so the packet flies from (660,400) — just
+                  // outside the core — to (940,420) at the seller's position.
+                  start: 1,
+                  end: 0,
                 },
               },
               `${PHASE_LABELS[4]!}+=0.1`,

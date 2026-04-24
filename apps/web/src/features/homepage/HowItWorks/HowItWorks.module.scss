@@ -129,7 +129,10 @@
   // Downstream ::before/::after consume it for the backdrop effects.
   --hiw-heat: 0;
   --hiw-rail-progress: 0;
-  --hiw-judge-opacity: 0.3;
+  // Judge opacity on happy path bumped from 0.3 to 0.55 so the middleman
+  // is legibly present without competing with client/seller for focus.
+  // Dispute branches (useOutcomeBranch) still lift it to 1.0.
+  --hiw-judge-opacity: 0.55;
 
   // Deep navy radial well — color-mix against --blue-ink for theme cohesion.
   &::before {

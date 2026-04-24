@@ -25,7 +25,7 @@ export function JudgePodium() {
     <g
       data-hiw="actor-mid"
       data-hiw-role="judge"
-      transform="translate(600 120)"
+      transform="translate(600 180)"
       opacity="0"
     >
       <g className={styles.hiw__diagJudgeBody}>
