@@ -15,14 +15,22 @@ const {
   gsapDelayedCall,
   driftSetter,
   gsapQuickTo,
+  gsapTimeline,
   mmAdd,
+  mmRevert,
   splitCreate,
   splitInstances,
   splitReverts,
+  scrollTriggerCreate,
   scrollTriggerRefresh,
+  scrollTriggerCreateCalls,
+  timelineCalls,
   observerCreate,
   observerInstances,
   registerProblemEases,
+  scheduleRefreshSpy,
+  lastTimelineHolder,
+  lastTriggerHolder,
 } = vi.hoisted(() => {
   const splitInstances: Array<{
     words: unknown[];
@@ -32,6 +40,39 @@ const {
   const observerInstances: Array<{ kill: ReturnType<typeof vi.fn> }> = [];
   const splitReverts = vi.fn();
   const driftSetter = vi.fn();
+  const scrollTriggerCreateCalls: Array<Record<string, unknown>> = [];
+  const timelineCalls: Array<{ method: string; args: unknown[] }> = [];
+  // Holders so helper accessors can read the latest-created instance across
+  // tests. Using an object wrapper keeps the reference stable through
+  // vi.hoisted lifting.
+  const lastTimelineHolder: {
+    current: ReturnType<typeof buildTimelineType> | null;
+  } = { current: null };
+  const lastTriggerHolder: {
+    current: {
+      id?: unknown;
+      start: number;
+      end: number;
+      isActive: boolean;
+      progress: number;
+      kill: ReturnType<typeof vi.fn>;
+    } | null;
+  } = { current: null };
+  // Helper type alias for the holder (avoids `any`).
+  type TimelineRecorder = {
+    labels: Record<string, number>;
+    duration: ReturnType<typeof vi.fn>;
+    progress: ReturnType<typeof vi.fn>;
+    kill: ReturnType<typeof vi.fn>;
+    addLabel: ReturnType<typeof vi.fn>;
+    to: ReturnType<typeof vi.fn>;
+    from: ReturnType<typeof vi.fn>;
+    set: ReturnType<typeof vi.fn>;
+  };
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  function buildTimelineType(): TimelineRecorder {
+    return {} as TimelineRecorder;
+  }
 
   return {
     gsapFrom: vi.fn(),
@@ -45,14 +86,22 @@ const {
     ),
     driftSetter,
     gsapQuickTo: vi.fn(() => driftSetter),
+    gsapTimeline: vi.fn(),
     mmAdd: vi.fn(),
+    mmRevert: vi.fn(),
     splitCreate: vi.fn(),
     splitInstances,
     splitReverts,
+    scrollTriggerCreate: vi.fn(),
     scrollTriggerRefresh: vi.fn(),
+    scrollTriggerCreateCalls,
+    timelineCalls,
     observerCreate: vi.fn(),
     observerInstances,
     registerProblemEases: vi.fn(),
+    scheduleRefreshSpy: vi.fn(),
+    lastTimelineHolder,
+    lastTriggerHolder,
   };
 });
 
@@ -78,13 +127,71 @@ vi.mock('@/animations/config/gsap-register', async () => {
     },
   );
 
+  // Factory cloned from HowItWorksAnimations.test.tsx:51–86.
+  // Each call to gsap.timeline() creates a fresh recording proxy pushed into
+  // lastTimelineHolder so specs can inspect the most-recent timeline.
+  const buildTimeline = () => {
+    const labels: Record<string, number> = {};
+    let labelCursor = 0;
+    const tl = {
+      labels,
+      duration: vi.fn(() => 10),
+      progress: vi.fn(() => 0),
+      kill: vi.fn(),
+      addLabel: vi.fn((name: string, position?: number | string) => {
+        if (typeof position === 'number') {
+          labels[name] = position;
+        } else {
+          labels[name] = labelCursor;
+          labelCursor += 1;
+        }
+        timelineCalls.push({ method: 'addLabel', args: [name, position] });
+        return tl;
+      }),
+      to: vi.fn((...args: unknown[]) => {
+        timelineCalls.push({ method: 'to', args });
+        return tl;
+      }),
+      from: vi.fn((...args: unknown[]) => {
+        timelineCalls.push({ method: 'from', args });
+        return tl;
+      }),
+      set: vi.fn((...args: unknown[]) => {
+        timelineCalls.push({ method: 'set', args });
+        return tl;
+      }),
+    };
+    return tl;
+  };
+
+  gsapTimeline.mockImplementation(() => {
+    const tl = buildTimeline();
+    lastTimelineHolder.current = tl;
+    return tl;
+  });
+
+  scrollTriggerCreate.mockImplementation((cfg: Record<string, unknown>) => {
+    scrollTriggerCreateCalls.push(cfg);
+    const trig = {
+      id: cfg.id,
+      start: 100,
+      end: 2000,
+      isActive: false,
+      progress: 0,
+      kill: vi.fn(),
+    };
+    lastTriggerHolder.current = trig;
+    return trig;
+  });
+
   return {
     gsap: {
-      matchMedia: () => ({ add: mmAdd }),
+      matchMedia: () => ({ add: mmAdd, revert: mmRevert }),
       from: gsapFrom,
       fromTo: gsapFromTo,
       set: gsapSet,
       to: gsapTo,
+      timeline: gsapTimeline,
       quickTo: gsapQuickTo,
       delayedCall: gsapDelayedCall,
       registerPlugin: gsapRegisterPlugin,
@@ -97,6 +204,7 @@ vi.mock('@/animations/config/gsap-register', async () => {
       create: splitCreate,
     },
     ScrollTrigger: {
+      create: scrollTriggerCreate,
       refresh: scrollTriggerRefresh,
     },
     CustomEase: {
@@ -111,6 +219,15 @@ vi.mock('@/animations/config/gsap-register', async () => {
     },
   };
 });
+
+vi.mock('@/animations/config/motion-system', () => ({
+  SCRUB_DEFAULTS_SAFE: {
+    invalidateOnRefresh: true,
+    fastScrollEnd: true,
+    anticipatePin: 1,
+  },
+  scheduleRefresh: scheduleRefreshSpy,
+}));
 
 vi.mock('gsap/Observer', () => {
   observerCreate.mockImplementation((_config: Record<string, unknown>) => {
@@ -147,15 +264,23 @@ afterEach(() => {
   gsapRegisterPlugin.mockClear();
   gsapDelayedCall.mockClear();
   gsapQuickTo.mockClear();
+  gsapTimeline.mockClear();
   driftSetter.mockClear();
   mmAdd.mockClear();
+  mmRevert.mockClear();
   splitCreate.mockClear();
   splitInstances.length = 0;
   splitReverts.mockClear();
+  scrollTriggerCreate.mockClear();
   scrollTriggerRefresh.mockClear();
+  scrollTriggerCreateCalls.length = 0;
+  timelineCalls.length = 0;
   observerCreate.mockClear();
   observerInstances.length = 0;
   registerProblemEases.mockClear();
+  scheduleRefreshSpy.mockClear();
+  lastTimelineHolder.current = null;
+  lastTriggerHolder.current = null;
 });
 
 // ---------------------------------------------------------------------------
@@ -176,6 +301,25 @@ function invokeReducedMotion(): void {
     ([query]) => query === '(prefers-reduced-motion: reduce)',
   );
   expect(entry).toBeDefined();
+  (entry![1] as MmCallback)();
+}
+
+function invokeLine3Pin(): void {
+  const entry = mmAdd.mock.calls.find(
+    ([q]) =>
+      typeof q === 'string' &&
+      q.includes('min-width: 900px') &&
+      q.includes('min-height: 700px'),
+  );
+  expect(entry, 'MEDIA_LINE3_PIN branch must be registered').toBeDefined();
+  (entry![1] as MmCallback)();
+}
+
+function invokeLine3Mobile(): void {
+  const entry = mmAdd.mock.calls.find(
+    ([q]) => typeof q === 'string' && q.includes('max-width: 899px'),
+  );
+  expect(entry, 'MEDIA_LINE3_MOBILE branch must be registered').toBeDefined();
   (entry![1] as MmCallback)();
 }
 
@@ -227,12 +371,16 @@ describe('TheProblemAnimations', () => {
     expect(eyebrowCalls.length).toBe(1);
   });
 
-  it('creates one SplitText per line (words)', () => {
+  it('creates one SplitText per line (words) in common branch — SKIPS line 3', () => {
+    // Line 3 lives inside [data-stage="line-3"] and is authored by the pin
+    // branch's master timeline, so the common forEach must skip it.
     render(
       <TheProblemAnimations>
         <p data-animate="line">line one</p>
         <p data-animate="line">line two</p>
-        <p data-animate="line">line three</p>
+        <div data-stage="line-3">
+          <p data-animate="line">line three</p>
+        </div>
         <p data-animate="line">line four</p>
       </TheProblemAnimations>,
     );
@@ -242,43 +390,186 @@ describe('TheProblemAnimations', () => {
       ([, config]) =>
         (config as { type?: string } | undefined)?.type === 'words',
     );
+    // Lines 1, 2, 4 — line 3 is delegated to the pin/mobile branch.
+    expect(wordsCalls.length).toBe(3);
+  });
+
+  it('pin branch adds the missing line-3 words SplitText (total 4 after both branches)', () => {
+    render(
+      <TheProblemAnimations>
+        <p data-animate="line">line one</p>
+        <p data-animate="line">line two</p>
+        <div data-stage="line-3">
+          <p data-animate="line">line three</p>
+          <s data-animate="stranger">
+            <span>a stranger too</span>
+          </s>
+        </div>
+        <p data-animate="line">line four</p>
+      </TheProblemAnimations>,
+    );
+    invokeNoReducedMotion();
+    invokeLine3Pin();
+
+    const wordsCalls = splitCreate.mock.calls.filter(
+      ([, config]) =>
+        (config as { type?: string } | undefined)?.type === 'words',
+    );
+    // 3 (common branch: lines 1, 2, 4) + 1 (pin branch: line 3) = 4.
     expect(wordsCalls.length).toBe(4);
   });
 
   it('creates nested SplitText for stranger (words, chars)', () => {
+    // Mobile branch authors the `words, chars` split; it needs both
+    // `[data-stage="line-3"] [data-animate="line"]` AND
+    // `[data-animate="stranger"]` present or it bails early.
     render(
       <TheProblemAnimations>
-        <s data-animate="stranger">
-          <span>a stranger too</span>
-        </s>
+        <div data-stage="line-3">
+          <p data-animate="line">line three</p>
+          <s data-animate="stranger">
+            <span>a stranger too</span>
+          </s>
+        </div>
       </TheProblemAnimations>,
     );
     invokeNoReducedMotion();
+    invokeLine3Mobile();
 
     const nestedCalls = splitCreate.mock.calls.filter(
       ([, config]) =>
         (config as { type?: string } | undefined)?.type === 'words, chars',
     );
-    expect(nestedCalls.length).toBe(1);
+    expect(nestedCalls.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('fires the strikethrough scrub tween on the SVG path', () => {
-    // The implementation queries `.problem__strike path, svg path` inside
-    // [data-animate="stranger"] so the JSX must include an inline SVG.
+  it('fires the strikethrough scrub tween inside the pin branch master timeline', () => {
+    // The pin branch now runs strike as:
+    //   masterTl.to(path, { strokeDashoffset: 0, duration: 0.8, ease: '…' },
+    //              'stage-strike')
+    // — NOT as an independent `gsap.fromTo(path, { scrollTrigger: scrub 0.6 })`.
     render(
       <TheProblemAnimations>
-        <s data-animate="stranger">
-          <span>a stranger too</span>
-          <svg>
-            <path />
-          </svg>
-        </s>
+        <div data-stage="line-3">
+          <p data-animate="line">line three</p>
+          <s data-animate="stranger">
+            <span>a stranger too</span>
+            <svg>
+              <path />
+            </svg>
+          </s>
+        </div>
       </TheProblemAnimations>,
     );
     invokeNoReducedMotion();
+    invokeLine3Pin();
 
-    // GSAP scrubs stroke-dashoffset from 100 → 0 directly on the path.
-    const strikeCall = gsapFromTo.mock.calls.find(([, , toVars]) => {
+    // The most-recently created timeline is the problem-stage master.
+    const masterTl = lastTimelineHolder.current;
+    expect(masterTl, 'master timeline should be created by pin branch').not
+      .toBeNull();
+
+    // Assert a `.to()` call matched { strokeDashoffset: 0 } at label
+    // 'stage-strike'. Timeline recorder logs each method + args pair.
+    const strikeTo = timelineCalls.find((c) => {
+      if (c.method !== 'to') return false;
+      const [, vars, pos] = c.args as [
+        unknown,
+        { strokeDashoffset?: unknown } | undefined,
+        unknown,
+      ];
+      return vars?.strokeDashoffset === 0 && pos === 'stage-strike';
+    });
+    expect(strikeTo, 'strike tween must land at the stage-strike label').toBeDefined();
+
+    // Assert the ScrollTrigger pin config matches the documented contract.
+    const pinCfg = scrollTriggerCreateCalls.find(
+      (cfg) => cfg.id === 'problem-stage',
+    );
+    expect(pinCfg, 'problem-stage ScrollTrigger must be created').toBeDefined();
+    expect(pinCfg!.pin).toBe(true);
+    expect(pinCfg!.pinType).toBe('transform');
+    expect(pinCfg!.pinSpacing).toBe(true);
+    expect(pinCfg!.scrub).toBe(0.6);
+    // SCRUB_DEFAULTS_SAFE spread.
+    expect(pinCfg!.invalidateOnRefresh).toBe(true);
+    expect(pinCfg!.fastScrollEnd).toBe(true);
+    expect(pinCfg!.anticipatePin).toBe(1);
+    // The pin drives the timeline via `animation`.
+    expect(pinCfg!.animation).toBeTruthy();
+  });
+
+  it('master timeline has labels stage-curtain → stage-fall → stage-strike → stage-settle in order', () => {
+    render(
+      <TheProblemAnimations>
+        <div data-stage="line-3">
+          <p data-animate="line">line three</p>
+          <s data-animate="stranger">
+            <span>a stranger too</span>
+            <svg>
+              <path />
+            </svg>
+          </s>
+        </div>
+      </TheProblemAnimations>,
+    );
+    invokeNoReducedMotion();
+    invokeLine3Pin();
+
+    const labelOrder = timelineCalls
+      .filter((c) => c.method === 'addLabel')
+      .map((c) => c.args[0] as string);
+    expect(labelOrder).toEqual([
+      'stage-curtain',
+      'stage-fall',
+      'stage-strike',
+      'stage-settle',
+    ]);
+  });
+
+  it('pin branch is NOT invoked under reduced-motion', () => {
+    render(
+      <TheProblemAnimations>
+        <div data-stage="line-3">
+          <p data-animate="line">line three</p>
+          <s data-animate="stranger">
+            <span>a stranger too</span>
+            <svg>
+              <path />
+            </svg>
+          </s>
+        </div>
+      </TheProblemAnimations>,
+    );
+    invokeReducedMotion();
+
+    const pinCfg = scrollTriggerCreateCalls.find(
+      (cfg) => cfg.id === 'problem-stage',
+    );
+    expect(pinCfg).toBeUndefined();
+  });
+
+  it('legacy independent scrub ScrollTrigger is NOT created in pin branch', () => {
+    // In the new pin architecture, strikethrough lives INSIDE the master
+    // timeline (driven by the pin's `animation`). It must NOT be authored as
+    // a standalone `gsap.fromTo(..., { scrollTrigger: { scrub: 0.6 } })`.
+    render(
+      <TheProblemAnimations>
+        <div data-stage="line-3">
+          <p data-animate="line">line three</p>
+          <s data-animate="stranger">
+            <span>a stranger too</span>
+            <svg>
+              <path />
+            </svg>
+          </s>
+        </div>
+      </TheProblemAnimations>,
+    );
+    invokeNoReducedMotion();
+    invokeLine3Pin();
+
+    const legacyStrike = gsapFromTo.mock.calls.find(([, , toVars]) => {
       const vars = toVars as
         | {
             strokeDashoffset?: unknown;
@@ -289,7 +580,47 @@ describe('TheProblemAnimations', () => {
         vars?.strokeDashoffset === 0 && vars?.scrollTrigger?.scrub === 0.6
       );
     });
-    expect(strikeCall).toBeDefined();
+    expect(legacyStrike).toBeUndefined();
+  });
+
+  it('mobile branch creates independent triggers for line 3 (legacy scrub pattern preserved)', () => {
+    render(
+      <TheProblemAnimations>
+        <div data-stage="line-3">
+          <p data-animate="line">line three</p>
+          <s data-animate="stranger">
+            <span>a stranger too</span>
+            <svg>
+              <path />
+            </svg>
+          </s>
+        </div>
+      </TheProblemAnimations>,
+    );
+    invokeNoReducedMotion();
+    invokeLine3Mobile();
+
+    const mobileStrike = gsapFromTo.mock.calls.find(([, , toVars]) => {
+      const vars = toVars as
+        | {
+            strokeDashoffset?: unknown;
+            scrollTrigger?: { scrub?: unknown };
+          }
+        | undefined;
+      return (
+        vars?.strokeDashoffset === 0 && vars?.scrollTrigger?.scrub === 0.6
+      );
+    });
+    expect(
+      mobileStrike,
+      'mobile branch preserves legacy independent scrub ScrollTrigger',
+    ).toBeDefined();
+
+    // Mobile must NOT pin.
+    const pinCfg = scrollTriggerCreateCalls.find(
+      (cfg) => cfg.id === 'problem-stage',
+    );
+    expect(pinCfg).toBeUndefined();
   });
 
   it('creates an Observer for velocity drift', () => {
@@ -343,6 +674,47 @@ describe('TheProblemAnimations', () => {
     unmount();
 
     expect(killSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('cleanup kills the master timeline and pin ScrollTrigger on unmount', () => {
+    const { unmount } = render(
+      <TheProblemAnimations>
+        <div data-stage="line-3">
+          <p data-animate="line">line three</p>
+          <s data-animate="stranger">
+            <span>a stranger too</span>
+            <svg>
+              <path />
+            </svg>
+          </s>
+        </div>
+      </TheProblemAnimations>,
+    );
+    invokeNoReducedMotion();
+    invokeLine3Pin();
+
+    const capturedTl = lastTimelineHolder.current;
+    const capturedTrig = lastTriggerHolder.current;
+    expect(capturedTl, 'master timeline must exist before unmount').not.toBeNull();
+    expect(capturedTrig, 'pin ScrollTrigger must exist before unmount').not.toBeNull();
+    expect(capturedTl!.kill).not.toHaveBeenCalled();
+    expect(capturedTrig!.kill).not.toHaveBeenCalled();
+
+    unmount();
+
+    expect(capturedTl!.kill).toHaveBeenCalled();
+    expect(capturedTrig!.kill).toHaveBeenCalled();
+  });
+
+  it('calls mm.revert() on unmount (belt-and-suspenders cleanup)', () => {
+    const { unmount } = render(
+      <TheProblemAnimations>
+        <p data-animate="eyebrow">eyebrow</p>
+      </TheProblemAnimations>,
+    );
+    expect(mmRevert).not.toHaveBeenCalled();
+    unmount();
+    expect(mmRevert).toHaveBeenCalled();
   });
 
   it('clears props in reduced-motion branch', () => {
