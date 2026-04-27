@@ -1,0 +1,8 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Forge stdlib test fixtures (intentional fake keys/secrets)"
+paths = [
+  '''apps/contracts/lib/forge-std/test/fixtures/.*''',
+]

@@ -80,6 +80,7 @@ The backend is never involved in any financial operation. All money movement hap
 - [pnpm](https://pnpm.io/) >= 10
 - [Foundry](https://getfoundry.sh/) (forge, cast, anvil)
 - [Docker](https://www.docker.com/) and Docker Compose
+- [gitleaks](https://github.com/gitleaks/gitleaks) on `PATH` (`apt install gitleaks` / `brew install gitleaks`) — used by the auto-installed pre-commit hook
 - A wallet with Arbitrum Sepolia ETH for testnet deployment
 
 ### Installation
@@ -87,18 +88,18 @@ The backend is never involved in any financial operation. All money movement hap
 ```bash
 git clone https://github.com/obezeq/blue-escrow.git
 cd blue-escrow
-pnpm install
+pnpm install   # also installs lefthook pre-commit hooks via the prepare script
 ```
 
 ### Environment Setup
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 # Fill in your environment variables:
 # - DATABASE_URL (PostgreSQL connection string)
-# - ARBITRUM_RPC_URL (Alchemy, Infura, or public RPC)
+# - JWT_PRIVATE_KEY / JWT_PUBLIC_KEY (EdDSA PEM, generated in S03 user manual task)
+# - RPC_URL_ARBITRUM_SEPOLIA (Alchemy free tier)
 # - NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID
-# - PINATA_API_KEY
 ```
 
 ### Development

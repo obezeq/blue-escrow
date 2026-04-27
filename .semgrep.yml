@@ -1,0 +1,54 @@
+rules:
+  - id: no-console-in-api
+    message: "Use the pino logger from shared/utils/logger.ts instead of console.* in apps/api/src/"
+    languages: [typescript, javascript]
+    severity: ERROR
+    pattern: console.$M(...)
+    paths:
+      include:
+        - apps/api/src/
+      exclude:
+        - apps/api/src/**/*.test.ts
+
+  - id: no-raw-prisma-sql
+    message: "Raw Prisma SQL is forbidden outside prisma/migrations/ — use generated client methods"
+    languages: [typescript]
+    severity: ERROR
+    patterns:
+      - pattern-either:
+          - pattern: $P.$queryRaw(...)
+          - pattern: $P.$queryRawUnsafe(...)
+          - pattern: $P.$executeRaw(...)
+          - pattern: $P.$executeRawUnsafe(...)
+    paths:
+      include:
+        - apps/api/src/
+      exclude:
+        - apps/api/prisma/migrations/
+
+  # TODO(S03): refine — false-positives on /health and any unauthenticated swagger handler.
+  - id: route-handler-must-zod-parse
+    message: "Route handlers under features/**/*.routes.ts must run zodValidate() before the handler."
+    languages: [typescript]
+    severity: WARNING
+    patterns:
+      - pattern: |
+          $ROUTER.$M($PATH, async ($REQ, $RES, ...) => { ... })
+      - pattern-not: |
+          $ROUTER.$M($PATH, ..., zodValidate(...), ...)
+    paths:
+      include:
+        - apps/api/src/features/**/*.routes.ts
+
+  - id: forbid-ethers-import
+    message: "ethers is forbidden — use viem (apps/web/src/lib/web3 in web; apps/api/src/integrations/blockchain in api)"
+    languages: [typescript, javascript]
+    severity: ERROR
+    pattern-either:
+      - pattern: import * as $X from 'ethers'
+      - pattern: import { ... } from 'ethers'
+      - pattern: require('ethers')
+    paths:
+      include:
+        - apps/api/src/
+        - apps/web/src/
