@@ -14,9 +14,14 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "clean": "rm -rf dist .turbo node_modules",
-    "prisma:migrate": "prisma migrate dev --schema=src/prisma/schema.prisma",
-    "prisma:generate": "prisma generate --schema=src/prisma/schema.prisma",
-    "prisma:seed": "tsx src/prisma/seed.ts"
+    "prisma:generate": "prisma generate && tsx scripts/post-prisma-generate.ts",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "prisma:reset": "prisma migrate reset --force"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@acpr/rate-limit-postgresql": "^1.4.1",
@@ -40,12 +45,15 @@
   "devDependencies": {
     "@blue-escrow/eslint-config": "workspace:*",
     "@blue-escrow/tsconfig": "workspace:*",
+    "@testcontainers/postgresql": "^10.13.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^24.0.0",
     "@types/supertest": "^6.0.2",
     "@vitest/coverage-v8": "^3.1.0",
+    "dotenv": "^16.4.5",
     "eslint": "^9.22.0",
+    "execa": "^9.5.0",
     "fast-check": "^3.23.0",
     "pino-pretty": "^11.3.0",
     "prisma": "^7.4.1",
