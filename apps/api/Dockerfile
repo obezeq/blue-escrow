@@ -1,5 +1,9 @@
 FROM node:24-alpine AS base
-RUN corepack enable && corepack prepare pnpm@10 --activate
+# Install pnpm via npm-install instead of corepack: corepack on Node 24
+# alpine images intermittently fails its integrity check when fetching the
+# pnpm tarball (https://github.com/nodejs/corepack/issues/612). Pin the
+# exact version to match `packageManager` in the root package.json.
+RUN npm install -g pnpm@10.32.1 && npm cache clean --force
 
 FROM base AS deps
 WORKDIR /app

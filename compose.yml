@@ -24,6 +24,10 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
       target: deps
+      # host network during build is a workaround for bridge-MTU/TLS handshake
+      # failures fetching from registry.npmjs.org inside the default
+      # docker-compose build network on some Linux daemons.
+      network: host
     command: pnpm --filter @blue-escrow/api dev
     ports:
       - "4000:4000"
