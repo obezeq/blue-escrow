@@ -5,7 +5,7 @@ export default defineConfig({
     environment: 'node',
     pool: 'forks',
     globalSetup: ['./test/globalSetup.ts'],
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'test/**/*.test.ts', 'prisma/**/*.test.ts'],
     exclude: ['dist/**', 'node_modules/**', 'src/generated/**'],
     coverage: {
       provider: 'v8',
