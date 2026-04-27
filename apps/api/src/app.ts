@@ -1,3 +1,7 @@
+// Side-effect first: BigInt.prototype.toJSON must be installed before any
+// response containing Prisma BigInt columns is serialized.
+import './shared/utils/bigint.js';
+
 import express, { Router, type Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
