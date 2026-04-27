@@ -1,15 +1,31 @@
-import express, { type Express } from 'express';
+import express, { Router, type Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import { env } from './config/env.js';
+import { requestId } from './shared/middleware/requestId.js';
+import { httpLogger } from './shared/middleware/pinoHttp.js';
+import { errorHandler } from './shared/middleware/errorHandler.js';
+import { success } from './shared/utils/response.js';
 
 const app: Express = express();
-
+app.set('trust proxy', 1);
 app.use(helmet());
-app.use(cors());
-app.use(express.json());
+app.use(cors({ origin: env.CORS_ORIGINS, credentials: true }));
+app.use(requestId);
 
+// /health is mounted before pinoHttp so liveness probes are silent (k8s/docker
+// convention). requestId still runs first, so the x-request-id header is echoed.
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok' });
+  res.json(success({ status: 'ok' }));
 });
 
-export { app };
+app.use(httpLogger);
+app.use(express.json({ limit: '64kb', strict: true }));
+app.use(express.urlencoded({ extended: false, limit: '64kb' }));
+
+const v1Router: Router = Router();
+app.use('/v1', v1Router);
+
+app.use(errorHandler);
+
+export { app, v1Router };
