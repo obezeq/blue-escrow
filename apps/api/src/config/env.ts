@@ -2,6 +2,13 @@ import { z } from 'zod';
 
 const PLACEHOLDER_PREFIX = 'placeholder-';
 
+// Docker compose's ${VAR} interpolation produces an empty string when the
+// host env var is unset. Zod's .default() only fires for undefined, so
+// coerce "" -> undefined before any string validator that has a default.
+function emptyToUndef(v: unknown): unknown {
+  return v === '' ? undefined : v;
+}
+
 function buildEnvSchema(rawNodeEnv: string | undefined) {
   const isProduction = rawNodeEnv === 'production';
 
@@ -13,12 +20,12 @@ function buildEnvSchema(rawNodeEnv: string | undefined) {
           .refine((s) => !s.startsWith(PLACEHOLDER_PREFIX), {
             message: 'placeholder value detected in production',
           })
-      : z.string().min(1).default(devDefault);
+      : z.preprocess(emptyToUndef, z.string().min(1).default(devDefault));
 
   const placeholderUrl = (devDefault: string) =>
     isProduction
       ? z.string().url()
-      : z.string().min(1).default(devDefault);
+      : z.preprocess(emptyToUndef, z.string().min(1).default(devDefault));
 
   return z.object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -33,15 +40,18 @@ function buildEnvSchema(rawNodeEnv: string | undefined) {
     SIWE_DOMAIN: z.string().min(1).default('localhost:3000'),
     SIWE_SCHEME: z.enum(['http', 'https']).default('http'),
     RPC_URL_ARBITRUM_SEPOLIA: placeholderUrl('https://placeholder-rpc.example.com'),
-    CORS_ORIGINS: z
-      .string()
-      .default('http://localhost:3000')
-      .transform((s) =>
-        s
-          .split(',')
-          .map((o) => o.trim())
-          .filter(Boolean),
-      ),
+    CORS_ORIGINS: z.preprocess(
+      emptyToUndef,
+      z
+        .string()
+        .default('http://localhost:3000')
+        .transform((s) =>
+          s
+            .split(',')
+            .map((o) => o.trim())
+            .filter(Boolean),
+        ),
+    ),
   });
 }
 
