@@ -1,0 +1,221 @@
+// Blue Escrow API — Prisma 7 schema
+//
+// Backend never touches money. Every model here is profile/metadata or an
+// event mirror; financial state lives on-chain. The indexer (S07) writes
+// IndexerCursor / IndexedEvent / IndexerError + denormalized DealMetadata.
+//
+// Enums mirror apps/contracts/src/types/DataTypes.sol order-for-order so
+// the on-chain enum index doubles as a stable persistence value.
+// TS source of truth: packages/config/src/enums/index.ts.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+generator json {
+  provider  = "prisma-json-types-generator"
+  namespace = "PrismaJson"
+  allowAny  = false
+}
+
+// Prisma 7: `url` is no longer permitted here — the connection string lives
+// in prisma.config.ts (CLI/migrations) and is passed via PrismaPg adapter
+// (runtime client). See https://pris.ly/d/prisma7-client-config.
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── enums ────────────────────────────────────────────────────────────────
+
+enum DealState {
+  Created
+  Joined
+  Signed
+  Funded
+  DeliveryConfirmed
+  RefundRequested
+  Disputed
+  Resolved
+  TimedOut
+}
+
+enum ResolutionType {
+  None
+  Delivery
+  Refund
+  MiddlemanBuyer
+  MiddlemanSeller
+  Timeout
+}
+
+enum ParticipantRole {
+  Client
+  Seller
+  Middleman
+}
+
+enum IndexedEventStatus {
+  Pending
+  Confirmed
+  Reorged
+}
+
+// ─── identity / profile ───────────────────────────────────────────────────
+
+model User {
+  addressLower String   @id @db.VarChar(42)
+  displayName  String?  @db.VarChar(64)
+  bio          String?  @db.VarChar(280)
+  avatarPath   String?  @db.VarChar(255)
+  externalLink String?  @db.VarChar(255)
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(6)
+
+  middleman MiddlemanProfile?
+
+  @@map("users")
+}
+
+model MiddlemanProfile {
+  addressLower      String   @id @db.VarChar(42)
+  commissionPctBps  Int      @db.SmallInt
+  active            Boolean  @default(false)
+  contactLink       String?  @db.VarChar(255)
+  dealsCount        Int      @default(0)
+  disputesCount     Int      @default(0)
+  successRate       Decimal? @db.Decimal(5, 4)
+  registeredAtBlock BigInt?
+  registeredAtTx    String?  @db.VarChar(66)
+  createdAt         DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime @updatedAt @db.Timestamptz(6)
+
+  user User @relation(fields: [addressLower], references: [addressLower], onDelete: Cascade)
+
+  @@index([active])
+  @@map("middleman_profile")
+}
+
+// ─── auth ─────────────────────────────────────────────────────────────────
+
+model SiweNonce {
+  // viem's generateSiweNonce() returns 96-char base16 strings; widened from
+  // the original 64-char column in S03 (after EOA tests showed PG length
+  // overflows). Domain still 64 chars — fits any reasonable host:port.
+  nonce        String    @id @db.VarChar(96)
+  addressLower String    @db.VarChar(42)
+  domain       String    @db.VarChar(64)
+  issuedAt     DateTime  @default(now()) @db.Timestamptz(6)
+  expiresAt    DateTime  @db.Timestamptz(6)
+  consumedAt   DateTime? @db.Timestamptz(6)
+
+  @@index([addressLower])
+  @@index([expiresAt])
+  @@map("siwe_nonce")
+}
+
+model RevokedJti {
+  jti       String   @id @db.VarChar(64)
+  expiresAt DateTime @db.Timestamptz(6)
+  revokedAt DateTime @default(now()) @db.Timestamptz(6)
+  reason    String?  @db.VarChar(64)
+
+  @@index([expiresAt])
+  @@map("revoked_jti")
+}
+
+// ─── deal / nft metadata ──────────────────────────────────────────────────
+
+model DealMetadata {
+  chainId            Int
+  contractAddress    String          @db.VarChar(42)
+  dealId             BigInt
+  state              DealState       @default(Created)
+  termsOfServiceText String?         @db.Text
+  termsHash          String?         @db.VarChar(66)
+  /// [DealParticipants]
+  participantsJson   Json            @db.JsonB
+  amountWei          Decimal?        @db.Decimal(78, 0)
+  paymentToken       String?         @db.VarChar(42)
+  middlemanAddress   String?         @db.VarChar(42)
+  resolutionType     ResolutionType?
+  createdAtBlock     BigInt?
+  createdAtTx        String?         @db.VarChar(66)
+  lastEventAt        DateTime?       @db.Timestamptz(6)
+  createdAt          DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime        @updatedAt @db.Timestamptz(6)
+
+  @@id([chainId, contractAddress, dealId])
+  @@index([state])
+  @@index([middlemanAddress])
+  @@map("deal_metadata")
+}
+
+model NftMetadataCache {
+  chainId         Int
+  contractAddress String   @db.VarChar(42)
+  tokenId         BigInt
+  name            String   @db.VarChar(128)
+  description     String   @db.Text
+  imageUrl        String?  @db.VarChar(255)
+  /// [NftAttributes]
+  attributesJson  Json     @db.JsonB
+  version         Int      @default(1)
+  createdAt       DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @db.Timestamptz(6)
+
+  @@id([chainId, contractAddress, tokenId])
+  @@map("nft_metadata_cache")
+}
+
+// ─── indexer ──────────────────────────────────────────────────────────────
+
+model IndexerCursor {
+  chainId            Int
+  contractAddress    String   @db.VarChar(42)
+  lastSafeBlock      BigInt
+  lastFinalizedBlock BigInt   @default(0)
+  lastUpdatedAt      DateTime @updatedAt @db.Timestamptz(6)
+
+  @@id([chainId, contractAddress])
+  @@map("indexer_cursor")
+}
+
+model IndexedEvent {
+  id              BigInt             @id @default(autoincrement())
+  chainId         Int
+  contractAddress String             @db.VarChar(42)
+  blockNumber     BigInt
+  blockHash       String             @db.VarChar(66)
+  txHash          String             @db.VarChar(66)
+  logIndex        Int
+  eventName       String             @db.VarChar(64)
+  /// [IndexedEventArgs]
+  argsJson        Json               @db.JsonB
+  status          IndexedEventStatus @default(Pending)
+  createdAt       DateTime           @default(now()) @db.Timestamptz(6)
+
+  @@unique([chainId, txHash, logIndex])
+  @@index([chainId, contractAddress, blockNumber])
+  @@index([chainId, contractAddress, eventName])
+  @@index([status])
+  @@map("indexed_event")
+}
+
+model IndexerError {
+  id              BigInt   @id @default(autoincrement())
+  chainId         Int
+  contractAddress String   @db.VarChar(42)
+  blockNumber     BigInt?
+  txHash          String?  @db.VarChar(66)
+  logIndex        Int?
+  errorCode       String   @db.VarChar(64)
+  errorMessage    String   @db.Text
+  /// [IndexerErrorContext]
+  contextJson     Json?    @db.JsonB
+  createdAt       DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([chainId, contractAddress])
+  @@index([createdAt])
+  @@map("indexer_error")
+}

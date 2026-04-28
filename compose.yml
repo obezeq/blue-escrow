@@ -24,6 +24,10 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
       target: deps
+      # host network during build is a workaround for bridge-MTU/TLS handshake
+      # failures fetching from registry.npmjs.org inside the default
+      # docker-compose build network on some Linux daemons.
+      network: host
     command: pnpm --filter @blue-escrow/api dev
     ports:
       - "4000:4000"
@@ -31,12 +35,17 @@ services:
       - ./apps/api/src:/app/apps/api/src
       - ./packages:/app/packages
     environment:
+      - NODE_ENV=${NODE_ENV:-development}
       - PORT=4000
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/blue_escrow
-      - JWT_SECRET=${JWT_SECRET:-dev-secret-change-in-production}
-      - ARBITRUM_SEPOLIA_RPC_URL=${ARBITRUM_SEPOLIA_RPC_URL}
-      - PINATA_API_KEY=${PINATA_API_KEY}
-      - PINATA_SECRET_KEY=${PINATA_SECRET_KEY}
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
+      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
+      - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY}
+      - COOKIE_DOMAIN=${COOKIE_DOMAIN:-localhost}
+      - SIWE_DOMAIN=${SIWE_DOMAIN:-localhost:3000}
+      - SIWE_SCHEME=${SIWE_SCHEME:-http}
+      - RPC_URL_ARBITRUM_SEPOLIA=${RPC_URL_ARBITRUM_SEPOLIA}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
     depends_on:
       db:
         condition: service_healthy

@@ -1,0 +1,9 @@
+# Generated Prisma client — produced by `prisma generate` from
+# prisma/schema.prisma. Regenerated on every install/migrate so it must
+# never be checked in.
+src/generated/
+
+# Defensive: a stray SQLite shadow database from accidental local prisma
+# experiments would otherwise be tracked.
+prisma/migrations/dev.db
+prisma/migrations/dev.db-journal
