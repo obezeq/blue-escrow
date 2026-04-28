@@ -5,11 +5,13 @@ import './shared/utils/bigint.js';
 import express, { Router, type Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { env } from './config/env.js';
 import { requestId } from './shared/middleware/requestId.js';
 import { httpLogger } from './shared/middleware/pinoHttp.js';
 import { errorHandler } from './shared/middleware/errorHandler.js';
 import { success } from './shared/utils/response.js';
+import { authRouter } from './features/auth/auth.routes.js';
 
 const app: Express = express();
 app.set('trust proxy', 1);
@@ -26,8 +28,10 @@ app.get('/health', (_req, res) => {
 app.use(httpLogger);
 app.use(express.json({ limit: '64kb', strict: true }));
 app.use(express.urlencoded({ extended: false, limit: '64kb' }));
+app.use(cookieParser());
 
 const v1Router: Router = Router();
+v1Router.use('/auth', authRouter);
 app.use('/v1', v1Router);
 
 app.use(errorHandler);
