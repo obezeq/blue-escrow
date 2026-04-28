@@ -114,9 +114,14 @@ export async function verifyAndIssue(
   if (parsed.scheme !== env.SIWE_SCHEME) throw new AuthError('siwe scheme mismatch');
   if (parsed.chainId !== SUPPORTED_CHAIN_ID) throw new AuthError('siwe chain mismatch');
 
+  // blockTag: 'safe' — EIP-1271 contract-wallet verification reads chain
+  // state. 'latest' (default) lets a small reorg flip the result; 'safe'
+  // pins to the latest checkpoint that won't be reorged. RFC reference:
+  // viem 2026 docs / EIP-1271 reorg-resistance guidance.
   const ok = await arbitrumSepoliaClient.verifySiweMessage({
     message,
     signature,
+    blockTag: 'safe',
   });
   if (!ok) throw new AuthError('signature invalid');
 
