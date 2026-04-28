@@ -5,6 +5,7 @@
 // client is mocked.
 
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import fc from 'fast-check';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { createSiweMessage } from 'viem/siwe';
 import { decodeJwt } from 'jose';
@@ -210,6 +211,36 @@ describe('auth.service', () => {
         service.refresh(tokens.refreshToken, 'attacker', tokens.csrfToken),
       ).rejects.toBeInstanceOf(AuthError);
     });
+
+    it('concurrent refresh: exactly 1 of N calls succeeds; family is killed', async () => {
+      await fc.assert(
+        fc.asyncProperty(fc.integer({ min: 2, max: 5 }), async (n) => {
+          await cleanAuthTables();
+          const { tokens } = await signInAndIssue();
+          const family = decodeJwt(tokens.refreshToken).family as string;
+
+          const results = await Promise.allSettled(
+            Array.from({ length: n }, () =>
+              service.refresh(tokens.refreshToken, tokens.csrfToken, tokens.csrfToken),
+            ),
+          );
+          const fulfilled = results.filter((r) => r.status === 'fulfilled');
+          const rejected = results.filter((r) => r.status === 'rejected');
+          expect(fulfilled).toHaveLength(1);
+          expect(rejected).toHaveLength(n - 1);
+          rejected.forEach((r) =>
+            expect((r as PromiseRejectedResult).reason).toBeInstanceOf(AuthError),
+          );
+
+          // Race-loser path is fail-secure: family sentinel must exist.
+          const sentinel = await prisma.revokedJti.findUnique({
+            where: { jti: `family:${family}` },
+          });
+          expect(sentinel).not.toBeNull();
+        }),
+        { numRuns: 10 },
+      );
+    }, 60_000);
 
     it('reuse-detection: replays the old refresh, kills the family', async () => {
       const { tokens } = await signInAndIssue();

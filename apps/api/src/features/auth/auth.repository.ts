@@ -129,11 +129,15 @@ export async function revokeFamily(
 ): Promise<void> {
   const jti = FAMILY_PREFIX + familyId;
   const expiresAt = new Date(Date.now() + 7 * 24 * 3600 * 1000);
-  await db.revokedJti.upsert({
-    where: { jti },
-    create: { jti, expiresAt, reason },
-    update: {},
-  });
+  // Idempotent INSERT — Prisma upsert is SELECT+INSERT/UPDATE under the
+  // hood and races on the SELECT under concurrent calls. The PK-unique
+  // INSERT is atomic; we swallow P2002 to keep "already revoked" a no-op.
+  try {
+    await db.revokedJti.create({ data: { jti, expiresAt, reason } });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') return;
+    throw e;
+  }
 }
 
 /**
