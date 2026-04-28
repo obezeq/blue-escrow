@@ -4,6 +4,10 @@ export default defineConfig({
   test: {
     environment: 'node',
     pool: 'forks',
+    // Tests share a single testcontainers Postgres; running files in
+    // parallel races on row inserts/cleanups. Serial files keep the
+    // shared schema deterministic without per-test schema spinup.
+    fileParallelism: false,
     globalSetup: ['./test/globalSetup.ts'],
     include: ['src/**/*.test.ts', 'test/**/*.test.ts', 'prisma/**/*.test.ts'],
     exclude: ['dist/**', 'node_modules/**', 'src/generated/**'],
