@@ -3,7 +3,8 @@
 // from test/helpers/db.ts without re-wiring the singleton.
 
 import { generateSiweNonce } from 'viem/siwe';
-import type { Prisma, SiweNonce, RevokedJti } from '../../generated/prisma/client.js';
+import { Prisma } from '../../generated/prisma/client.js';
+import type { SiweNonce, RevokedJti } from '../../generated/prisma/client.js';
 
 type Db = Prisma.TransactionClient;
 
@@ -75,6 +76,36 @@ export async function revokeJti(
     create: { jti, expiresAt, reason },
     update: {},
   });
+}
+
+/**
+ * Atomic single-shot rotation marker used by /v1/auth/refresh. Returns
+ * true if THIS call inserted the revocation row (won the claim), false
+ * if another caller beat us to it (P2002 unique-constraint violation).
+ *
+ * Idiomatic Prisma equivalent of:
+ *   INSERT INTO revoked_jti (jti, expires_at, reason)
+ *   VALUES ($1, $2, 'rotation') ON CONFLICT DO NOTHING RETURNING jti
+ *
+ * Single round-trip — no SELECT-then-INSERT TOCTOU window. Prisma compiles
+ * .create() to a single `INSERT ... RETURNING` statement; P2002 surfaces
+ * Postgres SQLSTATE 23505. The caller treats `false` as "lost the race
+ * or refresh replayed" and revokes the family fail-secure.
+ */
+export async function claimRotation(
+  db: Db,
+  jti: string,
+  expiresAt: Date,
+): Promise<boolean> {
+  try {
+    await db.revokedJti.create({ data: { jti, expiresAt, reason: 'rotation' } });
+    return true;
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+      return false;
+    }
+    throw e;
+  }
 }
 
 /**

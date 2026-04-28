@@ -166,6 +166,9 @@ export async function refresh(
   const family = typeof payload.family === 'string' ? payload.family : undefined;
   if (!sub || !jti || !exp || !family) throw new AuthError('refresh token malformed');
 
+  // Fast-fail if the jti is already revoked OR the family sentinel is
+  // set. Preserves cross-instance reuse-detection (an in-flight peer may
+  // have already inserted the sentinel for this family).
   const revoked = await repo.isRevoked(prisma, jti, family);
   if (revoked) {
     await repo.revokeFamily(prisma, family);
@@ -173,7 +176,19 @@ export async function refresh(
     throw new AuthError('refresh token reused');
   }
 
-  await repo.revokeJti(prisma, jti, new Date(exp * 1000), 'rotation');
+  // Atomic INSERT ON CONFLICT DO NOTHING RETURNING — exactly one caller
+  // observes `claimed === true` even under concurrent /refresh with the
+  // same valid token. If we lose the race, we can't tell whether it's a
+  // benign client retry or a stolen-token replay arriving microseconds
+  // later, so we fail-secure: kill the family. The UX cost (rare
+  // re-signin on truly concurrent refresh) is acceptable; the security
+  // cost of guessing wrong is not.
+  const claimed = await repo.claimRotation(prisma, jti, new Date(exp * 1000));
+  if (!claimed) {
+    await repo.revokeFamily(prisma, family);
+    invalidateRevocationCache(jti);
+    throw new AuthError('refresh reused or already rotated');
+  }
   invalidateRevocationCache(jti);
 
   const accessToken = await signAccessToken(sub);
