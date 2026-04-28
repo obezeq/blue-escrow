@@ -99,7 +99,10 @@ model MiddlemanProfile {
 // ─── auth ─────────────────────────────────────────────────────────────────
 
 model SiweNonce {
-  nonce        String    @id @db.VarChar(64)
+  // viem's generateSiweNonce() returns 96-char base16 strings; widened from
+  // the original 64-char column in S03 (after EOA tests showed PG length
+  // overflows). Domain still 64 chars — fits any reasonable host:port.
+  nonce        String    @id @db.VarChar(96)
   addressLower String    @db.VarChar(42)
   domain       String    @db.VarChar(64)
   issuedAt     DateTime  @default(now()) @db.Timestamptz(6)
