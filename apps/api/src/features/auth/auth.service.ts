@@ -35,6 +35,12 @@ const SUPPORTED_CHAIN_ID = 421614;
 const SIWE_STATEMENT = 'Sign in to Blue Escrow.';
 const NONCE_TTL_SECONDS = 300;
 
+// RFC 8725bis (JWT BCP, 2026 draft) §3.1 mandates aud and recommends iss.
+// iss = the SIWE domain that issued the token (env-bound). aud = a fixed
+// identifier for "the Blue Escrow API" — keeps tokens from being replayed
+// against any unrelated service that imports the same JWT_PUBLIC_KEY.
+const JWT_AUDIENCE = 'blue-escrow-api';
+
 let _privateKey: KeyLike | null = null;
 let _publicKey: KeyLike | null = null;
 
@@ -235,6 +241,8 @@ async function signAccessToken(sub: string): Promise<string> {
     .setSubject(sub)
     .setJti(ulid())
     .setIssuedAt()
+    .setIssuer(env.SIWE_DOMAIN)
+    .setAudience(JWT_AUDIENCE)
     .setExpirationTime(ACCESS_TTL)
     .sign(key);
 }
@@ -246,6 +254,8 @@ async function signRefreshToken(sub: string, family: string): Promise<string> {
     .setSubject(sub)
     .setJti(ulid())
     .setIssuedAt()
+    .setIssuer(env.SIWE_DOMAIN)
+    .setAudience(JWT_AUDIENCE)
     .setExpirationTime(REFRESH_TTL)
     .sign(key);
 }
@@ -257,7 +267,11 @@ export async function verifyJwt(
   const key = await getPublicKey();
   let payload: JWTPayload;
   try {
-    ({ payload } = await jwtVerify(token, key, { algorithms: [ALG] }));
+    ({ payload } = await jwtVerify(token, key, {
+      algorithms: [ALG],
+      issuer: env.SIWE_DOMAIN,
+      audience: JWT_AUDIENCE,
+    }));
   } catch {
     throw new AuthError('token invalid');
   }

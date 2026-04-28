@@ -22,6 +22,10 @@ import * as authRepo from '../../features/auth/auth.repository.js';
 import { AuthError } from '../errors/index.js';
 
 const ALG = 'EdDSA';
+// Must match the audience claim minted by auth.service.ts. Kept as a
+// literal here (rather than imported) to keep this middleware free of
+// feature-layer imports beyond the repository it already needs.
+const JWT_AUDIENCE = 'blue-escrow-api';
 const POSITIVE_TTL_MS = 5 * 60 * 1000;
 const NEGATIVE_TTL_MS = 30 * 1000;
 
@@ -84,7 +88,11 @@ export function requireAuth(options: RequireAuthOptions = {}) {
     const key = await getPublicKey();
     let payload: JWTPayload;
     try {
-      ({ payload } = await jwtVerify(token, key, { algorithms: [ALG] }));
+      ({ payload } = await jwtVerify(token, key, {
+        algorithms: [ALG],
+        issuer: env.SIWE_DOMAIN,
+        audience: JWT_AUDIENCE,
+      }));
     } catch {
       throw new AuthError('token invalid');
     }

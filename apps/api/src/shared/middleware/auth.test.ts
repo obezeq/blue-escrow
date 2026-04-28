@@ -16,6 +16,7 @@ import { prisma } from '../../prisma/client.js';
 
 const ALG = 'EdDSA';
 const ADDR = '0x000000000000000000000000000000000000cccc';
+const JWT_AUDIENCE = 'blue-escrow-api';
 
 let signKey: Awaited<ReturnType<typeof importPKCS8>>;
 
@@ -25,6 +26,8 @@ async function mintAccess(jti = ulid(), ttl = '15m'): Promise<string> {
     .setSubject(ADDR)
     .setJti(jti)
     .setIssuedAt()
+    .setIssuer(env.SIWE_DOMAIN)
+    .setAudience(JWT_AUDIENCE)
     .setExpirationTime(ttl)
     .sign(signKey);
 }
@@ -35,6 +38,8 @@ async function mintRefresh(family: string, jti = ulid(), ttl = '7d'): Promise<st
     .setSubject(ADDR)
     .setJti(jti)
     .setIssuedAt()
+    .setIssuer(env.SIWE_DOMAIN)
+    .setAudience(JWT_AUDIENCE)
     .setExpirationTime(ttl)
     .sign(signKey);
 }
